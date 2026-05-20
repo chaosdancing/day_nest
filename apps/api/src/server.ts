@@ -7,6 +7,8 @@ import type { StorageProvider } from './storage/provider.js';
 import type { PrismaClient } from '@prisma/client';
 import { authPlugin } from './auth/plugin.js';
 import { AppError } from './lib/errors.js';
+import { registerInviteRoutes } from './routes/invites.js';
+import { registerAuthRoutes } from './routes/auth.js';
 
 export type AppDeps = {
   config: AppConfig;
@@ -60,6 +62,8 @@ export async function buildServer(
       credentials: true,
     });
     await app.register(authPlugin);
+    await registerAuthRoutes(app);
+    await registerInviteRoutes(app);
   }
 
   return app;
