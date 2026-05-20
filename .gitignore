@@ -1,0 +1,21 @@
+# Brainstorming session artifacts
+.superpowers/
+
+# OS / Editor
+.DS_Store
+.idea/
+.vscode/
+
+# Node
+node_modules/
+dist/
+build/
+.next/
+.nuxt/
+.cache/
+*.log
+
+# Env
+.env
+.env.local
+.env.*.local
