@@ -1,0 +1,26 @@
+[Unit]
+Description=DayNest API
+After=network.target
+
+[Service]
+Type=simple
+User=daynest
+Group=daynest
+WorkingDirectory=/var/www/daynest/api
+EnvironmentFile=/etc/daynest/.env
+ExecStart=/usr/bin/node dist/src/index.js
+Restart=always
+RestartSec=3
+StandardOutput=append:/var/log/daynest/api.out.log
+StandardError=append:/var/log/daynest/api.err.log
+LimitNOFILE=4096
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/daynest /var/log/daynest
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

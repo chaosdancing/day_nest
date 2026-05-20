@@ -1,0 +1,12 @@
+# DayNest cron schedule
+# Install as the `daynest` user: crontab -u daynest -e
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+MAILTO=ops@example.com
+
+# Daily DB snapshot to Qiniu (with on-disk rotation)
+30 3 * * * /srv/daynest/deploy/scripts/backup-sqlite.sh >> /var/log/daynest/backup.log 2>&1
+
+# Weekly local file integrity check
+15 4 * * 0 sqlite3 /var/lib/daynest/daynest.db 'PRAGMA integrity_check;' >> /var/log/daynest/integrity.log 2>&1
