@@ -20,7 +20,8 @@ packages/*/dist/
 apps/*/dist/
 
 # Prisma generated client + dev DBs
-apps/api/prisma/migrations/dev.db*
+apps/api/prisma/dev.db*
+apps/api/prisma/test.db*
 apps/api/dev.db*
 apps/api/test.db*
 
