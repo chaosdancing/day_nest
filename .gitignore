@@ -15,6 +15,15 @@ build/
 .cache/
 *.log
 
+# Workspace package builds
+packages/*/dist/
+apps/*/dist/
+
+# Prisma generated client + dev DBs
+apps/api/prisma/migrations/dev.db*
+apps/api/dev.db*
+apps/api/test.db*
+
 # Env
 .env
 .env.local
