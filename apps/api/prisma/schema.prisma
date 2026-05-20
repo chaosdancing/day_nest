@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  username      String   @unique
+  displayName   String
+  passwordHash  String
+  avatarKey     String?
+  createdAt     DateTime @default(now())
+
+  collections   Collection[] @relation("CollectionCreator")
+  photos        Photo[]      @relation("PhotoUploader")
+  invitesIssued Invite[]     @relation("InviteIssuer")
+  tagsCreated   Tag[]        @relation("TagCreator")
+}
+
+model Invite {
+  id         String   @id @default(uuid())
+  token      String   @unique
+  issuedById String
+  issuedBy   User     @relation("InviteIssuer", fields: [issuedById], references: [id])
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime @default(now())
+}
+
+model Collection {
+  id            String   @id @default(uuid())
+  title         String
+  description   String?
+  occurredOn    DateTime
+  occurredUntil DateTime?
+  location      String?
+  coverPhotoId  String?  @unique
+  coverPhoto    Photo?   @relation("CollectionCover", fields: [coverPhotoId], references: [id])
+  createdById   String
+  createdBy     User     @relation("CollectionCreator", fields: [createdById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  photos        Photo[]         @relation("CollectionPhotos")
+  tags          CollectionTag[]
+
+  @@index([occurredOn])
+}
+
+model Photo {
+  id           String   @id @default(uuid())
+  collectionId String
+  collection   Collection @relation("CollectionPhotos", fields: [collectionId], references: [id], onDelete: Cascade)
+  fileKey      String
+  width        Int
+  height       Int
+  caption      String?
+  takenAt      DateTime?
+  orderIndex   Int
+  uploadedById String
+  uploadedBy   User     @relation("PhotoUploader", fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
+
+  tags         PhotoTag[]
+  asCoverOf    Collection? @relation("CollectionCover")
+
+  @@index([collectionId, orderIndex])
+}
+
+model Tag {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  displayName  String
+  createdById  String
+  createdBy    User     @relation("TagCreator", fields: [createdById], references: [id])
+  createdAt    DateTime @default(now())
+
+  photos       PhotoTag[]
+  collections  CollectionTag[]
+}
+
+model PhotoTag {
+  photoId String
+  tagId   String
+  photo   Photo @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  tag     Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([photoId, tagId])
+}
+
+model CollectionTag {
+  collectionId String
+  tagId        String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  tag          Tag        @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([collectionId, tagId])
+}
