@@ -9,6 +9,10 @@ import { authPlugin } from './auth/plugin.js';
 import { AppError } from './lib/errors.js';
 import { registerInviteRoutes } from './routes/invites.js';
 import { registerAuthRoutes } from './routes/auth.js';
+import { registerUploadRoutes } from './routes/uploads.js';
+import { registerCollectionRoutes } from './routes/collections.js';
+import { registerPhotoRoutes } from './routes/photos.js';
+import { registerTagRoutes } from './routes/tags.js';
 
 export type AppDeps = {
   config: AppConfig;
@@ -64,6 +68,10 @@ export async function buildServer(
     await app.register(authPlugin);
     await registerAuthRoutes(app);
     await registerInviteRoutes(app);
+    await registerUploadRoutes(app);
+    await registerCollectionRoutes(app);
+    await registerPhotoRoutes(app);
+    await registerTagRoutes(app);
   }
 
   return app;
