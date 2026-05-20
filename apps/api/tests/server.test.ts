@@ -3,10 +3,10 @@ import { buildApp } from './helpers/buildApp.js';
 
 describe('server', () => {
   it('responds to /healthz', async () => {
-    const { app, cleanup } = await buildApp();
-    const res = await app.inject({ method: 'GET', url: '/healthz' });
+    const ctx = await buildApp();
+    const res = await ctx.app.inject({ method: 'GET', url: '/healthz' });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ status: 'ok' });
-    await cleanup();
+    await ctx.cleanup();
   });
 });
