@@ -4,6 +4,44 @@ import { signAccess } from '../src/auth/jwt.js';
 import { createCollection } from '../src/services/collections.js';
 
 describe('photos', () => {
+  it('GET /:id/url returns signed download URL', async () => {
+    const ctx = await buildApp();
+    const u = await ctx.prisma.user.create({
+      data: { username: 'a', displayName: 'A', passwordHash: 'x' },
+    });
+    const id = await createCollection(ctx.prisma, u.id, {
+      title: 't',
+      description: null,
+      occurredOn: '2024-01-01',
+      occurredUntil: null,
+      location: null,
+      tags: [],
+      photos: [
+        {
+          fileKey: 'photos/original.jpg',
+          width: 1,
+          height: 1,
+          caption: null,
+          takenAt: null,
+          tags: [],
+        },
+      ],
+    });
+    const p = await ctx.prisma.photo.findFirstOrThrow({
+      where: { collectionId: id },
+    });
+    const t = await signAccess({ sub: u.id }, ctx.config.jwt.secret, 60);
+    const r = await ctx.app.inject({
+      method: 'GET',
+      url: `/api/photos/${p.id}/url`,
+      headers: { authorization: `Bearer ${t}` },
+    });
+    expect(r.statusCode).toBe(200);
+    expect(r.json().url).toContain('photos/original.jpg');
+    expect(r.json().expiresIn).toBe(3600);
+    await ctx.cleanup();
+  });
+
   it('PATCH updates caption and tags', async () => {
     const ctx = await buildApp();
     const u = await ctx.prisma.user.create({

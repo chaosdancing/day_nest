@@ -10,6 +10,20 @@ const Body = z.object({
 });
 
 export async function registerPhotoRoutes(app: FastifyInstance) {
+  app.get(
+    '/api/photos/:id/url',
+    { onRequest: [app.requireUser] },
+    async (req) => {
+      const { id } = req.params as { id: string };
+      const photo = await app.deps.prisma.photo.findUnique({ where: { id } });
+      if (!photo) throw new AppError(404, 'NOT_FOUND', 'photo not found');
+      return {
+        url: app.deps.storage.signDownload(photo.fileKey, 3600),
+        expiresIn: 3600,
+      };
+    }
+  );
+
   app.patch(
     '/api/photos/:id',
     { onRequest: [app.requireUser] },
