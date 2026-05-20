@@ -41,3 +41,9 @@ export const CollectionDetailDTO = CollectionSummaryDTO.extend({
   photos: z.array(PhotoDTO),
 });
 export type CollectionDetailDTO = z.infer<typeof CollectionDetailDTO>;
+
+export const CollectionAppendInput = z.object({
+  photos: z.array(PhotoInput).min(1).max(200),
+  extraTags: z.array(z.string().min(1).max(40)).default([]),
+});
+export type CollectionAppendInput = z.infer<typeof CollectionAppendInput>;

@@ -1,7 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { CollectionCreateInput, CollectionUpdateInput } from '@daynest/shared';
-import { createCollection } from '../services/collections.js';
+import {
+  CollectionAppendInput,
+  CollectionCreateInput,
+  CollectionUpdateInput,
+} from '@daynest/shared';
+import { appendToCollection, createCollection } from '../services/collections.js';
 import { upsertTags } from '../services/tags.js';
 import {
   buildCollectionDetail,
@@ -13,9 +17,19 @@ const ListQuery = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
   cursor: z.string().optional(),
   tag: z.string().optional(),
+  dateFrom: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  dateTo: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  location: z.string().optional(),
 });
 
 type Cursor = { occurredOn: string; id: string };
+type TitleMatchType = 'exact' | 'contains' | 'subsequence';
 
 function encodeCursor(c: Cursor): string {
   return Buffer.from(JSON.stringify(c)).toString('base64url');
@@ -33,6 +47,50 @@ function decodeCursor(s: string): Cursor | null {
   } catch {
     return null;
   }
+}
+
+function normalizeTitle(title: string): string {
+  return title.trim().toLocaleLowerCase().replace(/\s+/g, '');
+}
+
+function isSubsequence(needle: string, haystack: string): boolean {
+  if (!needle) return false;
+  let cursor = 0;
+  for (const ch of haystack) {
+    if (ch === needle[cursor]) cursor += 1;
+    if (cursor === needle.length) return true;
+  }
+  return false;
+}
+
+function scoreTitleMatch(
+  query: string,
+  title: string
+): { score: number; matchType: TitleMatchType } | null {
+  const q = normalizeTitle(query);
+  const t = normalizeTitle(title);
+  if (!q || !t) return null;
+  if (q === t) return { score: 100, matchType: 'exact' };
+  if (t.includes(q) || q.includes(t)) {
+    const overlap = Math.min(q.length, t.length) / Math.max(q.length, t.length);
+    return { score: Math.round(70 + overlap * 20), matchType: 'contains' };
+  }
+  if (isSubsequence(q, t)) {
+    const density = q.length / t.length;
+    return { score: Math.round(40 + density * 20), matchType: 'subsequence' };
+  }
+  return null;
+}
+
+async function getDirectCollectionTags(
+  app: FastifyInstance,
+  collectionId: string
+): Promise<string[]> {
+  const direct = await app.deps.prisma.collectionTag.findMany({
+    where: { collectionId },
+    include: { tag: true },
+  });
+  return direct.map((d) => d.tag.displayName);
 }
 
 export async function registerCollectionRoutes(app: FastifyInstance) {
@@ -103,6 +161,17 @@ export async function registerCollectionRoutes(app: FastifyInstance) {
           in: tagFilterClause.map((c) => c.collectionId),
         };
       }
+      if (q.dateFrom || q.dateTo) {
+        (where as { occurredOn?: { gte?: Date; lte?: Date } }).occurredOn = {
+          ...(q.dateFrom ? { gte: new Date(q.dateFrom) } : {}),
+          ...(q.dateTo ? { lte: new Date(q.dateTo) } : {}),
+        };
+      }
+      if (q.location?.trim()) {
+        (where as { location?: { contains: string } }).location = {
+          contains: q.location.trim(),
+        };
+      }
       if (q.cursor) {
         const c = decodeCursor(q.cursor);
         if (c) {
@@ -141,6 +210,54 @@ export async function registerCollectionRoutes(app: FastifyInstance) {
   );
 
   app.get(
+    '/api/collections/by-title',
+    { onRequest: [app.requireUser] },
+    async (req) => {
+      const { title } = req.query as { title?: string };
+      const trimmed = (title ?? '').trim();
+      if (!trimmed) {
+        throw new AppError(400, 'VALIDATION_ERROR', 'title required');
+      }
+      const candidates = await app.deps.prisma.collection.findMany({
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, title: true, createdAt: true },
+        take: 200,
+      });
+      const scored = candidates
+        .map((c) => {
+          const match = scoreTitleMatch(trimmed, c.title);
+          return match ? { ...c, ...match } : null;
+        })
+        .filter((c): c is NonNullable<typeof c> => c !== null)
+        .sort(
+          (a, b) =>
+            b.score - a.score ||
+            b.createdAt.getTime() - a.createdAt.getTime()
+        )
+        .slice(0, 5);
+
+      const matches = await Promise.all(
+        scored.map(async (m) => ({
+          collection: await buildCollectionDetail(
+            app.deps.prisma,
+            app.deps.storage,
+            m.id
+          ),
+          directTags: await getDirectCollectionTags(app, m.id),
+          score: m.score,
+          matchType: m.matchType,
+        }))
+      );
+      const exact = matches.find((m) => m.matchType === 'exact');
+      return {
+        collection: exact?.collection ?? null,
+        directTags: exact?.directTags ?? [],
+        matches,
+      };
+    }
+  );
+
+  app.get(
     '/api/collections/:id',
     { onRequest: [app.requireUser] },
     async (req) => {
@@ -154,6 +271,24 @@ export async function registerCollectionRoutes(app: FastifyInstance) {
       } catch {
         throw new AppError(404, 'NOT_FOUND', 'collection not found');
       }
+    }
+  );
+
+  app.post(
+    '/api/collections/:id/append',
+    { onRequest: [app.requireUser] },
+    async (req) => {
+      const { id } = req.params as { id: string };
+      const parsed = CollectionAppendInput.safeParse(req.body);
+      if (!parsed.success) {
+        throw new AppError(
+          400,
+          'VALIDATION_ERROR',
+          parsed.error.issues.map((i) => i.message).join('; ')
+        );
+      }
+      await appendToCollection(app.deps.prisma, req.user.id, id, parsed.data);
+      return buildCollectionDetail(app.deps.prisma, app.deps.storage, id);
     }
   );
 

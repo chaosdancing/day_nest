@@ -1,27 +1,49 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCollections } from '@/hooks/useCollections';
 import { Polaroid } from '@/components/scrapbook/Polaroid';
 import { TapeBadge } from '@/components/scrapbook/TapeBadge';
 import { HandwrittenText } from '@/components/scrapbook/HandwrittenText';
-
-const MONTH_LABELS = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
+import {
+  buildDatePresetRange,
+  type DatePreset,
+} from '@/lib/timelineFilters';
 
 function formatOccurred(occurredOn: string, occurredUntil: string | null) {
   const start = new Date(occurredOn);
-  const startStr = `${start.getFullYear()}年${MONTH_LABELS[start.getMonth()]}月${start.getDate()}日`;
+  const format = (d: Date) =>
+    `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(
+      d.getDate()
+    ).padStart(2, '0')}`;
+  const startStr = format(start);
   if (!occurredUntil) return startStr;
   const end = new Date(occurredUntil);
   if (start.toDateString() === end.toDateString()) return startStr;
-  if (start.getFullYear() === end.getFullYear() && start.getMonth() === end.getMonth()) {
-    return `${startStr} – ${end.getDate()}日`;
-  }
-  return `${startStr} – ${end.getFullYear()}年${MONTH_LABELS[end.getMonth()]}月${end.getDate()}日`;
+  return `${startStr} - ${format(end)}`;
 }
 
 export function TimelinePage() {
-  const q = useCollections({ limit: 20 });
+  const [datePreset, setDatePreset] = useState<DatePreset>('all');
+  const [customRange, setCustomRange] = useState({
+    dateFrom: '',
+    dateTo: '',
+  });
+  const [locationFilter, setLocationFilter] = useState('');
+
+  const dateRange =
+    datePreset === 'custom'
+      ? {
+          dateFrom: customRange.dateFrom || undefined,
+          dateTo: customRange.dateTo || undefined,
+        }
+      : buildDatePresetRange(datePreset);
+
+  const q = useCollections({
+    limit: 20,
+    ...dateRange,
+    location: locationFilter.trim() || undefined,
+  });
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -36,24 +58,21 @@ export function TimelinePage() {
   }, [q.hasNextPage, q.isFetchingNextPage, q.fetchNextPage]);
 
   const items = q.data?.pages.flatMap((p) => p.items) ?? [];
+  const locationSuggestions = useMemo(
+    () =>
+      Array.from(
+        new Set(items.map((c) => c.location).filter((v): v is string => !!v))
+      ).slice(0, 8),
+    [items]
+  );
+  const hasFilters =
+    datePreset !== 'all' ||
+    !!customRange.dateFrom ||
+    !!customRange.dateTo ||
+    !!locationFilter.trim();
 
   if (q.isLoading) {
     return <div className="text-center text-ink/60 py-16">正在翻开相册...</div>;
-  }
-
-  if (items.length === 0) {
-    return (
-      <div className="text-center py-20">
-        <HandwrittenText className="text-3xl block">空相册</HandwrittenText>
-        <p className="mt-4 text-ink/60">
-          还没有任何回忆。{' '}
-          <Link to="/upload" className="text-kraft-dark underline underline-offset-4">
-            上传第一个集合
-          </Link>
-          。
-        </p>
-      </div>
-    );
   }
 
   return (
@@ -67,9 +86,136 @@ export function TimelinePage() {
         </p>
       </div>
 
+      <section className="sticky top-[57px] z-20 mb-10 rounded-lg border border-kraft/25 bg-paper/90 p-3 shadow-sm backdrop-blur">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-hand text-xl text-kraft-dark mr-1">
+            时空快筛
+          </span>
+          {[
+            ['all', '全部'],
+            ['year', '今年'],
+            ['quarter', '近90天'],
+            ['custom', '自定义'],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setDatePreset(value as DatePreset)}
+              className={
+                datePreset === value
+                  ? 'rounded-full bg-kraft px-3 py-1 text-sm text-paper shadow-sm'
+                  : 'rounded-full border border-kraft/30 bg-paper/70 px-3 py-1 text-sm text-ink/65 hover:border-kraft hover:text-ink'
+              }
+            >
+              {label}
+            </button>
+          ))}
+          <div className="ml-auto flex min-w-[14rem] flex-1 items-center gap-2 rounded-full border border-kraft/30 bg-paper/70 px-3 py-1">
+            <span className="text-sm text-kraft-dark">📍</span>
+            <input
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+              placeholder="筛选地点，例如 北京 / 海边"
+              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-ink/30"
+            />
+            {locationFilter ? (
+              <button
+                type="button"
+                onClick={() => setLocationFilter('')}
+                className="text-ink/40 hover:text-ink"
+                aria-label="清空地点筛选"
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
+          {hasFilters ? (
+            <button
+              type="button"
+              onClick={() => {
+                setDatePreset('all');
+                setCustomRange({ dateFrom: '', dateTo: '' });
+                setLocationFilter('');
+              }}
+              className="text-xs text-ink/50 underline-offset-4 hover:text-ink hover:underline"
+            >
+              清空
+            </button>
+          ) : null}
+        </div>
+
+        {datePreset === 'custom' ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-kraft/20 pt-3">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-ink/45">
+              Range
+            </span>
+            <input
+              type="date"
+              value={customRange.dateFrom}
+              onChange={(e) =>
+                setCustomRange((v) => ({ ...v, dateFrom: e.target.value }))
+              }
+              className="rounded border border-kraft/25 bg-paper/80 px-2 py-1 text-sm outline-none focus:border-kraft"
+            />
+            <span className="text-ink/35">→</span>
+            <input
+              type="date"
+              value={customRange.dateTo}
+              onChange={(e) =>
+                setCustomRange((v) => ({ ...v, dateTo: e.target.value }))
+              }
+              className="rounded border border-kraft/25 bg-paper/80 px-2 py-1 text-sm outline-none focus:border-kraft"
+            />
+          </div>
+        ) : null}
+
+        {locationSuggestions.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {locationSuggestions.map((loc) => (
+              <button
+                type="button"
+                key={loc}
+                onClick={() => setLocationFilter(loc)}
+                className={
+                  locationFilter === loc
+                    ? 'rounded-full bg-pin-blue/80 px-2.5 py-0.5 text-xs text-paper'
+                    : 'rounded-full bg-kraft/10 px-2.5 py-0.5 text-xs text-ink/60 hover:bg-kraft/20 hover:text-ink'
+                }
+              >
+                {loc}
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </section>
+
+      {items.length === 0 ? (
+        <div className="text-center py-20">
+          <HandwrittenText className="text-3xl block">
+            {hasFilters ? '没有筛到回忆' : '空相册'}
+          </HandwrittenText>
+          <p className="mt-4 text-ink/60">
+            {hasFilters ? (
+              '换个时间或地点再试试。'
+            ) : (
+              <>
+                还没有任何回忆。{' '}
+                <Link
+                  to="/upload"
+                  className="text-kraft-dark underline underline-offset-4"
+                >
+                  上传第一个集合
+                </Link>
+                。
+              </>
+            )}
+          </p>
+        </div>
+      ) : null}
+
       <div
         aria-hidden
-        className="absolute left-1/2 -translate-x-1/2 top-32 bottom-0 w-px"
+        className="absolute left-1/2 -translate-x-1/2 top-72 bottom-0 w-px"
         style={{
           backgroundImage:
             'linear-gradient(180deg, #a88a5c 0%, #a88a5c 60%, transparent 60%, transparent 100%)',
@@ -77,6 +223,7 @@ export function TimelinePage() {
         }}
       />
 
+      {items.length > 0 ? (
       <ol className="space-y-12 sm:space-y-16">
         {items.map((c, idx) => {
           const side = idx % 2 === 0 ? 'left' : 'right';
@@ -136,6 +283,7 @@ export function TimelinePage() {
           );
         })}
       </ol>
+      ) : null}
       <div ref={sentinelRef} className="h-12" />
       {q.isFetchingNextPage ? (
         <p className="text-center text-ink/50 text-sm">正在翻下一页...</p>

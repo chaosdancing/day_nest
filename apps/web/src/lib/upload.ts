@@ -1,7 +1,37 @@
 import imageCompression from 'browser-image-compression';
 import exifr from 'exifr';
 import { api } from './api';
+import { pickExifTakenAt, type ExifDateFields } from './photoMetadata';
 import type { UploadTokenBundle } from './uploadTypes';
+
+/**
+ * Run `worker` over each item with up to `concurrency` in flight at once.
+ * Returns results in the same order as inputs. Throws on first error
+ * (after letting in-flight tasks complete).
+ */
+export async function pool<T, R>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let cursor = 0;
+  let firstError: unknown = null;
+  const runOne = async () => {
+    while (cursor < items.length && firstError === null) {
+      const i = cursor++;
+      try {
+        results[i] = await worker(items[i] as T, i);
+      } catch (e) {
+        if (firstError === null) firstError = e;
+      }
+    }
+  };
+  const lanes = Math.max(1, Math.min(concurrency, items.length));
+  await Promise.all(Array.from({ length: lanes }, runOne));
+  if (firstError) throw firstError;
+  return results;
+}
 
 export type LocalPhoto = {
   file: File;
@@ -19,29 +49,28 @@ export type LocalPhoto = {
 
 export async function loadLocalPhoto(file: File): Promise<LocalPhoto> {
   const compress = file.size > 4 * 1024 * 1024;
-  const finalFile = compress
-    ? await imageCompression(file, {
-        maxSizeMB: 4,
-        maxWidthOrHeight: 4096,
-        useWebWorker: true,
-        initialQuality: 0.9,
-      })
-    : file;
+  const [finalFile, exif] = await Promise.all([
+    compress
+      ? imageCompression(file, {
+          maxSizeMB: 4,
+          maxWidthOrHeight: 4096,
+          useWebWorker: true,
+          initialQuality: 0.9,
+        })
+      : Promise.resolve(file),
+    // Read metadata from the original file before compression strips EXIF.
+    exifr.parse(file).catch(() => null as null | ExifDateFields),
+  ]);
 
   const previewUrl = URL.createObjectURL(finalFile);
-  const [{ width, height }, exif] = await Promise.all([
-    readImageDimensions(previewUrl),
-    exifr.parse(finalFile).catch(() => null as null | { DateTimeOriginal?: Date }),
-  ]);
+  const { width, height } = await readImageDimensions(previewUrl);
 
   return {
     file: finalFile,
     previewUrl,
     width,
     height,
-    takenAt: exif?.DateTimeOriginal
-      ? new Date(exif.DateTimeOriginal).toISOString()
-      : null,
+    takenAt: pickExifTakenAt(exif),
     caption: null,
     tags: [],
     status: 'pending',

@@ -14,7 +14,7 @@ async function seed(ctx: Awaited<ReturnType<typeof buildApp>>) {
       description: null,
       occurredOn: `2024-${month}-15`,
       occurredUntil: null,
-      location: null,
+      location: i % 3 === 0 ? '北京' : i % 3 === 1 ? '上海' : '广州',
       tags: i % 2 ? ['樱花'] : ['毕业'],
       photos: [
         {
@@ -82,6 +82,24 @@ describe('GET /api/collections', () => {
       headers: { authorization: `Bearer ${token}` },
     });
     expect(r.json()).toEqual({ items: [], nextCursor: null });
+    await ctx.cleanup();
+  });
+
+  it('filters by occurred date range and fuzzy location', async () => {
+    const ctx = await buildApp();
+    const { token } = await seed(ctx);
+    const r = await ctx.app.inject({
+      method: 'GET',
+      url: '/api/collections?dateFrom=2024-03-01&dateTo=2024-05-31&location=上&limit=50',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    expect(r.statusCode).toBe(200);
+    const b = r.json();
+    expect(b.items.map((i: { title: string }) => i.title).sort()).toEqual([
+      'c16',
+      'c4',
+    ]);
+    b.items.forEach((i: { location: string }) => expect(i.location).toBe('上海'));
     await ctx.cleanup();
   });
 });
