@@ -18,6 +18,7 @@ build/
 # Workspace package builds
 packages/*/dist/
 apps/*/dist/
+**/tsconfig.tsbuildinfo
 
 # Prisma generated client + dev DBs
 apps/api/prisma/dev.db*
