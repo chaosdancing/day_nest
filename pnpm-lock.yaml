@@ -15,6 +15,12 @@ importers:
         specifier: ^5.4.0
         version: 5.9.3
 
+  packages/shared:
+    dependencies:
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
+
 packages:
 
   '@esbuild/aix-ppc64@0.28.0':
@@ -193,6 +199,9 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  zod@3.25.76:
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+
 snapshots:
 
   '@esbuild/aix-ppc64@0.28.0':
@@ -312,3 +321,5 @@ snapshots:
       fsevents: 2.3.3
 
   typescript@5.9.3: {}
+
+  zod@3.25.76: {}
