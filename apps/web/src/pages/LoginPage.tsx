@@ -80,15 +80,15 @@ function BrandingSide() {
         className="md:mt-12"
       >
         <p className="font-mono text-[11px] tracking-[0.4em] text-kraft-dark/70 dark:text-paper/55">
-          DAYNEST · 日常巢
+          DAYNEST · 朝夕居
         </p>
         <HandwrittenText
           as="h1"
           className="mt-2 block text-4xl leading-tight text-ink dark:text-paper sm:text-5xl md:mt-3 md:text-6xl"
         >
-          把家的日常
+          收纳烟火日常
           <br />
-          洗成拍立得
+          酿造专属回忆
         </HandwrittenText>
         {/* Long-form subtitle is only worth the vertical cost on
             tablet+ where it lives next to the form. On phones it just
