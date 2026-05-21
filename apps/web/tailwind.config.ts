@@ -2,6 +2,7 @@ import type { Config } from 'tailwindcss';
 
 const config: Config = {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -9,7 +10,11 @@ const config: Config = {
           DEFAULT: '#f1ece1',
           dark: '#e6dcc6',
         },
-        ink: '#2b2418',
+        ink: {
+          DEFAULT: '#2b2418',
+          soft: '#3a3024',
+          deep: '#1a1510',
+        },
         kraft: {
           DEFAULT: '#a88a5c',
           dark: '#8b6e44',

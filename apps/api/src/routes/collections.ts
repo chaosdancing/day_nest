@@ -17,6 +17,20 @@ const ListQuery = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
   cursor: z.string().optional(),
   tag: z.string().optional(),
+  // How to interpret the `tag` filter:
+  //   - 'any'        (default) : a collection matches if it has the tag
+  //                              directly OR if any of its photos do.
+  //   - 'collection'           : only direct collection-level tags.
+  //   - 'photo'                : only tags applied to at least one of
+  //                              the collection's photos.
+  // Used by the Tags overview page to surface collection-tagged vs
+  // photo-tagged collections separately.
+  tagScope: z.enum(['any', 'collection', 'photo']).default('any'),
+  // Fuzzy `contains` match on collection title (case-insensitive on
+  // SQLite — built-in LIKE is already case-insensitive for ASCII; CJK
+  // works because we don't apply lower() so contains() does a byte
+  // substring search).
+  title: z.string().optional(),
   dateFrom: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -114,7 +128,8 @@ export async function registerCollectionRoutes(app: FastifyInstance) {
       const dto = await buildCollectionDetail(
         app.deps.prisma,
         app.deps.storage,
-        id
+        id,
+        req.user.id
       );
       reply.status(201);
       return dto;
@@ -132,21 +147,26 @@ export async function registerCollectionRoutes(app: FastifyInstance) {
           where: { name: q.tag.toLocaleLowerCase().trim() },
         });
         if (!t) return { items: [], nextCursor: null };
-        const direct = await app.deps.prisma.collectionTag.findMany({
-          where: { tagId: t.id },
-          select: { collectionId: true },
-        });
-        const viaPhoto = await app.deps.prisma.photo.findMany({
-          where: { tags: { some: { tagId: t.id } } },
-          select: { collectionId: true },
-          distinct: ['collectionId'],
-        });
-        const ids = Array.from(
-          new Set([
-            ...direct.map((d) => d.collectionId),
-            ...viaPhoto.map((v) => v.collectionId),
-          ])
-        );
+        const directIds =
+          q.tagScope === 'photo'
+            ? []
+            : (
+                await app.deps.prisma.collectionTag.findMany({
+                  where: { tagId: t.id },
+                  select: { collectionId: true },
+                })
+              ).map((d) => d.collectionId);
+        const photoIds =
+          q.tagScope === 'collection'
+            ? []
+            : (
+                await app.deps.prisma.photo.findMany({
+                  where: { tags: { some: { tagId: t.id } } },
+                  select: { collectionId: true },
+                  distinct: ['collectionId'],
+                })
+              ).map((v) => v.collectionId);
+        const ids = Array.from(new Set([...directIds, ...photoIds]));
         if (ids.length === 0) return { items: [], nextCursor: null };
         tagFilterClause = ids.map((id) => ({ collectionId: id }));
       }
@@ -172,6 +192,11 @@ export async function registerCollectionRoutes(app: FastifyInstance) {
           contains: q.location.trim(),
         };
       }
+      if (q.title?.trim()) {
+        (where as { title?: { contains: string } }).title = {
+          contains: q.title.trim(),
+        };
+      }
       if (q.cursor) {
         const c = decodeCursor(q.cursor);
         if (c) {
@@ -194,7 +219,12 @@ export async function registerCollectionRoutes(app: FastifyInstance) {
       const sliced = hasMore ? rows.slice(0, q.limit) : rows;
       const items = await Promise.all(
         sliced.map((r) =>
-          buildCollectionSummary(app.deps.prisma, app.deps.storage, r.id)
+          buildCollectionSummary(
+            app.deps.prisma,
+            app.deps.storage,
+            r.id,
+            req.user.id
+          )
         )
       );
       const last = sliced[sliced.length - 1];
@@ -241,7 +271,8 @@ export async function registerCollectionRoutes(app: FastifyInstance) {
           collection: await buildCollectionDetail(
             app.deps.prisma,
             app.deps.storage,
-            m.id
+            m.id,
+            req.user.id
           ),
           directTags: await getDirectCollectionTags(app, m.id),
           score: m.score,
@@ -266,7 +297,8 @@ export async function registerCollectionRoutes(app: FastifyInstance) {
         return await buildCollectionDetail(
           app.deps.prisma,
           app.deps.storage,
-          id
+          id,
+          req.user.id
         );
       } catch {
         throw new AppError(404, 'NOT_FOUND', 'collection not found');
@@ -288,7 +320,12 @@ export async function registerCollectionRoutes(app: FastifyInstance) {
         );
       }
       await appendToCollection(app.deps.prisma, req.user.id, id, parsed.data);
-      return buildCollectionDetail(app.deps.prisma, app.deps.storage, id);
+      return buildCollectionDetail(
+        app.deps.prisma,
+        app.deps.storage,
+        id,
+        req.user.id
+      );
     }
   );
 
@@ -334,7 +371,12 @@ export async function registerCollectionRoutes(app: FastifyInstance) {
           });
         }
       }
-      return buildCollectionDetail(app.deps.prisma, app.deps.storage, id);
+      return buildCollectionDetail(
+        app.deps.prisma,
+        app.deps.storage,
+        id,
+        req.user.id
+      );
     }
   );
 

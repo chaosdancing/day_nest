@@ -7,6 +7,7 @@ import { useCollection } from '@/hooks/useCollections';
 import { useTags } from '@/hooks/useTags';
 import { api } from '@/lib/api';
 import { TagPicker } from '@/components/scrapbook/TagPicker';
+import { FavoriteHeart } from '@/components/scrapbook/FavoriteHeart';
 import type { PhotoDTO } from '@daynest/shared';
 
 function usePhotoUrl(photoId: string | undefined) {
@@ -33,23 +34,43 @@ export function PhotoViewerPage() {
   const [infoOpen, setInfoOpen] = useState(false);
   const [draftCaption, setDraftCaption] = useState('');
   const [draftTags, setDraftTags] = useState<string[]>([]);
+  // Embla keeps its own currentIndex so swipe + arrow taps both update the
+  // URL and the chrome (prev/next visibility, counter, neighbor preload).
+  const [currentIndex, setCurrentIndex] = useState(initial);
   const [emblaRef, embla] = useEmblaCarousel({
     startIndex: initial,
     loop: false,
     align: 'center',
+    // touch-friendly defaults; the dragFree off keeps slides snapping.
+    skipSnaps: false,
   });
 
   useEffect(() => {
     if (!embla) return;
     const onSelect = () => {
       const i = embla.selectedScrollSnap();
+      setCurrentIndex(i);
       navigate(`/c/${id}/p/${i}`, { replace: true });
     };
     embla.on('select', onSelect);
+    // Also fire once to seed currentIndex if the URL specified a startIndex.
+    setCurrentIndex(embla.selectedScrollSnap());
     return () => {
       embla.off('select', onSelect);
     };
   }, [embla, id, navigate]);
+
+  const closeViewer = () => {
+    // Prefer popping the history stack so the user lands back on the
+    // exact page they came from (collection detail / favorites / tag pin).
+    // Only fall back to pushing the collection route when there is no
+    // previous entry (e.g. deep-linked into a photo URL directly).
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(`/c/${id}`, { replace: true });
+    }
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -60,10 +81,11 @@ export function PhotoViewerPage() {
       }
       if (e.key === 'ArrowLeft') embla.scrollPrev();
       else if (e.key === 'ArrowRight') embla.scrollNext();
-      else if (e.key === 'Escape') navigate(`/c/${id}`);
+      else if (e.key === 'Escape') closeViewer();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [embla, id, infoOpen, navigate]);
 
   const updatePhoto = useMutation({
@@ -82,7 +104,9 @@ export function PhotoViewerPage() {
 
   if (!q.data) return null;
   const photos = q.data.photos;
-  const current = photos[initial];
+  const current = photos[currentIndex];
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex < photos.length - 1;
 
   const openInfo = () => {
     if (!current) return;
@@ -99,7 +123,7 @@ export function PhotoViewerPage() {
       className="fixed inset-0 z-50 bg-ink/95"
     >
       <button
-        onClick={() => navigate(`/c/${id}`)}
+        onClick={closeViewer}
         className="absolute top-4 right-4 text-paper/80 hover:text-paper z-10 text-sm font-mono"
       >
         ESC ×
@@ -110,17 +134,87 @@ export function PhotoViewerPage() {
       >
         信息 / 编辑
       </button>
+      {current ? (
+        <div className="absolute top-4 left-4 z-10">
+          <FavoriteHeart
+            photoId={current.id}
+            collectionId={id}
+            favorited={current.favoritedByMe}
+            count={current.favoriteCount}
+            variant="overlay"
+            size="lg"
+          />
+        </div>
+      ) : null}
       <div className="overflow-hidden w-full h-full" ref={emblaRef}>
         <div className="flex w-full h-full">
           {photos.map((p, i) => (
-            <ViewerSlide key={p.id} photoId={p.id} fallback={p.thumbnailUrl} caption={p.caption} index={i} active={i === initial} />
+            <ViewerSlide
+              key={p.id}
+              photoId={p.id}
+              fallback={p.thumbnailUrl}
+              caption={p.caption}
+              index={i}
+              // Preload the focused slide plus its immediate neighbours so
+              // swiping/clicking arrows feels instant rather than flashing
+              // from blurry thumbnail to full-res.
+              active={Math.abs(i - currentIndex) <= 1}
+            />
           ))}
         </div>
       </div>
+
+      {/* Prev / Next chevrons. Big hit area (≥44px) for mobile thumbs;
+          fade in/out at the edges; tucked above the caption strip. */}
+      {hasPrev ? (
+        <button
+          type="button"
+          onClick={() => embla?.scrollPrev()}
+          aria-label="上一张"
+          className="group absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 grid h-12 w-12 sm:h-14 sm:w-14 place-items-center rounded-full bg-paper/10 text-paper/85 backdrop-blur-sm transition hover:bg-paper/25 hover:text-paper active:scale-95"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <polyline points="15 6 9 12 15 18" />
+          </svg>
+        </button>
+      ) : null}
+      {hasNext ? (
+        <button
+          type="button"
+          onClick={() => embla?.scrollNext()}
+          aria-label="下一张"
+          className="group absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 grid h-12 w-12 sm:h-14 sm:w-14 place-items-center rounded-full bg-paper/10 text-paper/85 backdrop-blur-sm transition hover:bg-paper/25 hover:text-paper active:scale-95"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <polyline points="9 6 15 12 9 18" />
+          </svg>
+        </button>
+      ) : null}
+
       {current ? (
         <div className="absolute bottom-4 left-4 right-4 text-paper/80 font-serif text-sm flex flex-wrap items-center gap-x-3 gap-y-2">
           <span className="font-mono text-paper/60">
-            {initial + 1} / {photos.length}
+            {currentIndex + 1} / {photos.length}
           </span>
           {current.caption ? <span>{current.caption}</span> : null}
           {current.tags.length > 0 ? (
@@ -169,7 +263,7 @@ export function PhotoViewerPage() {
               className="w-full rounded shadow object-cover max-h-56"
             />
 
-            <InfoRow label="序号" value={`${initial + 1} / ${photos.length}`} />
+            <InfoRow label="序号" value={`${currentIndex + 1} / ${photos.length}`} />
             <InfoRow label="尺寸" value={`${current.width} × ${current.height}`} />
             <InfoRow
               label="拍摄时间"

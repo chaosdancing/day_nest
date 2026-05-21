@@ -15,10 +15,11 @@ model User {
   avatarKey     String?
   createdAt     DateTime @default(now())
 
-  collections   Collection[] @relation("CollectionCreator")
-  photos        Photo[]      @relation("PhotoUploader")
-  invitesIssued Invite[]     @relation("InviteIssuer")
-  tagsCreated   Tag[]        @relation("TagCreator")
+  collections   Collection[]    @relation("CollectionCreator")
+  photos        Photo[]         @relation("PhotoUploader")
+  invitesIssued Invite[]        @relation("InviteIssuer")
+  tagsCreated   Tag[]           @relation("TagCreator")
+  favorites     PhotoFavorite[] @relation("UserFavorites")
 }
 
 model Invite {
@@ -42,6 +43,11 @@ model Collection {
   coverPhoto    Photo?   @relation("CollectionCover", fields: [coverPhotoId], references: [id])
   createdById   String
   createdBy     User     @relation("CollectionCreator", fields: [createdById], references: [id])
+  // Denormalized count of photos in this collection. Updated alongside
+  // every photo insert/delete so list endpoints can render
+  // "stack of N polaroids" without doing a per-collection COUNT(*) /
+  // loading every photo row just to compute .length on the API server.
+  photoCount    Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -67,8 +73,21 @@ model Photo {
 
   tags         PhotoTag[]
   asCoverOf    Collection? @relation("CollectionCover")
+  favorites    PhotoFavorite[]
 
   @@index([collectionId, orderIndex])
+}
+
+model PhotoFavorite {
+  photoId   String
+  userId    String
+  createdAt DateTime @default(now())
+  photo     Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  user      User     @relation("UserFavorites", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([photoId, userId])
+  @@index([userId, createdAt])
+  @@index([photoId])
 }
 
 model Tag {

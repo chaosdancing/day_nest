@@ -3,12 +3,16 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
+    "predev": "tsx --env-file=.env scripts/backup-db.ts",
     "dev": "tsx watch --env-file=.env src/index.ts",
     "build": "tsc -p .",
     "start": "node dist/src/index.js",
+    "pretest": "tsx --env-file=.env scripts/backup-db.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "seed": "tsx --env-file=.env scripts/seed.ts",
+    "backup": "tsx --env-file=.env scripts/backup-db.ts --force",
+    "users": "tsx --env-file=.env scripts/list-users.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy"

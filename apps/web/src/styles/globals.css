@@ -14,6 +14,13 @@
       radial-gradient(circle at 20% 30%, rgba(170, 140, 90, 0.10) 0%, transparent 40%),
       radial-gradient(circle at 80% 70%, rgba(120, 90, 50, 0.08) 0%, transparent 40%);
     background-attachment: fixed;
+    transition: background-color 320ms ease, color 320ms ease;
+  }
+  html.dark body {
+    @apply bg-ink-deep text-paper;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(170, 140, 90, 0.10) 0%, transparent 45%),
+      radial-gradient(circle at 80% 70%, rgba(216, 191, 138, 0.06) 0%, transparent 45%);
   }
 
   /* Subtle paper noise (CSS-only, ~3KB inline svg) */
@@ -26,6 +33,9 @@
     opacity: 0.04;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.4 0 0 0 0 0.3 0 0 0 0 0.1 0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   }
+  html.dark body::before {
+    opacity: 0.08;
+  }
   #root {
     position: relative;
     z-index: 1;
@@ -36,7 +46,11 @@
   .polaroid {
     @apply bg-white shadow-polaroid;
     padding: 8px 8px 28px;
-    transition: transform 250ms ease, box-shadow 250ms ease, rotate 250ms ease;
+    transition: transform 250ms ease, box-shadow 250ms ease, rotate 250ms ease, background-color 320ms ease;
+  }
+  html.dark .polaroid {
+    background-color: #f7f1e5;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55);
   }
   .polaroid:hover {
     @apply shadow-polaroid-hover;
@@ -73,5 +87,12 @@
 
   .input {
     @apply block w-full bg-paper/60 border-b-2 border-kraft/40 focus:border-kraft focus:outline-none px-1 py-1.5 text-base;
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
   }
 }

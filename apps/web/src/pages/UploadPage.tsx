@@ -17,15 +17,17 @@ import {
   type LocalPhoto,
 } from '@/lib/upload';
 import { Polaroid } from '@/components/scrapbook/Polaroid';
-import { HandwrittenText } from '@/components/scrapbook/HandwrittenText';
+import { PageHero } from '@/components/scrapbook/PageHero';
 import { TagPicker } from '@/components/scrapbook/TagPicker';
+import { Collapse } from '@/components/scrapbook/Collapse';
 import {
   UploadProgress,
   type UploadPhase,
 } from '@/components/scrapbook/UploadProgress';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion, LayoutGroup } from 'framer-motion';
 import { useTags } from '@/hooks/useTags';
 import { useCollectionByTitle } from '@/hooks/useCollections';
+import { useIMEDebouncedValue } from '@/hooks/useIMEDebouncedValue';
 import type { CollectionDetailDTO } from '@daynest/shared';
 
 const MAX_PHOTOS = 50;
@@ -63,7 +65,12 @@ export function UploadPage() {
     [tagsQuery.data]
   );
 
-  const matchQuery = useCollectionByTitle(meta.title);
+  // IME-aware debounced title — prevents the merge-suggestion lookup
+  // from firing on intermediate pinyin while the user is still typing
+  // the collection name in Chinese.
+  const { committed: debouncedTitle, compositionProps: titleIme } =
+    useIMEDebouncedValue(meta.title, 350);
+  const matchQuery = useCollectionByTitle(debouncedTitle);
   const titleMatches = matchQuery.data?.matches ?? [];
   const [selectedMergeId, setSelectedMergeId] = useState<string | null>(null);
   const selectedMerge = titleMatches.find(
@@ -240,14 +247,13 @@ export function UploadPage() {
   if (stage === 'select') {
     return (
       <div className="pb-16">
-        <div className="text-center pb-6">
-          <HandwrittenText as="h1" className="text-5xl block">
-            上传一段回忆
-          </HandwrittenText>
-          <p className="font-mono text-xs tracking-widest text-ink/50 mt-2">
-            STEP 1 · 选照片
-          </p>
-        </div>
+        <PageHero
+          emoji="📸"
+          title="上传一段回忆"
+          subtitle="STEP 1 · 选照片"
+          motion="bounce"
+          className="pb-6"
+        />
 
         <label
           onDragOver={(e) => {
@@ -258,13 +264,20 @@ export function UploadPage() {
           onDrop={onDrop}
           className={
             'block border-2 border-dashed rounded-lg p-10 text-center cursor-pointer transition-colors ' +
-            (dragOver ? 'border-kraft bg-kraft/10' : 'border-kraft/40 hover:border-kraft hover:bg-kraft/5')
+            (dragOver
+              ? 'border-kraft bg-kraft/10 dark:bg-kraft/20'
+              : 'border-kraft/40 hover:border-kraft hover:bg-kraft/5 dark:border-paper/20 dark:hover:border-paper/40 dark:hover:bg-paper/5')
           }
         >
-          <p className="font-hand text-2xl text-kraft-dark mb-2">
+          <div className="text-4xl mb-2" aria-hidden>
+            {dragOver ? '✨' : '🖼️'}
+          </div>
+          <p className="font-hand text-2xl text-kraft-dark dark:text-kraft-light mb-2">
             把照片拖进来 / 点击选择
           </p>
-          <p className="text-sm text-ink/60">单次最多 {MAX_PHOTOS} 张 · JPG/PNG/HEIC</p>
+          <p className="text-sm text-ink/60 dark:text-paper/60">
+            单次最多 {MAX_PHOTOS} 张 · JPG / PNG / HEIC
+          </p>
           <input
             type="file"
             accept="image/*"
@@ -303,7 +316,7 @@ export function UploadPage() {
                 onClick={() => setStage('meta')}
                 className="bg-kraft text-paper px-6 py-2.5 rounded-sm font-medium hover:bg-kraft-dark"
               >
-                下一步 · 填资料
+                下一步 · 填资料 ✍️
               </button>
             </div>
           </>
@@ -314,14 +327,13 @@ export function UploadPage() {
 
   return (
     <div className="pb-16 max-w-2xl mx-auto">
-      <div className="text-center pb-4">
-        <p className="font-mono text-xs tracking-widest text-ink/50 mb-1">
-          STEP 2 · 填资料
-        </p>
-        <HandwrittenText as="h1" className="text-4xl block">
-          这次回忆叫什么
-        </HandwrittenText>
-      </div>
+      <PageHero
+        emoji="✍️"
+        title="这次回忆叫什么"
+        subtitle="STEP 2 · 填资料"
+        motion="wobble"
+        className="pb-4"
+      />
 
       <form
         onSubmit={(e: FormEvent) => {
@@ -340,6 +352,7 @@ export function UploadPage() {
                 setSelectedMergeId(null);
                 setMeta({ ...meta, title: e.target.value });
               }}
+              {...titleIme}
               required
               placeholder="给这次回忆起个名字…"
               className="w-full bg-transparent border-b-2 border-kraft/40 focus:border-kraft outline-none font-hand text-3xl text-ink/90 placeholder:text-ink/30 placeholder:font-hand py-2"
@@ -347,43 +360,43 @@ export function UploadPage() {
             />
           </label>
           <div className="flex flex-wrap items-center gap-3 mt-3 text-sm">
-            <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-kraft/10 border border-kraft/30">
-              <span className="text-ink/50 font-mono text-[10px] uppercase tracking-widest">
-                日期
+            <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-kraft/10 border border-kraft/30 dark:bg-paper/5 dark:border-paper/15">
+              <span className="text-kraft-dark dark:text-kraft-light" aria-hidden>
+                🗓️
               </span>
               <input
                 type="date"
                 value={meta.occurredOn}
                 onChange={(e) => setMeta({ ...meta, occurredOn: e.target.value })}
-                className="bg-transparent outline-none font-mono text-sm text-ink/80"
+                className="bg-transparent outline-none font-mono text-sm text-ink/80 dark:text-paper/80"
               />
             </div>
-            <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-kraft/10 border border-kraft/30 flex-1 min-w-[12rem]">
-              <span className="text-ink/50 font-mono text-[10px] uppercase tracking-widest">
-                地点
+            <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-kraft/10 border border-kraft/30 flex-1 min-w-[12rem] dark:bg-paper/5 dark:border-paper/15">
+              <span className="text-kraft-dark dark:text-kraft-light" aria-hidden>
+                📍
               </span>
               <input
                 value={meta.location}
                 onChange={(e) => setMeta({ ...meta, location: e.target.value })}
                 placeholder="选填"
-                className="bg-transparent outline-none font-hand text-base flex-1 placeholder:text-ink/30"
+                className="bg-transparent outline-none font-hand text-base flex-1 placeholder:text-ink/30 dark:placeholder:text-paper/35 dark:text-paper"
               />
             </div>
           </div>
         </div>
 
-        {titleMatches.length > 0 ? (
+        <Collapse show={titleMatches.length > 0}>
           <MergeChooser
             matches={titleMatches}
             selectedId={selectedMergeId}
             onSelect={setSelectedMergeId}
           />
-        ) : null}
+        </Collapse>
 
         {/* Tags */}
         <section>
-          <h3 className="font-mono text-[10px] uppercase tracking-widest text-ink/50 mb-2">
-            集合标签
+          <h3 className="font-mono text-[10px] uppercase tracking-widest text-ink/50 dark:text-paper/55 mb-2">
+            🏷️ 集合标签
             {matchedCollection ? (
               <span className="ml-2 text-pin-red/80 normal-case tracking-normal font-hand text-xs">
                 · 已锁定的来自合并集合
@@ -410,8 +423,8 @@ export function UploadPage() {
 
         {/* Description */}
         <section>
-          <h3 className="font-mono text-[10px] uppercase tracking-widest text-ink/50 mb-2">
-            描述 (Markdown)
+          <h3 className="font-mono text-[10px] uppercase tracking-widest text-ink/50 dark:text-paper/55 mb-2">
+            📝 描述 (Markdown)
           </h3>
           <textarea
             value={meta.description}
@@ -425,10 +438,10 @@ export function UploadPage() {
         {/* Per-photo tags */}
         <section>
           <div className="flex items-baseline justify-between mb-2">
-            <h3 className="font-mono text-[10px] uppercase tracking-widest text-ink/50">
-              每张的标签
+            <h3 className="font-mono text-[10px] uppercase tracking-widest text-ink/50 dark:text-paper/55">
+              🖼️ 每张的标签
             </h3>
-            <span className="text-xs font-hand text-ink/40">
+            <span className="text-xs font-hand text-ink/40 dark:text-paper/50">
               留空 = 跟随集合标签
             </span>
           </div>
@@ -505,10 +518,10 @@ export function UploadPage() {
               {submit.isPending
                 ? '正在上传...'
                 : matchedCollection
-                  ? `合并进「${matchedCollection.title}」`
+                  ? `🔗 合并进「${matchedCollection.title}」`
                   : titleMatches.length > 0
-                    ? '新建 · 不合并'
-                    : '完成 · 收进相册'}
+                    ? '✨ 新建 · 不合并'
+                    : '🌟 完成 · 收进相册'}
             </button>
           </div>
         </div>
@@ -591,56 +604,65 @@ function MergeChooser({
         </button>
       </div>
 
-      <div className="space-y-2">
-        {matches.map((m) => {
-          const selected = selectedId === m.collection.id;
-          return (
-            <button
-              key={m.collection.id}
-              type="button"
-              onClick={() => onSelect(selected ? null : m.collection.id)}
-              className={
-                selected
-                  ? 'w-full text-left rounded border-2 border-kraft bg-paper/80 p-3 shadow-sm'
-                  : 'w-full text-left rounded border border-kraft/20 bg-paper/50 p-3 hover:border-kraft/60 hover:bg-paper/75'
-              }
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-hand text-xl text-ink/85 truncate">
-                    {m.collection.title}
-                  </p>
-                  <p className="font-mono text-[11px] tracking-widest text-ink/45 mt-0.5">
-                    {m.collection.occurredOn} · {m.collection.photoCount} 张 ·{' '}
-                    {matchLabel(m.matchType)} · {m.score}
-                  </p>
-                </div>
-                <span
+      <LayoutGroup>
+        <motion.div className="space-y-2" layout>
+          <AnimatePresence initial={false}>
+            {matches.map((m) => {
+              const selected = selectedId === m.collection.id;
+              return (
+                <motion.button
+                  layout
+                  key={m.collection.id}
+                  type="button"
+                  onClick={() => onSelect(selected ? null : m.collection.id)}
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
                   className={
                     selected
-                      ? 'shrink-0 rounded-full bg-kraft text-paper px-2 py-0.5 text-xs'
-                      : 'shrink-0 rounded-full border border-kraft/30 text-ink/50 px-2 py-0.5 text-xs'
+                      ? 'w-full text-left rounded border-2 border-kraft bg-paper/80 p-3 shadow-sm'
+                      : 'w-full text-left rounded border border-kraft/20 bg-paper/50 p-3 hover:border-kraft/60 hover:bg-paper/75'
                   }
                 >
-                  {selected ? '已选择合并' : '选择合并'}
-                </span>
-              </div>
-              {m.directTags.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {m.directTags.map((t) => (
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-hand text-xl text-ink/85 truncate">
+                        {m.collection.title}
+                      </p>
+                      <p className="font-mono text-[11px] tracking-widest text-ink/45 mt-0.5">
+                        {m.collection.occurredOn} · {m.collection.photoCount} 张 ·{' '}
+                        {matchLabel(m.matchType)} · {m.score}
+                      </p>
+                    </div>
                     <span
-                      key={t}
-                      className="px-2 py-0.5 rounded-full bg-kraft/15 text-ink/70 text-xs font-hand"
+                      className={
+                        selected
+                          ? 'shrink-0 rounded-full bg-kraft text-paper px-2 py-0.5 text-xs'
+                          : 'shrink-0 rounded-full border border-kraft/30 text-ink/50 px-2 py-0.5 text-xs'
+                      }
                     >
-                      {t}
+                      {selected ? '已选择合并' : '选择合并'}
                     </span>
-                  ))}
-                </div>
-              ) : null}
-            </button>
-          );
-        })}
-      </div>
+                  </div>
+                  {m.directTags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {m.directTags.map((t) => (
+                        <span
+                          key={t}
+                          className="px-2 py-0.5 rounded-full bg-kraft/15 text-ink/70 text-xs font-hand"
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </motion.button>
+              );
+            })}
+          </AnimatePresence>
+        </motion.div>
+      </LayoutGroup>
     </div>
   );
 }

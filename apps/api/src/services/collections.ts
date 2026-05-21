@@ -60,7 +60,12 @@ export async function createCollection(
     if (photos.length > 0) {
       await tx.collection.update({
         where: { id: collection.id },
-        data: { coverPhotoId: photos[0]!.id },
+        data: {
+          coverPhotoId: photos[0]!.id,
+          // Persist the photo count alongside the cover assignment so
+          // we hit only one extra UPDATE per create.
+          photoCount: photos.length,
+        },
       });
     }
 
@@ -127,10 +132,21 @@ export async function appendToCollection(
       }
     }
 
+    // Bump the denormalized count by however many photos we just
+    // appended; coalesce with the cover-assignment write when possible.
+    const appendedCount = input.photos.length;
     if (!existing.coverPhotoId && assignedCover) {
       await tx.collection.update({
         where: { id: collectionId },
-        data: { coverPhotoId: assignedCover.id },
+        data: {
+          coverPhotoId: assignedCover.id,
+          photoCount: { increment: appendedCount },
+        },
+      });
+    } else if (appendedCount > 0) {
+      await tx.collection.update({
+        where: { id: collectionId },
+        data: { photoCount: { increment: appendedCount } },
       });
     }
   });

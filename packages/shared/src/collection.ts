@@ -31,6 +31,10 @@ export const CollectionSummaryDTO = z.object({
   occurredUntil: z.string().nullable(),
   location: z.string().nullable(),
   coverPhoto: PhotoDTO.nullable(),
+  // Up to 3 representative photos (cover first, then next two by order).
+  // Used by list views (tag pinboard, timeline) to render a "stack" of
+  // overlapping polaroids instead of a single cover.
+  previewPhotos: z.array(PhotoDTO).max(3),
   tags: z.array(TagDTO),
   photoCount: z.number().int().nonnegative(),
   createdBy: z.string().uuid(),

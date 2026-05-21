@@ -13,6 +13,7 @@ import { registerUploadRoutes } from './routes/uploads.js';
 import { registerCollectionRoutes } from './routes/collections.js';
 import { registerPhotoRoutes } from './routes/photos.js';
 import { registerTagRoutes } from './routes/tags.js';
+import { registerFavoritesRoutes } from './routes/favorites.js';
 
 export type AppDeps = {
   config: AppConfig;
@@ -72,6 +73,7 @@ export async function buildServer(
     await registerCollectionRoutes(app);
     await registerPhotoRoutes(app);
     await registerTagRoutes(app);
+    await registerFavoritesRoutes(app);
   }
 
   return app;

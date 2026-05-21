@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { TimelinePage } from './pages/TimelinePage';
+import { FavoritesPage } from './pages/FavoritesPage';
 import { TagsOverviewPage } from './pages/TagsOverviewPage';
 import { TagPinboardPage } from './pages/TagPinboardPage';
 import { CollectionDetailPage } from './pages/CollectionDetailPage';
@@ -27,6 +28,7 @@ export const router = createBrowserRouter([
         element: <AppShell />,
         children: [
           { index: true, element: <TimelinePage /> },
+          { path: 'favorites', element: <FavoritesPage /> },
           { path: 'tags', element: <TagsOverviewPage /> },
           { path: 'tags/:name', element: <TagPinboardPage /> },
           { path: 'c/:id', element: <CollectionDetailPage /> },

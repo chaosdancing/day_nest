@@ -5,6 +5,7 @@ import { useCollection } from '@/hooks/useCollections';
 import { Polaroid } from '@/components/scrapbook/Polaroid';
 import { TapeBadge } from '@/components/scrapbook/TapeBadge';
 import { HandwrittenText } from '@/components/scrapbook/HandwrittenText';
+import { FavoriteHeart } from '@/components/scrapbook/FavoriteHeart';
 import { deterministicTilt } from '@/lib/deterministicTilt';
 
 export function CollectionDetailPage() {
@@ -13,14 +14,24 @@ export function CollectionDetailPage() {
   const q = useCollection(id);
 
   if (q.isLoading) {
-    return <div className="text-center text-ink/60 py-16">正在翻开这一页...</div>;
+    return (
+      <div className="text-center text-ink/60 dark:text-paper/60 py-16">
+        正在翻开这一页...
+      </div>
+    );
   }
   if (q.isError || !q.data) {
     return (
       <div className="text-center py-16">
-        <p className="text-ink/60 mb-2">这个集合不见了。</p>
-        <Link to="/" className="text-kraft-dark underline">
-          回到时间轴
+        <div className="text-5xl mb-3" aria-hidden>
+          🌫️
+        </div>
+        <p className="text-ink/60 dark:text-paper/60 mb-2">这个集合不见了。</p>
+        <Link
+          to="/"
+          className="text-kraft-dark underline dark:text-kraft-light"
+        >
+          回到时间轴 📖
         </Link>
       </div>
     );
@@ -32,7 +43,7 @@ export function CollectionDetailPage() {
     <div className="pb-24">
       <button
         onClick={() => navigate(-1)}
-        className="text-sm text-ink/60 hover:text-ink mb-6"
+        className="text-sm text-ink/60 hover:text-ink dark:text-paper/60 dark:hover:text-paper mb-6"
       >
         ← 返回
       </button>
@@ -49,12 +60,12 @@ export function CollectionDetailPage() {
           />
         ) : null}
         <div className="text-center mt-6">
-          <p className="font-mono text-xs uppercase tracking-widest text-ink/50">
-            {c.occurredOn}
+          <p className="font-mono text-xs uppercase tracking-widest text-ink/50 dark:text-paper/55">
+            🗓️ {c.occurredOn}
             {c.occurredUntil ? ` – ${c.occurredUntil}` : ''}
-            {c.location ? ` · ${c.location}` : ''}
+            {c.location ? ` · 📍 ${c.location}` : ''}
           </p>
-          <HandwrittenText as="h1" className="text-5xl block mt-2 leading-tight">
+          <HandwrittenText as="h1" className="text-4xl sm:text-5xl block mt-2 leading-tight">
             {c.title}
           </HandwrittenText>
           {c.tags.length > 0 ? (
@@ -80,9 +91,10 @@ export function CollectionDetailPage() {
       </section>
 
       <ul
-        className="grid gap-y-12 gap-x-6"
+        className="grid gap-y-10 gap-x-3 sm:gap-x-6 sm:gap-y-12"
         style={{
-          gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+          gridTemplateColumns:
+            'repeat(auto-fill, minmax(min(160px, 100%), 1fr))',
         }}
       >
         {c.photos.map((p, idx) => (
@@ -99,7 +111,18 @@ export function CollectionDetailPage() {
               duration: 0.5,
               ease: 'easeOut',
             }}
+            className="relative"
           >
+            <div className="absolute top-1 right-1 z-10">
+              <FavoriteHeart
+                photoId={p.id}
+                collectionId={c.id}
+                favorited={p.favoritedByMe}
+                count={p.favoriteCount}
+                size="sm"
+                variant="overlay"
+              />
+            </div>
             <Link to={`/c/${c.id}/p/${idx}`}>
               <Polaroid
                 src={p.thumbnailUrl}

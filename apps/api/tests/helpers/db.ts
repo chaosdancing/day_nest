@@ -27,6 +27,7 @@ function ensureMigrated() {
 }
 
 const TABLES = [
+  'PhotoFavorite',
   'PhotoTag',
   'CollectionTag',
   'Photo',

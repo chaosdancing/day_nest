@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview --port 4173",
-    "test": "echo \"web has no tests yet\""
+    "test": "for f in tests/*.test.ts; do echo \"--- $f\" && tsx \"$f\" || exit 1; done"
   },
   "dependencies": {
     "@daynest/shared": "workspace:*",

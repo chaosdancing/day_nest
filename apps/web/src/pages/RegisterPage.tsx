@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams, Navigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth';
 import type { AuthResponse } from '@daynest/shared';
@@ -50,6 +51,14 @@ export function RegisterPage() {
         style={{ rotate: '1deg' }}
       >
         <div className="pb-2 pt-1 text-center">
+          <motion.div
+            className="text-4xl mb-1"
+            aria-hidden
+            animate={{ y: [0, -4, 0] }}
+            transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            🏡
+          </motion.div>
           <HandwrittenText as="h1" className="text-4xl block leading-tight">
             欢迎加入
           </HandwrittenText>
@@ -106,7 +115,7 @@ export function RegisterPage() {
             disabled={loading}
             className="w-full bg-kraft text-paper py-2 rounded-sm font-medium hover:bg-kraft-dark disabled:opacity-50 transition-colors"
           >
-            {loading ? '正在注册...' : '加入家庭'}
+            {loading ? '正在注册...' : '🌿 加入家庭'}
           </button>
           <p className="text-center text-xs text-ink/50">
             已经有账号？

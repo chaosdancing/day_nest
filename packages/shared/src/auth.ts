@@ -22,6 +22,16 @@ export const UserDTO = z.object({
 });
 export type UserDTO = z.infer<typeof UserDTO>;
 
+/**
+ * Self-service profile patch. Only fields the user is allowed to edit
+ * themselves — username is intentionally NOT here (it's the login key
+ * and renaming it would invalidate every existing session/token).
+ */
+export const UpdateProfileInput = z.object({
+  displayName: z.string().min(1).max(64).optional(),
+});
+export type UpdateProfileInput = z.infer<typeof UpdateProfileInput>;
+
 export const AuthResponse = z.object({
   user: UserDTO,
   accessToken: z.string(),
