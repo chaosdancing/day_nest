@@ -19,19 +19,35 @@ export interface WechatClient {
 }
 
 /**
+ * Thrown by WechatClient implementations when WeChat's API responds with a
+ * non-zero `errcode`. Routes catch this to map WX errcodes (eg 40029 "invalid
+ * code") to HTTP responses without string-matching error messages.
+ */
+export class WechatApiError extends Error {
+  readonly errcode: number;
+  readonly errmsg: string;
+  constructor(errcode: number, errmsg: string) {
+    super(`wechat api error ${errcode}: ${errmsg}`);
+    this.name = 'WechatApiError';
+    this.errcode = errcode;
+    this.errmsg = errmsg;
+  }
+}
+
+/**
  * Used when `config.wechat.enabled` is false. Every method throws — routes
  * are expected to gate on `config.wechat.enabled` and return WECHAT_DISABLED
  * before reaching the client, so this class exists mostly to make
  * AppDeps.wechat non-nullable.
  */
 export class DisabledWechatClient implements WechatClient {
-  jsCode2Session(): Promise<JsCode2SessionResult> {
+  async jsCode2Session(): Promise<JsCode2SessionResult> {
     throw new Error('wechat client is disabled (WECHAT_APPID/WECHAT_APP_SECRET unset)');
   }
-  getAccessToken(): Promise<AccessTokenResult> {
+  async getAccessToken(): Promise<AccessTokenResult> {
     throw new Error('wechat client is disabled (WECHAT_APPID/WECHAT_APP_SECRET unset)');
   }
-  sendSubscribeMessage(): Promise<SubscribeMessageOutcome> {
+  async sendSubscribeMessage(): Promise<SubscribeMessageOutcome> {
     throw new Error('wechat client is disabled (WECHAT_APPID/WECHAT_APP_SECRET unset)');
   }
 }

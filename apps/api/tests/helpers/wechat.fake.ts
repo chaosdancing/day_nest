@@ -1,5 +1,6 @@
-import type {
-  WechatClient,
+import {
+  WechatApiError,
+  type WechatClient,
 } from '../../src/wechat/client.js';
 import type {
   JsCode2SessionResult,
@@ -37,7 +38,7 @@ export class FakeWechatClient implements WechatClient {
   async jsCode2Session(code: string): Promise<JsCode2SessionResult> {
     const openid = this.codeToOpenid.get(code);
     if (!openid) {
-      throw new Error(`fake-wechat: unknown code '${code}'`);
+      throw new WechatApiError(40029, `fake-wechat: unknown code '${code}'`);
     }
     const unionid = this.codeToUnionid.get(code);
     return {
