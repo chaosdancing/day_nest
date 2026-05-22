@@ -80,7 +80,16 @@ export async function registerWechatRoutes(app: FastifyInstance) {
       if (e instanceof WechatApiError) {
         throw new AppError(400, 'WECHAT_CODE_INVALID', `wechat rejected code: ${e.errmsg}`);
       }
-      app.log.error({ err: e }, 'wechat jscode2session failed');
+      // Explicitly avoid logging the raw err — undici populates err.cause.url
+      // with the jscode2session URL, which carries `secret=APP_SECRET` in the
+      // query string. Log only safe fields to prevent secret exfiltration.
+      app.log.error(
+        {
+          errName: e instanceof Error ? e.name : 'Unknown',
+          errMessage: e instanceof Error ? e.message : String(e),
+        },
+        'wechat jscode2session failed',
+      );
       throw new AppError(502, 'WECHAT_UPSTREAM', 'wechat upstream unavailable');
     }
 
