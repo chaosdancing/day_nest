@@ -120,7 +120,7 @@ export class RealWechatClient implements WechatClient {
       }),
     });
     if (!res.ok) {
-      return { ok: false, errcode: res.status, errmsg: `http ${res.status}` };
+      throw new Error(`subscribe/send http ${res.status}`);
     }
     const body = (await res.json()) as { errcode?: number; errmsg?: string };
     if (body.errcode === 0) return { ok: true };

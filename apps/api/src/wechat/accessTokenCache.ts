@@ -11,9 +11,10 @@ export type AccessTokenCacheOptions = {
    */
   renewBeforeSeconds?: number;
   /**
-   * If set, the cache persists the token to this path as JSON. The same path
-   * is read on cache construction so multiple processes (eg pm2 restarts) share
-   * a single token. The directory must already exist.
+   * If set, the cache persists the token to this path as JSON. Reduces the
+   * number of WeChat `cgi-bin/token` calls across server restarts (single
+   * process). NOT designed for inter-process coordination — concurrent
+   * writers will overwrite each other. The directory must already exist.
    */
   cachePath?: string;
 };
@@ -23,8 +24,9 @@ export type AccessTokenCacheOptions = {
  *
  * Two-level cache:
  *   1. In-memory: per-process, fastest path.
- *   2. File-backed (optional): survives process restarts; loaded lazily on
- *      first `get()` if the in-memory cache is empty.
+ *   2. File-backed (optional): survives single-process restarts. NOT a
+ *      cross-process coordination mechanism — for cluster mode, use a
+ *      shared external store (Redis, etc.).
  *
  * Concurrent first-callers coalesce on a single in-flight fetch (the
  * `inflight` field), so a thundering herd produces one upstream HTTP call.
@@ -32,7 +34,7 @@ export type AccessTokenCacheOptions = {
 export class AccessTokenCache {
   private cached?: AccessTokenResult;
   private inflight?: Promise<AccessTokenResult>;
-  private diskLoaded = false;
+  private diskLoadPromise?: Promise<void>;
   private readonly opts: Required<Pick<AccessTokenCacheOptions, 'renewBeforeSeconds'>> &
     AccessTokenCacheOptions;
 
@@ -44,17 +46,12 @@ export class AccessTokenCache {
   }
 
   async get(fetcher: Fetcher): Promise<AccessTokenResult> {
-    if (!this.diskLoaded && this.opts.cachePath) {
-      this.diskLoaded = true;
-      try {
-        const raw = await fs.readFile(this.opts.cachePath, 'utf-8');
-        const parsed = JSON.parse(raw) as AccessTokenResult;
-        if (parsed.accessToken && typeof parsed.expiresAt === 'number') {
-          this.cached = parsed;
-        }
-      } catch {
-        // Missing or invalid disk cache — fall through to fetcher.
-      }
+    // Coalesce concurrent first-callers on a single disk-load.
+    if (this.opts.cachePath && !this.diskLoadPromise) {
+      this.diskLoadPromise = this.loadFromDisk(this.opts.cachePath);
+    }
+    if (this.diskLoadPromise) {
+      await this.diskLoadPromise;
     }
 
     if (this.cached && !this.needsRenew(this.cached)) {
@@ -73,7 +70,8 @@ export class AccessTokenCache {
           try {
             await fs.writeFile(this.opts.cachePath, JSON.stringify(fresh), 'utf-8');
           } catch {
-            // Disk write failure shouldn't fail the request.
+            // Disk write failure shouldn't fail the request. The next
+            // process restart will refetch, which is harmless.
           }
         }
         return fresh;
@@ -83,6 +81,18 @@ export class AccessTokenCache {
     })();
 
     return this.inflight;
+  }
+
+  private async loadFromDisk(cachePath: string): Promise<void> {
+    try {
+      const raw = await fs.readFile(cachePath, 'utf-8');
+      const parsed = JSON.parse(raw) as AccessTokenResult;
+      if (parsed.accessToken && typeof parsed.expiresAt === 'number') {
+        this.cached = parsed;
+      }
+    } catch {
+      // Missing or corrupt disk cache — fall through to fetcher.
+    }
   }
 
   private needsRenew(token: AccessTokenResult): boolean {

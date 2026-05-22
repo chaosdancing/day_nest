@@ -187,4 +187,24 @@ describe('RealWechatClient.sendSubscribeMessage', () => {
     });
     expect(outcome).toEqual({ ok: false, errcode: 43101, errmsg: 'user rejected' });
   });
+
+  it('throws on HTTP non-200 (transport error)', async () => {
+    const fetchMock = vi.fn() as FetchMock;
+    fetchMock.mockResolvedValueOnce(mockResponse({ access_token: 'at-1', expires_in: 7200 }));
+    fetchMock.mockResolvedValueOnce(new Response('upstream down', { status: 502 }));
+
+    const client = new RealWechatClient({
+      appId: 'wxapp',
+      appSecret: 'wxsecret',
+      cache: new AccessTokenCache(),
+      fetch: fetchMock as unknown as typeof globalThis.fetch,
+    });
+    await expect(
+      client.sendSubscribeMessage({
+        toUser: 'open-x',
+        templateId: 't',
+        data: {},
+      }),
+    ).rejects.toThrow(/http 502/);
+  });
 });

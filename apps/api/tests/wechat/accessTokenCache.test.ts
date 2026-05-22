@@ -119,4 +119,21 @@ describe('AccessTokenCache (file-backed)', () => {
     }));
     expect(r.accessToken).toBe('fresh');
   });
+
+  it('coalesces disk-load across concurrent first-callers', async () => {
+    const future = Math.floor(Date.now() / 1000) + 1000;
+    await fs.writeFile(
+      cachePath,
+      JSON.stringify({ accessToken: 'from-disk', expiresAt: future }),
+    );
+    const cache = new AccessTokenCache({ cachePath });
+    let fetcherCalls = 0;
+    const fetcher = async () => {
+      fetcherCalls++;
+      return { accessToken: 'fresh', expiresAt: future };
+    };
+    const results = await Promise.all([cache.get(fetcher), cache.get(fetcher), cache.get(fetcher)]);
+    expect(fetcherCalls).toBe(0);
+    expect(results.every((r) => r.accessToken === 'from-disk')).toBe(true);
+  });
 });
