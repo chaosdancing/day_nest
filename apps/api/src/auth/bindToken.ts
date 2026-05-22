@@ -28,6 +28,7 @@ export async function signBindToken(
   const exp = Math.floor(Date.now() / 1000) + ttlSeconds;
   return new SignJWT({ openid: input.openid, typ: 'bind' })
     .setProtectedHeader({ alg: 'HS256' })
+    .setSubject(input.openid)
     .setIssuedAt()
     .setExpirationTime(exp)
     .sign(enc.encode(secret));
