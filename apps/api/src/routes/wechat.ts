@@ -1,9 +1,10 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
-import { WechatLoginInput } from '@daynest/shared';
+import { WechatLoginInput, WechatBindInput } from '@daynest/shared';
 import { AppError } from '../lib/errors.js';
 import { WechatApiError } from '../wechat/client.js';
 import { signAccess, signRefresh } from '../auth/jwt.js';
-import { signBindToken } from '../auth/bindToken.js';
+import { signBindToken, verifyBindToken } from '../auth/bindToken.js';
+import { verifyPassword } from '../auth/password.js';
 
 const REFRESH_COOKIE = 'daynest_rt';
 
@@ -87,5 +88,65 @@ export async function registerWechatRoutes(app: FastifyInstance) {
 
     const bindToken = await signBindToken({ openid }, app.deps.config.jwt.secret);
     return { status: 'unbound' as const, bindToken };
+  });
+
+  app.post('/api/auth/wechat-bind', async (req, reply) => {
+    if (!app.deps.config.wechat.enabled) {
+      throw new AppError(503, 'WECHAT_DISABLED', 'wechat client is not configured');
+    }
+    const parsed = WechatBindInput.safeParse(req.body);
+    if (!parsed.success) {
+      throw new AppError(
+        400,
+        'VALIDATION_ERROR',
+        parsed.error.issues.map((i) => i.message).join('; '),
+      );
+    }
+
+    let openid: string;
+    try {
+      const claims = await verifyBindToken(parsed.data.bindToken, app.deps.config.jwt.secret);
+      openid = claims.openid;
+    } catch {
+      throw new AppError(400, 'BIND_TOKEN_INVALID', 'bind token is expired or invalid');
+    }
+
+    const user = await app.deps.prisma.user.findUnique({
+      where: { username: parsed.data.username },
+    });
+    if (!user) {
+      throw new AppError(401, 'CREDENTIALS_INVALID', 'invalid username or password');
+    }
+    const ok = await verifyPassword(user.passwordHash, parsed.data.password);
+    if (!ok) {
+      throw new AppError(401, 'CREDENTIALS_INVALID', 'invalid username or password');
+    }
+
+    if (user.wechatOpenId !== null) {
+      throw new AppError(
+        409,
+        'USER_ALREADY_BOUND',
+        'this account is already bound to a wechat user',
+      );
+    }
+
+    const conflict = await app.deps.prisma.user.findUnique({
+      where: { wechatOpenId: openid },
+    });
+    if (conflict) {
+      throw new AppError(
+        409,
+        'WECHAT_ALREADY_BOUND',
+        'this wechat account is already bound to another daynest user',
+      );
+    }
+
+    const updated = await app.deps.prisma.user.update({
+      where: { id: user.id },
+      data: { wechatOpenId: openid, wechatBoundAt: new Date() },
+    });
+
+    const tokens = await issueTokens(app, reply, updated);
+    return { user: toUserDTO(updated), ...tokens };
   });
 }
