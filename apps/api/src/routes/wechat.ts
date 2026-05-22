@@ -211,4 +211,26 @@ export async function registerWechatRoutes(app: FastifyInstance) {
     const tokens = await issueTokens(app, reply, user);
     return { user: toUserDTO(user), ...tokens };
   });
+
+  app.post(
+    '/api/auth/wechat-unbind',
+    { onRequest: [app.requireUser] },
+    async (req) => {
+      const user = await app.deps.prisma.user.findUnique({ where: { id: req.user.id } });
+      if (!user) {
+        throw new AppError(404, 'USER_NOT_FOUND', 'user not found');
+      }
+      if (user.wechatOpenId === null) {
+        throw new AppError(400, 'NOT_BOUND', 'this account is not bound to a wechat user');
+      }
+      const updated = await app.deps.prisma.$transaction(async (tx) => {
+        await tx.wechatSubscription.deleteMany({ where: { userId: user.id } });
+        return tx.user.update({
+          where: { id: user.id },
+          data: { wechatOpenId: null, wechatBoundAt: null },
+        });
+      });
+      return { user: toUserDTO(updated) };
+    },
+  );
 }
