@@ -18,6 +18,9 @@ const Schema = z.object({
   PORT: z.coerce.number().int().nonnegative().default(3000),
   CORS_ORIGIN: z.string().default('*'),
   COOKIE_DOMAIN: z.string().optional(),
+  WECHAT_APPID: z.string().optional(),
+  WECHAT_APP_SECRET: z.string().optional(),
+  WECHAT_ACCESS_TOKEN_CACHE_PATH: z.string().optional(),
 });
 
 export type AppConfig = {
@@ -40,6 +43,12 @@ export type AppConfig = {
   port: number;
   corsOrigin: string;
   cookieDomain?: string;
+  wechat: {
+    enabled: boolean;
+    appId?: string;
+    appSecret?: string;
+    accessTokenCachePath?: string;
+  };
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -64,5 +73,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     port: parsed.PORT,
     corsOrigin: parsed.CORS_ORIGIN,
     cookieDomain: parsed.COOKIE_DOMAIN,
+    wechat: {
+      enabled: Boolean(parsed.WECHAT_APPID && parsed.WECHAT_APP_SECRET),
+      appId: parsed.WECHAT_APPID,
+      appSecret: parsed.WECHAT_APP_SECRET,
+      accessTokenCachePath: parsed.WECHAT_ACCESS_TOKEN_CACHE_PATH,
+    },
   };
 }
