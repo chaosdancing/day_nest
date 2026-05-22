@@ -8,15 +8,13 @@ CREATE TABLE "WechatSubscription" (
     "userId" TEXT NOT NULL,
     "templateId" TEXT NOT NULL,
     "quota" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "WechatSubscription_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateIndex
-CREATE INDEX "WechatSubscription_userId_idx" ON "WechatSubscription"("userId");
+CREATE UNIQUE INDEX "User_wechatOpenId_key" ON "User"("wechatOpenId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "WechatSubscription_userId_templateId_key" ON "WechatSubscription"("userId", "templateId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "User_wechatOpenId_key" ON "User"("wechatOpenId");

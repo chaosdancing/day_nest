@@ -129,8 +129,8 @@ model WechatSubscription {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   templateId  String
   quota       Int      @default(0)
+  createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@unique([userId, templateId])
-  @@index([userId])
 }
