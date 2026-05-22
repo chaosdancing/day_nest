@@ -40,4 +40,17 @@ describe('config.wechat', () => {
     } as NodeJS.ProcessEnv);
     expect(cfg.wechat.accessTokenCachePath).toBe('/tmp/wx-token.json');
   });
+
+  it('treats empty-string credentials as disabled (dotenv path)', () => {
+    const cfg = loadConfig({
+      ...baseEnv,
+      WECHAT_APPID: '',
+      WECHAT_APP_SECRET: '',
+      WECHAT_ACCESS_TOKEN_CACHE_PATH: '   ',
+    } as NodeJS.ProcessEnv);
+    expect(cfg.wechat.enabled).toBe(false);
+    expect(cfg.wechat.appId).toBeUndefined();
+    expect(cfg.wechat.appSecret).toBeUndefined();
+    expect(cfg.wechat.accessTokenCachePath).toBeUndefined();
+  });
 });

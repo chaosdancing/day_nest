@@ -18,9 +18,18 @@ const Schema = z.object({
   PORT: z.coerce.number().int().nonnegative().default(3000),
   CORS_ORIGIN: z.string().default('*'),
   COOKIE_DOMAIN: z.string().optional(),
-  WECHAT_APPID: z.string().optional(),
-  WECHAT_APP_SECRET: z.string().optional(),
-  WECHAT_ACCESS_TOKEN_CACHE_PATH: z.string().optional(),
+  WECHAT_APPID: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim().length > 0 ? v.trim() : undefined)),
+  WECHAT_APP_SECRET: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim().length > 0 ? v.trim() : undefined)),
+  WECHAT_ACCESS_TOKEN_CACHE_PATH: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim().length > 0 ? v.trim() : undefined)),
 });
 
 export type AppConfig = {
