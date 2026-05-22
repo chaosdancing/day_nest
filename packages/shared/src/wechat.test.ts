@@ -51,12 +51,23 @@ describe('WechatLoginResponse', () => {
     ).not.toThrow();
   });
 
-  it('rejects mixing fields from both variants', () => {
+  it('strips fields belonging to the other variant', () => {
+    const parsed = WechatLoginResponse.parse({
+      status: 'unbound',
+      bindToken: 'bt-xyz',
+      accessToken: 'should-be-stripped',
+      user: { id: '00000000-0000-0000-0000-000000000000', username: 'a', displayName: 'A', avatarKey: null, hasWechatBound: true },
+    });
+    expect(parsed.status).toBe('unbound');
+    if (parsed.status !== 'unbound') throw new Error('unreachable');
+    expect(parsed.bindToken).toBe('bt-xyz');
+    expect((parsed as Record<string, unknown>).accessToken).toBeUndefined();
+    expect((parsed as Record<string, unknown>).user).toBeUndefined();
+  });
+
+  it('rejects payloads missing required fields for the discriminated variant', () => {
     expect(() =>
-      WechatLoginResponse.parse({
-        status: 'bound',
-        bindToken: 'bt-xyz',
-      }),
+      WechatLoginResponse.parse({ status: 'bound', bindToken: 'bt-xyz' }),
     ).toThrow();
   });
 });
