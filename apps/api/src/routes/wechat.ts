@@ -1,5 +1,10 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
-import { WechatLoginInput, WechatBindInput, WechatRegisterInput } from '@daynest/shared';
+import {
+  WechatLoginInput,
+  WechatBindInput,
+  WechatRegisterInput,
+  SubscribeAuthInput,
+} from '@daynest/shared';
 import { AppError } from '../lib/errors.js';
 import { WechatApiError } from '../wechat/client.js';
 import { signAccess, signRefresh } from '../auth/jwt.js';
@@ -231,6 +236,35 @@ export async function registerWechatRoutes(app: FastifyInstance) {
         });
       });
       return { user: toUserDTO(updated) };
+    },
+  );
+
+  app.post(
+    '/api/wechat/subscribe',
+    { onRequest: [app.requireUser] },
+    async (req) => {
+      const parsed = SubscribeAuthInput.safeParse(req.body);
+      if (!parsed.success) {
+        throw new AppError(
+          400,
+          'VALIDATION_ERROR',
+          parsed.error.issues.map((i) => i.message).join('; '),
+        );
+      }
+      const accepted = parsed.data.accepted;
+      const userId = req.user.id;
+
+      // Sequential to keep transaction semantics simple and to ensure
+      // duplicates in the array compound correctly via incremental upserts.
+      for (const templateId of accepted) {
+        await app.deps.prisma.wechatSubscription.upsert({
+          where: { userId_templateId: { userId, templateId } },
+          create: { userId, templateId, quota: 1 },
+          update: { quota: { increment: 1 } },
+        });
+      }
+
+      return { ok: true, recorded: accepted.length };
     },
   );
 }
