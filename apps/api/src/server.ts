@@ -5,6 +5,7 @@ import helmet from '@fastify/helmet';
 import type { AppConfig } from './config.js';
 import type { StorageProvider } from './storage/provider.js';
 import type { PrismaClient } from '@prisma/client';
+import type { WechatClient } from './wechat/client.js';
 import { authPlugin } from './auth/plugin.js';
 import { AppError } from './lib/errors.js';
 import { registerInviteRoutes } from './routes/invites.js';
@@ -19,6 +20,7 @@ export type AppDeps = {
   config: AppConfig;
   storage: StorageProvider;
   prisma: PrismaClient;
+  wechat: WechatClient;
 };
 
 declare module 'fastify' {

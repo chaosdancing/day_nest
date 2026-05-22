@@ -2,6 +2,10 @@ import { buildServer } from './server.js';
 import { loadConfig } from './config.js';
 import { getPrisma } from './db.js';
 import { QiniuStorage } from './storage/qiniu.js';
+import { DisabledWechatClient } from './wechat/client.js';
+import { RealWechatClient } from './wechat/realClient.js';
+import { AccessTokenCache } from './wechat/accessTokenCache.js';
+import type { WechatClient } from './wechat/client.js';
 
 const config = loadConfig();
 const prisma = getPrisma();
@@ -13,6 +17,14 @@ const storage = new QiniuStorage({
   zone: config.qiniu.zone,
 });
 
+const wechat: WechatClient = config.wechat.enabled
+  ? new RealWechatClient({
+      appId: config.wechat.appId!,
+      appSecret: config.wechat.appSecret!,
+      cache: new AccessTokenCache({ cachePath: config.wechat.accessTokenCachePath }),
+    })
+  : new DisabledWechatClient();
+
 const app = await buildServer(
   {
     logger: {
@@ -23,7 +35,7 @@ const app = await buildServer(
           : { target: 'pino-pretty' },
     },
   },
-  { config, prisma, storage }
+  { config, prisma, storage, wechat }
 );
 
 await app.listen({ port: config.port, host: '0.0.0.0' });
