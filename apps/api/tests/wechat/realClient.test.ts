@@ -1,7 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { RealWechatClient } from '../../src/wechat/realClient.js';
 import { WechatApiError } from '../../src/wechat/client.js';
 import { AccessTokenCache } from '../../src/wechat/accessTokenCache.js';
+
+type FetchLike = typeof globalThis.fetch;
+type FetchMock = Mock<Parameters<FetchLike>, ReturnType<FetchLike>>;
 
 function mockResponse(body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -11,10 +14,10 @@ function mockResponse(body: unknown): Response {
 }
 
 describe('RealWechatClient.jsCode2Session', () => {
-  let fetchMock: ReturnType<typeof vi.fn>;
+  let fetchMock: FetchMock;
 
   beforeEach(() => {
-    fetchMock = vi.fn();
+    fetchMock = vi.fn() as FetchMock;
   });
 
   it('returns openid + sessionKey on success', async () => {
@@ -33,7 +36,9 @@ describe('RealWechatClient.jsCode2Session', () => {
     expect(res.unionid).toBeUndefined();
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const url = fetchMock.mock.calls[0][0] as string;
+    const firstCall = fetchMock.mock.calls[0];
+    expect(firstCall).toBeDefined();
+    const url = firstCall![0] as string;
     expect(url).toContain('jscode2session');
     expect(url).toContain('appid=wxapp');
     expect(url).toContain('secret=wxsecret');
@@ -96,7 +101,7 @@ describe('RealWechatClient.jsCode2Session', () => {
 
 describe('RealWechatClient.getAccessToken', () => {
   it('fetches token from WX and caches it', async () => {
-    const fetchMock = vi.fn();
+    const fetchMock = vi.fn() as FetchMock;
     fetchMock.mockResolvedValue(mockResponse({ access_token: 'at-1', expires_in: 7200 }));
     const client = new RealWechatClient({
       appId: 'wxapp',
@@ -114,7 +119,7 @@ describe('RealWechatClient.getAccessToken', () => {
   });
 
   it('throws WechatApiError when WX returns an errcode', async () => {
-    const fetchMock = vi.fn();
+    const fetchMock = vi.fn() as FetchMock;
     fetchMock.mockResolvedValue(
       mockResponse({ errcode: 40013, errmsg: 'invalid appid' }),
     );
@@ -133,7 +138,7 @@ describe('RealWechatClient.getAccessToken', () => {
 
 describe('RealWechatClient.sendSubscribeMessage', () => {
   it('sends a POST with access_token in query and returns ok:true on errcode 0', async () => {
-    const fetchMock = vi.fn();
+    const fetchMock = vi.fn() as FetchMock;
     fetchMock.mockResolvedValueOnce(mockResponse({ access_token: 'at-1', expires_in: 7200 }));
     fetchMock.mockResolvedValueOnce(mockResponse({ errcode: 0, errmsg: 'ok' }));
 
@@ -152,7 +157,9 @@ describe('RealWechatClient.sendSubscribeMessage', () => {
 
     expect(outcome).toEqual({ ok: true });
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    const [sendUrl, sendInit] = fetchMock.mock.calls[1];
+    const secondCall = fetchMock.mock.calls[1];
+    expect(secondCall).toBeDefined();
+    const [sendUrl, sendInit] = secondCall!;
     expect(sendUrl).toContain('message/subscribe/send');
     expect(sendUrl).toContain('access_token=at-1');
     expect(sendInit?.method).toBe('POST');
@@ -163,7 +170,7 @@ describe('RealWechatClient.sendSubscribeMessage', () => {
   });
 
   it('returns ok:false with errcode on WX failure', async () => {
-    const fetchMock = vi.fn();
+    const fetchMock = vi.fn() as FetchMock;
     fetchMock.mockResolvedValueOnce(mockResponse({ access_token: 'at-1', expires_in: 7200 }));
     fetchMock.mockResolvedValueOnce(mockResponse({ errcode: 43101, errmsg: 'user rejected' }));
 
