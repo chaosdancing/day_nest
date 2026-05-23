@@ -1,0 +1,36 @@
+.page { background: var(--paper-cream); min-height: 100vh; padding: 32rpx 32rpx 120rpx; }
+.card {
+  background: #FFFCF5;
+  border-radius: 12rpx;
+  padding: 32rpx;
+  box-shadow: var(--shadow-polaroid);
+}
+.card__label { font-size: 22rpx; color: var(--ink-secondary); margin-bottom: 8rpx; }
+.card__original {
+  font-size: 36rpx;
+  color: var(--ink-primary);
+  margin-bottom: 24rpx;
+}
+.card__input {
+  background: var(--paper-cream);
+  border: 1px solid var(--paper-aged);
+  border-radius: 8rpx;
+  padding: 16rpx 24rpx;
+  font-size: 28rpx;
+  color: var(--ink-primary);
+  margin-bottom: 16rpx;
+}
+.hint { font-size: 24rpx; color: var(--ink-secondary); margin-bottom: 16rpx; }
+.hint--warn { color: var(--ink-sticker); }
+.card__submit {
+  background: var(--ink-primary);
+  color: var(--paper-cream);
+  border-radius: 999rpx;
+  font-size: 28rpx;
+  padding: 18rpx 0;
+  margin-top: 16rpx;
+}
+.card__submit--disabled {
+  background: var(--paper-aged);
+  color: var(--ink-secondary);
+}

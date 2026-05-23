@@ -1,0 +1,29 @@
+<view class="page">
+  <view class="card">
+    <view class="card__label">原标签</view>
+    <view class="card__original">#{{originalDisplay || tagName}}</view>
+
+    <view class="card__label">新名称</view>
+    <input
+      class="card__input"
+      placeholder="输入新名称"
+      value="{{newDisplay}}"
+      bindinput="onInput"
+      maxlength="60"
+      focus="{{true}}"
+    />
+
+    <view wx:if="{{collisionDisplay}}" class="hint hint--warn">
+      已存在 #{{collisionDisplay}} —— 保存后两个标签将合并
+    </view>
+    <view wx:elif="{{newNormalized && newNormalized !== originalNormalized}}" class="hint">
+      保存后将更名
+    </view>
+
+    <button
+      class="card__submit {{canSubmit ? '' : 'card__submit--disabled'}}"
+      bindtap="onSubmit"
+      disabled="{{!canSubmit || submitting}}"
+    >{{submitting ? '保存中…' : '保存'}}</button>
+  </view>
+</view>
