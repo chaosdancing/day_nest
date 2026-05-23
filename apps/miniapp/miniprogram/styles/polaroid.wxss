@@ -1,0 +1,47 @@
+/* Polaroid frame primitives. Pure WXSS, no images. */
+
+.polaroid {
+  background: #FFFCF5;
+  padding: 14rpx 14rpx 60rpx 14rpx;
+  border-radius: 6rpx;
+  box-shadow: var(--shadow-polaroid);
+  position: relative;
+}
+
+.polaroid__photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: var(--paper-aged);
+  border-radius: 2rpx;
+}
+
+.polaroid__caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--ink-secondary);
+  padding: 0 20rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Decorative tape on top edge. Color picked via .tape--<n> hash bucket. */
+.tape {
+  position: absolute;
+  top: -16rpx;
+  left: 50%;
+  width: 96rpx;
+  height: 32rpx;
+  transform: translateX(-50%) rotate(-2deg);
+  opacity: .85;
+}
+.tape--0 { background: linear-gradient(180deg, rgba(212,182,140,.85), rgba(212,182,140,.55)); }
+.tape--1 { background: linear-gradient(180deg, rgba(212,150,140,.85), rgba(212,150,140,.55)); }
+.tape--2 { background: linear-gradient(180deg, rgba(168,139,92,.85), rgba(168,139,92,.55)); }
+.tape--3 { background: linear-gradient(180deg, rgba(120,140,160,.85), rgba(120,140,160,.55)); }

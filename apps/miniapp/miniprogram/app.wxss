@@ -1,4 +1,5 @@
 @import 'styles/tokens.wxss';
+@import 'styles/polaroid.wxss';
 
 /* Reset */
 page {
