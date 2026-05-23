@@ -1121,7 +1121,10 @@ Component({
       this.triggerEvent('tap', { photoId: this.data.photoId });
     },
     onFavoriteTap(e: WechatMiniprogram.TouchEvent) {
-      e.stopPropagation?.();
+      // `stopPropagation` isn't on WechatMiniprogram.TouchEvent — WXML uses
+      // `catchtap` to stop propagation at the WX layer. We keep the optional
+      // call as defense-in-depth in case the runtime exposes it.
+      (e as { stopPropagation?: () => void }).stopPropagation?.();
       this.triggerEvent('favoritetap', { photoId: this.data.photoId });
     },
   },
