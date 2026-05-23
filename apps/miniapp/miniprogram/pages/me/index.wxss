@@ -1,0 +1,22 @@
+.page {
+  min-height: 100vh;
+  padding: 120rpx 48rpx;
+  background: var(--paper-cream);
+}
+.card {
+  background: #FFFCF5;
+  padding: 64rpx 32rpx;
+  border-radius: 8rpx;
+  box-shadow: var(--shadow-polaroid);
+  text-align: center;
+}
+.title { font-size: 44rpx; color: var(--ink-primary); margin-bottom: 16rpx; }
+.hint { font-size: 26rpx; color: var(--ink-secondary); }
+.logout {
+  margin-top: 64rpx;
+  background: var(--ink-sticker);
+  color: #fff;
+  padding: 20rpx 64rpx;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+}
