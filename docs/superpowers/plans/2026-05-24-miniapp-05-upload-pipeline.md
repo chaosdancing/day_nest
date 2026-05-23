@@ -154,10 +154,11 @@ const tiff = Buffer.concat([
   Buffer.from([0x69, 0x87, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00,   // tag 0x8769, type LONG, count 1
                 0x1A, 0x00, 0x00, 0x00]),                        // value = offset 26 (where ExifIFD starts)
   Buffer.from([0x00, 0x00, 0x00, 0x00]),                         // next IFD offset = 0
-  // ExifIFD at offset 26: 1 entry (DateTimeOriginal)
+  // ExifIFD at offset 26: count(2) + 1 entry(12) + next(4) = 18 bytes,
+  //   so dateBytes land at TIFF base + 26 + 18 = TIFF+44.
   Buffer.from([0x01, 0x00]),                                     // 1 entry
   Buffer.from([0x03, 0x90, 0x02, 0x00, 0x14, 0x00, 0x00, 0x00,   // tag 0x9003, type ASCII, count 20
-                0x2E, 0x00, 0x00, 0x00]),                        // value offset = 46
+                0x2C, 0x00, 0x00, 0x00]),                        // value offset = 44
   Buffer.from([0x00, 0x00, 0x00, 0x00]),                         // next IFD offset
   dateBytes,                                                     // 20 bytes ASCII date
 ]);
