@@ -1,14 +1,33 @@
-.page {
-  min-height: 100vh;
-  padding: 120rpx 48rpx;
-  background: var(--paper-cream);
+.page { background: var(--paper-cream); min-height: 100vh; }
+.empty { padding: 200rpx 0; text-align: center; color: var(--ink-secondary); font-size: 26rpx; }
+.scroll { padding: 16rpx 24rpx 120rpx; }
+.block { margin-bottom: 32rpx; }
+.block__title { font-size: 24rpx; color: var(--ink-secondary); margin-bottom: 12rpx; }
+.cloud { display: flex; flex-wrap: wrap; gap: 12rpx; }
+.chip {
+  padding: 10rpx 22rpx;
+  background: var(--paper-aged);
+  color: var(--ink-primary);
+  border-radius: 999rpx;
+  font-size: 26rpx;
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
 }
-.card {
-  background: #FFFCF5;
-  padding: 64rpx 32rpx;
-  border-radius: 8rpx;
-  box-shadow: var(--shadow-polaroid);
-  text-align: center;
+.chip--big { font-size: 28rpx; padding: 14rpx 26rpx; }
+.chip__count {
+  font-size: 20rpx;
+  color: var(--ink-secondary);
+  background: rgba(255,255,255,.5);
+  padding: 0 8rpx;
+  border-radius: 999rpx;
 }
-.title { font-size: 44rpx; color: var(--ink-primary); margin-bottom: 16rpx; }
-.hint { font-size: 26rpx; color: var(--ink-secondary); }
+.toolbar { display: flex; gap: 12rpx; margin-bottom: 16rpx; }
+.seg {
+  padding: 10rpx 24rpx;
+  border: 1px solid var(--paper-aged);
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  color: var(--ink-secondary);
+}
+.seg--on { background: var(--ink-primary); color: var(--paper-cream); border-color: var(--ink-primary); }

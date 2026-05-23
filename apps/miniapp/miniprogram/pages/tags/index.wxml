@@ -1,6 +1,73 @@
 <view class="page">
-  <view class="card">
-    <view class="title">标签</view>
-    <view class="hint">即将上线 · v1 主线</view>
-  </view>
+  <view wx:if="{{loading}}" class="empty">读取中…</view>
+  <view wx:elif="{{tags.length === 0}}" class="empty">还没有标签</view>
+
+  <scroll-view class="scroll" scroll-y="true">
+    <view wx:if="{{popular.length > 0}}" class="block">
+      <view class="block__title">热门</view>
+      <view class="cloud">
+        <view
+          wx:for="{{popular}}"
+          wx:key="id"
+          class="chip chip--big"
+          data-name="{{item.name}}"
+          bindtap="onTagTap"
+        >#{{item.displayName}}
+          <text class="chip__count">{{(item.photoCount || 0) + (item.collectionCount || 0)}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="toolbar">
+      <view
+        class="seg {{view === 'flat' ? 'seg--on' : ''}}"
+        data-view="flat"
+        bindtap="onSwitchView"
+      >平铺</view>
+      <view
+        class="seg {{view === 'categorized' ? 'seg--on' : ''}}"
+        data-view="categorized"
+        bindtap="onSwitchView"
+      >分类</view>
+    </view>
+
+    <view wx:if="{{view === 'flat'}}" class="block">
+      <view class="cloud">
+        <view
+          wx:for="{{tags}}"
+          wx:key="id"
+          class="chip"
+          data-name="{{item.name}}"
+          bindtap="onTagTap"
+        >#{{item.displayName}}</view>
+      </view>
+    </view>
+
+    <block wx:if="{{view === 'categorized'}}">
+      <view class="block">
+        <view class="block__title">集合维度</view>
+        <view class="cloud">
+          <view
+            wx:for="{{collectionTags}}"
+            wx:key="id"
+            class="chip"
+            data-name="{{item.name}}"
+            bindtap="onTagTap"
+          >#{{item.displayName}} <text class="chip__count">{{item.collectionCount || 0}}</text></view>
+        </view>
+      </view>
+      <view class="block">
+        <view class="block__title">照片维度</view>
+        <view class="cloud">
+          <view
+            wx:for="{{photoOnlyTags}}"
+            wx:key="id"
+            class="chip"
+            data-name="{{item.name}}"
+            bindtap="onTagTap"
+          >#{{item.displayName}} <text class="chip__count">{{item.photoCount || 0}}</text></view>
+        </view>
+      </view>
+    </block>
+  </scroll-view>
 </view>

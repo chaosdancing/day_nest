@@ -1,1 +1,1 @@
-{ "navigationBarTitleText": "标签", "usingComponents": {} }
+{ "navigationBarTitleText": "标签", "enablePullDownRefresh": true, "usingComponents": {} }
