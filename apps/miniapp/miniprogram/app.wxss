@@ -1,1 +1,23 @@
+@import 'styles/tokens.wxss';
 
+/* Reset */
+page {
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--paper-cream);
+  color: var(--ink-primary);
+  font-size: 28rpx;
+  line-height: 1.5;
+}
+
+view, text, input, button, image {
+  box-sizing: border-box;
+}
+
+button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  line-height: normal;
+}
+button::after { border: none; }
