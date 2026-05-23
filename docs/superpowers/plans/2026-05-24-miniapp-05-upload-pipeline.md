@@ -687,13 +687,23 @@ export function createUploadQueue(opts: UploadQueueOptions): UploadQueue {
     while (active < concurrency && waiting.length > 0) {
       const job = waiting.shift()!;
       active++;
-      job.run()
-        .then((v) => job.resolve(v))
-        .catch((e) => job.reject(e))
-        .finally(() => {
+      // NOTE: decrement active and drain BEFORE resolve/reject. Using
+      // `.finally(active--)` would run the cleanup after the consumer's
+      // `await enqueue(...)` resumes, leaving `inFlight()` stale for one
+      // microtask — which the "reports in-flight and pending counts"
+      // test would catch.
+      job.run().then(
+        (v) => {
           active--;
           drain();
-        });
+          job.resolve(v);
+        },
+        (e) => {
+          active--;
+          drain();
+          job.reject(e);
+        },
+      );
     }
   };
 
