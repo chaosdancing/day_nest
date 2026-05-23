@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2018",
+    "module": "ES2020",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2020", "DOM"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": false,
+    "outDir": "miniprogram/dist",
+    "rootDir": ".",
+    "types": ["miniprogram-api-typings", "vitest/globals"],
+    "paths": {
+      "@daynest/shared": ["../../packages/shared/src/index.ts"]
+    }
+  },
+  "include": [
+    "miniprogram/**/*.ts",
+    "tests/**/*.ts",
+    "typings/**/*.d.ts"
+  ],
+  "exclude": ["miniprogram/dist", "node_modules"]
+}

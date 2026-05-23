@@ -1,0 +1,40 @@
+{
+  "pages": [
+    "pages/login/index",
+    "pages/bind/index",
+    "pages/timeline/index",
+    "pages/favorites/index",
+    "pages/tags/index",
+    "pages/me/index"
+  ],
+  "subPackages": [
+    {
+      "root": "pkgOnboarding/",
+      "name": "pkgOnboarding",
+      "pages": ["register/index"]
+    }
+  ],
+  "tabBar": {
+    "custom": true,
+    "color": "#6E5F4E",
+    "selectedColor": "#2A2520",
+    "backgroundColor": "#FBF4E4",
+    "list": [
+      { "pagePath": "pages/timeline/index", "text": "时间轴" },
+      { "pagePath": "pages/favorites/index", "text": "收藏" },
+      { "pagePath": "pages/tags/index", "text": "标签" },
+      { "pagePath": "pages/me/index", "text": "我的" }
+    ]
+  },
+  "window": {
+    "navigationBarBackgroundColor": "#FBF4E4",
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "朝夕居",
+    "backgroundColor": "#FBF4E4"
+  },
+  "permission": {
+    "scope.userLocation": { "desc": "" }
+  },
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

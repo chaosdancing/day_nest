@@ -1,0 +1,8 @@
+{
+  "$schema": "https://developer.weixin.qq.com/miniprogram/dev/devtools/private.config.schema.json",
+  "appid": "wxXXXXXXXXXXXXXXXX",
+  "projectname": "daynest-miniapp",
+  "setting": {
+    "compileHotReLoad": true
+  }
+}
