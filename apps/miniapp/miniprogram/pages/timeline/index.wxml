@@ -49,4 +49,8 @@
     <view wx:if="{{loadingMore}}" class="footer">加载更多…</view>
     <view wx:elif="{{!nextCursor && items.length > 0}}" class="footer">到底了</view>
   </scroll-view>
+
+  <view class="fab" bindtap="onFabTap">
+    <text class="fab__plus">+</text>
+  </view>
 </view>

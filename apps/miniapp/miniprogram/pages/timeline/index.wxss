@@ -81,3 +81,23 @@
 .row__tags { display: flex; flex-wrap: wrap; gap: 8rpx; }
 .row__tag { font-size: 22rpx; color: var(--ink-secondary); padding: 4rpx 12rpx; background: var(--paper-aged); border-radius: 999rpx; }
 .footer { padding: 32rpx 0; text-align: center; color: var(--ink-secondary); font-size: 24rpx; }
+.fab {
+  position: fixed;
+  right: 40rpx;
+  bottom: 160rpx;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: var(--ink-primary);
+  color: var(--paper-cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba(0,0,0,.2);
+  z-index: 5;
+}
+.fab__plus {
+  font-size: 60rpx;
+  line-height: 1;
+  color: var(--paper-cream);
+}

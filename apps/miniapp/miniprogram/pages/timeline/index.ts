@@ -112,4 +112,8 @@ Page({
     const id = e.currentTarget.dataset.id as string;
     wx.navigateTo({ url: `/pkgCollection/detail/index?id=${encodeURIComponent(id)}` });
   },
+
+  onFabTap() {
+    wx.navigateTo({ url: '/pkgUpload/new/index' });
+  },
 });
