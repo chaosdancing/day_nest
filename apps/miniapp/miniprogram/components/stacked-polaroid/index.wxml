@@ -1,8 +1,7 @@
 <view class="stack">
   <view
     wx:for="{{slots}}"
-    wx:key="thumb"
-    wx:if="{{item.visible}}"
+    wx:key="key"
     class="stack__slot polaroid"
     style="transform: translate({{item.offsetX}}rpx, {{item.offsetY}}rpx) rotate({{item.angle}}deg); z-index: {{index}};"
   >

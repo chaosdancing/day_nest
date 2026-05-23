@@ -13,6 +13,7 @@ Page({
     const photoId = decodeURIComponent(query.photoId ?? '');
     if (!collectionId) {
       wx.showToast({ title: '缺少集合 id', icon: 'none' });
+      this.setData({ loading: false });
       return;
     }
     void this.load(collectionId, photoId);
