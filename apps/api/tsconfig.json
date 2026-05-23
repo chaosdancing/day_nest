@@ -5,5 +5,6 @@
     "rootDir": ".",
     "types": ["node"]
   },
-  "include": ["src", "scripts", "tests"]
+  "include": ["src", "scripts", "tests"],
+  "exclude": ["tests/wechat/miniapp-integration.test.ts"]
 }

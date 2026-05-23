@@ -20,6 +20,13 @@ type LoginResponse = LoginBoundResponse | LoginUnboundResponse;
 Page({
   data: { loading: false, error: '' },
 
+  onShow() {
+    const s = authStore.getState();
+    if (s.hydrated && s.accessToken && s.user) {
+      wx.switchTab({ url: '/pages/timeline/index' });
+    }
+  },
+
   async onWechatLogin() {
     if (this.data.loading) return;
     this.setData({ loading: true, error: '' });
