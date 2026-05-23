@@ -18,14 +18,17 @@ const ListQuery = z.object({
   cursor: z.string().optional(),
   tag: z.string().optional(),
   // How to interpret the `tag` filter:
-  //   - 'any'        (default) : a collection matches if it has the tag
-  //                              directly OR if any of its photos do.
-  //   - 'collection'           : only direct collection-level tags.
-  //   - 'photo'                : only tags applied to at least one of
-  //                              the collection's photos.
-  // Used by the Tags overview page to surface collection-tagged vs
-  // photo-tagged collections separately.
-  tagScope: z.enum(['any', 'collection', 'photo']).default('any'),
+  //   - 'any' / 'all' (default) : a collection matches if it has the tag
+  //                               directly OR if any of its photos do.
+  //   - 'collection'            : only direct collection-level tags.
+  //   - 'photo'                 : only tags applied to at least one of
+  //                               the collection's photos.
+  // Used by the Tags overview page (web uses 'any') and the miniapp's tag
+  // pinboard (uses 'all'); we accept both so both wire formats work.
+  tagScope: z
+    .enum(['any', 'all', 'collection', 'photo'])
+    .default('any')
+    .transform((s) => (s === 'all' ? 'any' : s)),
   // Fuzzy `contains` match on collection title (case-insensitive on
   // SQLite — built-in LIKE is already case-insensitive for ASCII; CJK
   // works because we don't apply lower() so contains() does a byte
