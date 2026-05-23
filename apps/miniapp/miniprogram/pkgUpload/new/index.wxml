@@ -1,0 +1,59 @@
+<view class="page">
+  <view class="section">
+    <view class="section__head">照片 ({{photos.length}})</view>
+    <view class="grid">
+      <view wx:for="{{photos}}" wx:key="id" class="cell">
+        <image class="cell__img" src="{{item.thumbPath}}" mode="aspectFill" />
+        <view wx:if="{{item.stage.kind === 'compressing'}}" class="cell__overlay">压缩中…</view>
+        <view wx:elif="{{item.stage.kind === 'uploading'}}" class="cell__overlay">上传 {{item.stage.percent}}%</view>
+        <view wx:elif="{{item.stage.kind === 'failed'}}" class="cell__overlay cell__overlay--err">失败</view>
+        <view wx:elif="{{item.stage.kind === 'done'}}" class="cell__overlay cell__overlay--ok">✓</view>
+        <view wx:if="{{!uploading}}" class="cell__del" data-id="{{item.id}}" bindtap="onRemovePhoto">×</view>
+      </view>
+      <view wx:if="{{!uploading && photos.length < 50}}" class="cell cell--add" bindtap="onPickMore">+</view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section__head">标题</view>
+    <input class="input" placeholder="给这次回忆起个名字" value="{{title}}" bindinput="onTitleInput" maxlength="200" />
+    <view wx:if="{{mergeCandidateTitle}}" class="merge">
+      已存在「{{mergeCandidateTitle}}」
+      <switch class="merge__switch" checked="{{mergeIntoId !== ''}}" bindchange="onMergeToggle" />
+      合并
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section__head">日期</view>
+    <picker mode="date" value="{{occurredOn}}" bindchange="onDateChange">
+      <view class="input input--picker">{{occurredOn}}</view>
+    </picker>
+  </view>
+
+  <view class="section">
+    <view class="section__head">地点（可选）</view>
+    <input class="input" placeholder="家、公园、远方…" value="{{location}}" bindinput="onLocationInput" maxlength="200" />
+  </view>
+
+  <view class="section">
+    <view class="section__head">描述（可选）</view>
+    <textarea class="textarea" placeholder="这一刻你想说的话…" value="{{description}}" bindinput="onDescriptionInput" maxlength="10000" auto-height="true" />
+  </view>
+
+  <view class="section">
+    <view class="section__head">标签</view>
+    <tag-picker value="{{tags}}" suggest="{{tagSuggestions}}" bind:change="onTagsChange" />
+  </view>
+
+  <view wx:if="{{uploading}}" class="progress">
+    <view class="progress__bar"><view class="progress__fill" style="width: {{progressPercent}}%"></view></view>
+    <view class="progress__text">{{progressLabel}}</view>
+  </view>
+
+  <view class="footer">
+    <button class="submit {{canSubmit ? '' : 'submit--disabled'}}" disabled="{{!canSubmit}}" bindtap="onSubmit">
+      {{uploading ? '上传中…' : (mergeIntoId ? '加入「' + mergeCandidateTitle + '」' : '创建集合')}}
+    </button>
+  </view>
+</view>

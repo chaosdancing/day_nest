@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "新建集合",
+  "usingComponents": {
+    "tag-picker": "/components/tag-picker/index"
+  }
+}
