@@ -818,8 +818,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { debounce } from '../../miniprogram/lib/debounce.js';
 
 describe('debounce', () => {
-  beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); });
 
   it('does not invoke fn before delay elapses', () => {
     const fn = vi.fn();
