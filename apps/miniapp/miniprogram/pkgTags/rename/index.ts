@@ -105,8 +105,13 @@ Page({
         title: res.merged ? '合并完成' : '已更新',
         icon: 'success',
       });
+      // After a merge the source tag is gone — landing back on the now-
+      // empty pinboard ("该标签下还没有集合") feels broken. Skip the
+      // pinboard and return to the tags overview where the surviving
+      // tag is visible with its new counts.
+      const delta = res.merged ? 2 : 1;
       setTimeout(() => {
-        wx.navigateBack();
+        wx.navigateBack({ delta });
       }, 600);
     } catch {
       wx.showToast({ title: '保存失败', icon: 'none' });

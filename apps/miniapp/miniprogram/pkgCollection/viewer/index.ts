@@ -139,9 +139,13 @@ Page({
     } catch {
       const revertPhotos = [...this.data.photos];
       revertPhotos[idx] = photo;
+      // Re-derive against the CURRENT index, not the one captured at tap
+      // time — the user may have swiped during the in-flight request, so
+      // `currentFav` must reflect the photo they're looking at NOW.
+      const cur = this.data.current;
       this.setData({
         photos: revertPhotos,
-        ...this.deriveCurrent(revertPhotos, idx),
+        ...this.deriveCurrent(revertPhotos, cur),
       });
       wx.showToast({ title: '操作失败', icon: 'none' });
     }
