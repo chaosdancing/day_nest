@@ -9,6 +9,7 @@
   "exclude": [
     "tests/wechat/miniapp-integration.test.ts",
     "tests/wechat/miniapp-browse.test.ts",
-    "tests/wechat/miniapp-tags.test.ts"
+    "tests/wechat/miniapp-tags.test.ts",
+    "tests/wechat/miniapp-upload.test.ts"
   ]
 }
