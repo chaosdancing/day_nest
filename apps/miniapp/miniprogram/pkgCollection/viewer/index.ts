@@ -10,6 +10,21 @@ interface FavSnapshot {
   favoriteCount: number;
 }
 
+function formatTakenAt(iso: string): string {
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    return `${y}-${m}-${day} ${hh}:${mm}`;
+  } catch {
+    return '';
+  }
+}
+
 Page({
   data: {
     photos: [] as PhotoDTO[],
@@ -18,6 +33,10 @@ Page({
     anyZoomed: false,
     loading: true,
     currentFav: null as FavSnapshot | null,
+    currentCaption: '',
+    currentTakenAtLabel: '',
+    currentTags: [] as string[],
+    infoOpen: false,
   },
 
   onLoad(query: Record<string, string | undefined>) {
@@ -42,7 +61,7 @@ Page({
         scales: collection.photos.map(() => 1),
         anyZoomed: false,
         loading: false,
-        currentFav: this.snapshotFav(collection.photos, current),
+        ...this.deriveCurrent(collection.photos, current),
       });
     } catch {
       wx.showToast({ title: '加载失败', icon: 'none' });
@@ -50,10 +69,26 @@ Page({
     }
   },
 
-  snapshotFav(photos: PhotoDTO[], current: number): FavSnapshot | null {
+  deriveCurrent(photos: PhotoDTO[], current: number) {
     const p = photos[current];
-    if (!p) return null;
-    return { id: p.id, favoritedByMe: p.favoritedByMe, favoriteCount: p.favoriteCount };
+    if (!p) {
+      return {
+        currentFav: null as FavSnapshot | null,
+        currentCaption: '',
+        currentTakenAtLabel: '',
+        currentTags: [] as string[],
+      };
+    }
+    return {
+      currentFav: {
+        id: p.id,
+        favoritedByMe: p.favoritedByMe,
+        favoriteCount: p.favoriteCount,
+      } as FavSnapshot,
+      currentCaption: p.caption ?? '',
+      currentTakenAtLabel: p.takenAt ? formatTakenAt(p.takenAt) : '',
+      currentTags: p.tags ?? [],
+    };
   },
 
   onChange(e: WechatMiniprogram.CustomEvent<{ current: number; source: string }>) {
@@ -63,7 +98,8 @@ Page({
       current,
       scales,
       anyZoomed: false,
-      currentFav: this.snapshotFav(this.data.photos, current),
+      infoOpen: false,
+      ...this.deriveCurrent(this.data.photos, current),
     });
   },
 
@@ -95,23 +131,27 @@ Page({
     newPhotos[idx] = updated;
     this.setData({
       photos: newPhotos,
-      currentFav: this.snapshotFav(newPhotos, idx),
+      ...this.deriveCurrent(newPhotos, idx),
     });
     try {
-      if (wasFav) {
-        await favoritesService.remove(photo.id);
-      } else {
-        await favoritesService.add(photo.id);
-      }
+      if (wasFav) await favoritesService.remove(photo.id);
+      else await favoritesService.add(photo.id);
     } catch {
-      // revert
       const revertPhotos = [...this.data.photos];
       revertPhotos[idx] = photo;
       this.setData({
         photos: revertPhotos,
-        currentFav: this.snapshotFav(revertPhotos, idx),
+        ...this.deriveCurrent(revertPhotos, idx),
       });
       wx.showToast({ title: '操作失败', icon: 'none' });
     }
+  },
+
+  onInfoToggle() {
+    this.setData({ infoOpen: !this.data.infoOpen });
+  },
+
+  onInfoNoop() {
+    // Swallow taps inside the drawer so the mask's bindtap doesn't close it.
   },
 });

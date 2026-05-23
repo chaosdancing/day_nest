@@ -60,3 +60,47 @@
   opacity: 1;
 }
 .heart__count { font-size: 22rpx; color: #FFFCF5; }
+
+.info-toggle {
+  position: absolute;
+  top: 40rpx;
+  left: 32rpx;
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: rgba(0,0,0,.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+.info-toggle__icon { color: #FFFCF5; font-size: 30rpx; }
+
+.info-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 20;
+  display: flex;
+  align-items: flex-end;
+}
+.info-drawer {
+  width: 100%;
+  background: var(--paper-cream);
+  border-radius: 24rpx 24rpx 0 0;
+  padding: 32rpx 32rpx 64rpx;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.info__caption { font-size: 30rpx; color: var(--ink-primary); line-height: 1.5; margin-bottom: 16rpx; }
+.info__row { display: flex; gap: 16rpx; font-size: 26rpx; margin-bottom: 12rpx; }
+.info__label { color: var(--ink-secondary); }
+.info__value { color: var(--ink-primary); }
+.info__tags { display: flex; flex-wrap: wrap; gap: 10rpx; margin-top: 12rpx; }
+.info__tag {
+  font-size: 22rpx;
+  padding: 4rpx 14rpx;
+  background: var(--paper-aged);
+  color: var(--ink-primary);
+  border-radius: 999rpx;
+}

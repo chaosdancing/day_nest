@@ -36,4 +36,21 @@
     <view class="heart__shape"></view>
     <view wx:if="{{currentFav.favoriteCount > 0}}" class="heart__count">{{currentFav.favoriteCount}}</view>
   </view>
+
+  <view class="info-toggle" bindtap="onInfoToggle">
+    <text class="info-toggle__icon">ⓘ</text>
+  </view>
+
+  <view wx:if="{{infoOpen}}" class="info-mask" bindtap="onInfoToggle">
+    <view class="info-drawer" catchtap="onInfoNoop">
+      <view wx:if="{{currentCaption}}" class="info__caption">{{currentCaption}}</view>
+      <view class="info__row">
+        <text class="info__label">拍摄于</text>
+        <text class="info__value">{{currentTakenAtLabel || '—'}}</text>
+      </view>
+      <view wx:if="{{currentTags.length > 0}}" class="info__tags">
+        <view wx:for="{{currentTags}}" wx:key="*this" class="info__tag">#{{item}}</view>
+      </view>
+    </view>
+  </view>
 </view>
