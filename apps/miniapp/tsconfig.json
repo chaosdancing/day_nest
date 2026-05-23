@@ -10,9 +10,7 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": false,
-    "outDir": "miniprogram/dist",
-    "rootDir": ".",
+    "noEmit": true,
     "types": ["miniprogram-api-typings", "vitest/globals"],
     "paths": {
       "@daynest/shared": ["../../packages/shared/src/index.ts"]
