@@ -44,7 +44,13 @@ Page({
     this.setData({ view });
   },
 
-  onTagTap() {
-    wx.showToast({ title: '标签详情即将上线', icon: 'none' });
+  onTagTap(e: WechatMiniprogram.TouchEvent) {
+    const name = e.currentTarget.dataset.name as string;
+    if (!name) return;
+    const tag = this.data.tags.find((t) => t.name === name);
+    const display = tag?.displayName ?? name;
+    wx.navigateTo({
+      url: `/pkgTags/pinboard/index?tag=${encodeURIComponent(name)}&display=${encodeURIComponent(display)}`,
+    });
   },
 });
