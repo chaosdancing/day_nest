@@ -31,4 +31,9 @@
   </swiper>
 
   <view wx:if="{{photos.length > 0}}" class="counter">{{current + 1}} / {{photos.length}}</view>
+
+  <view class="heart {{currentFav.favoritedByMe ? 'heart--on' : ''}}" bindtap="onFavoriteTap">
+    <view class="heart__shape"></view>
+    <view wx:if="{{currentFav.favoriteCount > 0}}" class="heart__count">{{currentFav.favoriteCount}}</view>
+  </view>
 </view>
