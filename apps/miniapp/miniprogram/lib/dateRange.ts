@@ -15,7 +15,11 @@ export function buildPresetRange(
 ): DateRange {
   if (preset === 'all') return {};
   if (preset === 'year') {
-    const year = now.getUTCFullYear();
+    // Use local-year (matches apps/web/src/lib/timelineFilters.ts) so a user
+    // opening the app at 02:00 on Jan 1 in UTC+8 sees the new year preset,
+    // not the previous one. Trailing-day presets below use UTC math (also
+    // matching web) — the slight internal inconsistency is intentional.
+    const year = now.getFullYear();
     return { dateFrom: `${year}-01-01`, dateTo: `${year}-12-31` };
   }
   const days = preset === '7d' ? 6 : 29;

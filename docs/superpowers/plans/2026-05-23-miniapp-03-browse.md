@@ -729,12 +729,13 @@ describe('dateRange', () => {
     expect(buildPresetRange('all')).toEqual({});
   });
 
-  it('preset "year" spans the calendar year of the reference date', () => {
-    const ref = new Date('2026-08-15T00:00:00Z');
-    expect(buildPresetRange('year', ref)).toEqual({
-      dateFrom: '2026-01-01',
-      dateTo: '2026-12-31',
-    });
+  it('preset "year" spans the local calendar year of the reference date', () => {
+    // Reference date chosen mid-year so local and UTC agree regardless of
+    // the test machine's timezone.
+    const ref = new Date('2026-08-15T12:00:00Z');
+    const range = buildPresetRange('year', ref);
+    expect(range.dateFrom).toBe('2026-01-01');
+    expect(range.dateTo).toBe('2026-12-31');
   });
 
   it('preset "30d" spans the trailing 30 days inclusive', () => {
@@ -780,7 +781,10 @@ export function buildPresetRange(
 ): DateRange {
   if (preset === 'all') return {};
   if (preset === 'year') {
-    const year = now.getUTCFullYear();
+    // Use local year so a Beijing user (UTC+8) opening the app at 02:00 on
+    // Jan 1 sees the new year preset, not last year's. Matches the web
+    // helper at apps/web/src/lib/timelineFilters.ts.
+    const year = now.getFullYear();
     return { dateFrom: `${year}-01-01`, dateTo: `${year}-12-31` };
   }
   const days = preset === '7d' ? 6 : 29;
