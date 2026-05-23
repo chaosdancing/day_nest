@@ -1,0 +1,24 @@
+.stack {
+  position: relative;
+  width: 360rpx;
+  height: 320rpx;
+}
+.stack__slot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 320rpx;
+  padding: 14rpx 14rpx 60rpx 14rpx;
+}
+.stack__count {
+  position: absolute;
+  right: -16rpx;
+  bottom: -8rpx;
+  background: var(--ink-primary);
+  color: var(--paper-cream);
+  font-size: 22rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+  box-shadow: var(--shadow-sticker);
+  z-index: 10;
+}
