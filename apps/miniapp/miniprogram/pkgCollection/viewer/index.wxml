@@ -7,18 +7,28 @@
     bindchange="onChange"
     duration="300"
     easing-function="easeInOutCubic"
+    disable-touch="{{anyZoomed}}"
   >
-    <swiper-item wx:for="{{photos}}" wx:key="id">
-      <view class="slide" bindlongpress="onLongPress" data-url="{{item.thumbnailUrl}}">
-        <image
-          class="slide__img"
-          src="{{item.thumbnailUrl}}"
-          mode="aspectFit"
-          lazy-load="true"
-        />
-        <view wx:if="{{item.caption}}" class="slide__caption">{{item.caption}}</view>
-      </view>
+    <swiper-item wx:for="{{photos}}" wx:key="id" wx:for-index="i">
+      <movable-area class="ma" scale-area="{{true}}">
+        <movable-view
+          class="mv"
+          direction="all"
+          scale="{{true}}"
+          scale-min="1"
+          scale-max="3"
+          scale-value="{{scales[i]}}"
+          out-of-bounds="{{false}}"
+          inertia="{{true}}"
+          data-index="{{i}}"
+          bindscale="onScale"
+          bindlongpress="onLongPress"
+        >
+          <image class="mv__img" src="{{item.thumbnailUrl}}" mode="aspectFit" lazy-load="true" />
+        </movable-view>
+      </movable-area>
     </swiper-item>
   </swiper>
+
   <view wx:if="{{photos.length > 0}}" class="counter">{{current + 1}} / {{photos.length}}</view>
 </view>

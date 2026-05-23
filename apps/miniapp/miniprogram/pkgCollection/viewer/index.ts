@@ -1,10 +1,14 @@
 import type { PhotoDTO } from '@daynest/shared';
 import { collectionsService } from '../../lib/services/collections.js';
 
+const ZOOM_EPSILON = 0.05;
+
 Page({
   data: {
     photos: [] as PhotoDTO[],
     current: 0,
+    scales: [] as number[],
+    anyZoomed: false,
     loading: true,
   },
 
@@ -22,12 +26,12 @@ Page({
   async load(collectionId: string, photoId: string) {
     try {
       const collection = await collectionsService.get(collectionId);
-      const idx = photoId
-        ? collection.photos.findIndex((p) => p.id === photoId)
-        : 0;
+      const idx = photoId ? collection.photos.findIndex((p) => p.id === photoId) : 0;
       this.setData({
         photos: collection.photos,
         current: idx >= 0 ? idx : 0,
+        scales: collection.photos.map(() => 1),
+        anyZoomed: false,
         loading: false,
       });
     } catch {
@@ -37,15 +41,27 @@ Page({
   },
 
   onChange(e: WechatMiniprogram.CustomEvent<{ current: number; source: string }>) {
-    this.setData({ current: e.detail.current });
+    // Reset all scales when the user swipes; otherwise a half-zoomed slide
+    // could persist its zoom state when revisited.
+    const scales = this.data.photos.map(() => 1);
+    this.setData({
+      current: e.detail.current,
+      scales,
+      anyZoomed: false,
+    });
+  },
+
+  onScale(e: WechatMiniprogram.CustomEvent<{ scale: number; x: number; y: number }>) {
+    const idx = Number(e.currentTarget.dataset.index ?? 0);
+    const next = [...this.data.scales];
+    next[idx] = e.detail.scale;
+    const anyZoomed = next.some((s) => s > 1 + ZOOM_EPSILON);
+    this.setData({ scales: next, anyZoomed });
   },
 
   onLongPress(_e: WechatMiniprogram.TouchEvent) {
     const urls = this.data.photos.map((p) => p.thumbnailUrl);
     const current = this.data.photos[this.data.current]?.thumbnailUrl ?? urls[0];
-    wx.previewImage({
-      current,
-      urls,
-    });
+    wx.previewImage({ current, urls });
   },
 });
