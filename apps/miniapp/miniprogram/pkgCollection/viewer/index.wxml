@@ -1,0 +1,24 @@
+<view class="viewer">
+  <view wx:if="{{loading}}" class="empty">读取中…</view>
+  <swiper
+    wx:elif="{{photos.length > 0}}"
+    class="swiper"
+    current="{{current}}"
+    bindchange="onChange"
+    duration="300"
+    easing-function="easeInOutCubic"
+  >
+    <swiper-item wx:for="{{photos}}" wx:key="id">
+      <view class="slide" bindlongpress="onLongPress" data-url="{{item.thumbnailUrl}}">
+        <image
+          class="slide__img"
+          src="{{item.thumbnailUrl}}"
+          mode="aspectFit"
+          lazy-load="true"
+        />
+        <view wx:if="{{item.caption}}" class="slide__caption">{{item.caption}}</view>
+      </view>
+    </swiper-item>
+  </swiper>
+  <view wx:if="{{photos.length > 0}}" class="counter">{{current + 1}} / {{photos.length}}</view>
+</view>
