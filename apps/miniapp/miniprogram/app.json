@@ -22,12 +22,17 @@
       "root": "pkgTags/",
       "name": "pkgTags",
       "pages": ["pinboard/index", "rename/index"]
+    },
+    {
+      "root": "pkgUpload/",
+      "name": "pkgUpload",
+      "pages": ["new/index"]
     }
   ],
   "preloadRule": {
     "pages/timeline/index": {
       "network": "wifi",
-      "packages": ["pkgCollection"]
+      "packages": ["pkgCollection", "pkgUpload"]
     },
     "pages/tags/index": {
       "network": "wifi",
