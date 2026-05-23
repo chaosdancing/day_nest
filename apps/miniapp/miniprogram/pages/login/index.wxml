@@ -1,0 +1,17 @@
+<view class="page">
+  <view class="hero">
+    <view class="brand">朝夕居</view>
+    <view class="tagline">收纳烟火日常</view>
+    <view class="tagline tagline--sub">酿造专属回忆</view>
+  </view>
+
+  <button class="primary" disabled="{{loading}}" bindtap="onWechatLogin">
+    {{loading ? '请稍候...' : '微信一键进入'}}
+  </button>
+
+  <view class="secondary" bindtap="onGoRegister">
+    没有朝夕居账号？用邀请码注册
+  </view>
+
+  <view wx:if="{{error}}" class="error">{{error}}</view>
+</view>
