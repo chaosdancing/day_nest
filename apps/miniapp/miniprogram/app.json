@@ -17,12 +17,21 @@
       "root": "pkgCollection/",
       "name": "pkgCollection",
       "pages": ["detail/index", "viewer/index"]
+    },
+    {
+      "root": "pkgTags/",
+      "name": "pkgTags",
+      "pages": ["pinboard/index", "rename/index"]
     }
   ],
   "preloadRule": {
     "pages/timeline/index": {
       "network": "wifi",
       "packages": ["pkgCollection"]
+    },
+    "pages/tags/index": {
+      "network": "wifi",
+      "packages": ["pkgTags"]
     }
   },
   "tabBar": {
