@@ -1,1 +1,8 @@
-{ "navigationBarTitleText": "时间轴", "usingComponents": {} }
+{
+  "navigationBarTitleText": "朝夕居",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "stacked-polaroid": "/components/stacked-polaroid/index",
+    "timeline-filters": "/components/timeline-filters/index"
+  }
+}
