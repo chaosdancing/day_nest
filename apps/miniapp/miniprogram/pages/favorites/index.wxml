@@ -1,6 +1,33 @@
 <view class="page">
-  <view class="card">
-    <view class="title">收藏</view>
-    <view class="hint">即将上线 · v1 主线</view>
-  </view>
+  <view wx:if="{{loading && items.length === 0}}" class="empty">读取中…</view>
+  <view wx:elif="{{!loading && items.length === 0}}" class="empty">还没有收藏</view>
+
+  <scroll-view
+    class="grid"
+    scroll-y="true"
+    enable-back-to-top="true"
+    bindscrolltolower="onLoadMore"
+  >
+    <view
+      wx:for="{{items}}"
+      wx:key="id"
+      class="grid__cell"
+    >
+      <photo-tile
+        photoId="{{item.photo.id}}"
+        thumbnailUrl="{{item.photo.thumbnailUrl}}"
+        caption="{{item.collection.title}}"
+        favoritedByMe="{{true}}"
+        favoriteCount="{{item.photo.favoriteCount}}"
+        bind:tap="onPhotoTap"
+        bind:favoritetap="onFavoriteToggle"
+      />
+      <view class="grid__meta">
+        <text class="grid__date">{{item.collection.occurredOn}}</text>
+        <view wx:if="{{item.favoritedBy.length > 1}}" class="grid__by">+{{item.favoritedBy.length - 1}} 人也收藏</view>
+      </view>
+    </view>
+    <view wx:if="{{loadingMore}}" class="footer">加载更多…</view>
+    <view wx:elif="{{!nextCursor && items.length > 0}}" class="footer">到底了</view>
+  </scroll-view>
 </view>
