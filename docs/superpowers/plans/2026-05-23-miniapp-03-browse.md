@@ -2492,7 +2492,7 @@ describe('miniapp browse — end-to-end via real Fastify', () => {
       data: {
         title,
         occurredOn: new Date('2026-05-01'),
-        createdBy: userId,
+        createdById: userId,
         photoCount,
       },
     });
@@ -2507,7 +2507,7 @@ describe('miniapp browse — end-to-end via real Fastify', () => {
           caption: null,
           takenAt: null,
           orderIndex: i,
-          uploadedBy: userId,
+          uploadedById: userId,
         },
       });
       photos.push(p);
@@ -2575,7 +2575,7 @@ describe('miniapp browse — end-to-end via real Fastify', () => {
 
   it('tagsService.list() returns all tags with counts', async () => {
     const tag = await ctx.prisma.tag.create({
-      data: { name: 'travel', displayName: 'Travel' },
+      data: { name: 'travel', displayName: 'Travel', createdById: userId },
     });
     const { collection } = await seedCollection('tag-test', 1);
     await ctx.prisma.collectionTag.create({
