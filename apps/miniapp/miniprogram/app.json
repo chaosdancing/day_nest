@@ -12,8 +12,19 @@
       "root": "pkgOnboarding/",
       "name": "pkgOnboarding",
       "pages": ["register/index"]
+    },
+    {
+      "root": "pkgCollection/",
+      "name": "pkgCollection",
+      "pages": ["detail/index", "viewer/index"]
     }
   ],
+  "preloadRule": {
+    "pages/timeline/index": {
+      "network": "wifi",
+      "packages": ["pkgCollection"]
+    }
+  },
   "tabBar": {
     "custom": true,
     "color": "#6E5F4E",
