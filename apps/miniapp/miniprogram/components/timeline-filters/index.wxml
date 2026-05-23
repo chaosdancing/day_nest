@@ -1,0 +1,28 @@
+<view class="filters">
+  <scroll-view class="filters__chips" scroll-x="true">
+    <view
+      wx:for="{{presets}}"
+      wx:key="key"
+      class="chip {{active === item.key ? 'chip--on' : ''}}"
+      data-key="{{item.key}}"
+      bindtap="onPresetTap"
+    >{{item.label}}</view>
+  </scroll-view>
+
+  <view wx:if="{{active === 'custom'}}" class="filters__custom">
+    <picker mode="date" value="{{customFrom}}" bindchange="onCustomFrom">
+      <view class="filters__date">{{customFrom || '起 ▾'}}</view>
+    </picker>
+    <view class="filters__dash">—</view>
+    <picker mode="date" value="{{customTo}}" bindchange="onCustomTo">
+      <view class="filters__date">{{customTo || '止 ▾'}}</view>
+    </picker>
+  </view>
+
+  <input
+    class="filters__location"
+    placeholder="按地点筛选（可选）"
+    value="{{location}}"
+    bindinput="onLocation"
+  />
+</view>
