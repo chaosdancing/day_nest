@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "标签",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "stacked-polaroid": "/components/stacked-polaroid/index"
+  }
+}
