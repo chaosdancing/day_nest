@@ -12,6 +12,10 @@ export interface WxMock {
   queueLogin(res: { code: string }): void;
   /** Capture wx.navigateTo / wx.reLaunch / wx.switchTab calls. */
   navStack: Array<{ kind: 'navigateTo' | 'reLaunch' | 'switchTab'; url: string }>;
+  /** Configure the next wx.getImageInfo success payload. */
+  queueImageInfo(r: { width: number; height: number }): void;
+  /** Configure the next wx.compressImage success payload. */
+  queueCompressResult(r: { tempFilePath: string }): void;
 }
 
 export function installWxMock(opts: WxMockOptions = {}): WxMock {
@@ -19,6 +23,8 @@ export function installWxMock(opts: WxMockOptions = {}): WxMock {
   const requests: WxMock['requests'] = [];
   const requestQueue: Array<{ statusCode: number; data: unknown }> = [];
   const loginQueue: Array<{ code: string }> = [];
+  const imageInfoQueue: Array<{ width: number; height: number }> = [];
+  const compressQueue: Array<{ tempFilePath: string }> = [];
   const navStack: WxMock['navStack'] = [];
 
   const wx = {
@@ -69,6 +75,34 @@ export function installWxMock(opts: WxMockOptions = {}): WxMock {
     getNetworkType: (o: { success?: (r: { networkType: string }) => void }) => {
       Promise.resolve().then(() => o.success?.({ networkType: 'wifi' }));
     },
+
+    getImageInfo: (o: {
+      src: string;
+      success?: (r: { width: number; height: number }) => void;
+      fail?: (e: unknown) => void;
+    }) => {
+      const next = imageInfoQueue.shift();
+      if (!next) {
+        o.fail?.(new Error('no queued image info'));
+        return;
+      }
+      Promise.resolve().then(() => o.success?.(next));
+    },
+    compressImage: (o: {
+      src: string;
+      quality?: number;
+      compressedWidth?: number;
+      compressedHeight?: number;
+      success?: (r: { tempFilePath: string }) => void;
+      fail?: (e: unknown) => void;
+    }) => {
+      const next = compressQueue.shift();
+      if (!next) {
+        o.fail?.(new Error('no queued compress result'));
+        return;
+      }
+      Promise.resolve().then(() => o.success?.(next));
+    },
   };
 
   (globalThis as Record<string, unknown>).wx = wx;
@@ -79,6 +113,8 @@ export function installWxMock(opts: WxMockOptions = {}): WxMock {
     queueResponse: (r) => { requestQueue.push(r); },
     queueLogin: (r) => { loginQueue.push(r); },
     navStack,
+    queueImageInfo: (r) => { imageInfoQueue.push(r); },
+    queueCompressResult: (r) => { compressQueue.push(r); },
   };
 }
 
