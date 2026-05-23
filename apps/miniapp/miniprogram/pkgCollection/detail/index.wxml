@@ -1,0 +1,37 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="empty">读取中…</view>
+  <block wx:elif="{{!loading && collection}}">
+    <view class="header">
+      <view class="header__title">{{collection.title}}</view>
+      <view class="header__meta">
+        <text class="header__date">{{collection.occurredOn}}</text>
+        <text wx:if="{{collection.location}}" class="header__sep">·</text>
+        <text wx:if="{{collection.location}}" class="header__location">{{collection.location}}</text>
+      </view>
+      <view wx:if="{{collection.description}}" class="header__desc">{{collection.description}}</view>
+      <view wx:if="{{collection.tags.length}}" class="header__tags">
+        <view wx:for="{{collection.tags}}" wx:key="id" class="chip">#{{item.displayName}}</view>
+      </view>
+      <view class="header__count">共 {{collection.photoCount}} 张</view>
+    </view>
+
+    <view class="grid">
+      <view
+        wx:for="{{collection.photos}}"
+        wx:key="id"
+        class="grid__cell"
+        id="photo-{{item.id}}"
+      >
+        <photo-tile
+          photoId="{{item.id}}"
+          thumbnailUrl="{{item.thumbnailUrl}}"
+          caption=""
+          favoritedByMe="{{item.favoritedByMe}}"
+          favoriteCount="{{item.favoriteCount}}"
+          bind:tap="onPhotoTap"
+          bind:favoritetap="onFavoriteToggle"
+        />
+      </view>
+    </view>
+  </block>
+</view>

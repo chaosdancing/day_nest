@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "集合详情",
+  "usingComponents": {
+    "photo-tile": "/components/photo-tile/index"
+  }
+}

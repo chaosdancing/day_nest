@@ -1,0 +1,25 @@
+.page { background: var(--paper-cream); min-height: 100vh; padding-bottom: 80rpx; }
+.empty { padding: 200rpx 0; text-align: center; color: var(--ink-secondary); font-size: 26rpx; }
+.header { padding: 32rpx 32rpx 24rpx; }
+.header__title { font-size: 48rpx; color: var(--ink-primary); line-height: 1.2; }
+.header__meta { margin-top: 12rpx; font-size: 26rpx; color: var(--ink-secondary); display: flex; gap: 12rpx; align-items: center; }
+.header__sep { opacity: .5; }
+.header__desc { margin-top: 16rpx; font-size: 28rpx; color: var(--ink-primary); line-height: 1.5; }
+.header__tags { margin-top: 16rpx; display: flex; flex-wrap: wrap; gap: 10rpx; }
+.chip {
+  padding: 6rpx 18rpx;
+  background: var(--paper-aged);
+  color: var(--ink-primary);
+  border-radius: 999rpx;
+  font-size: 22rpx;
+}
+.header__count { margin-top: 16rpx; font-size: 22rpx; color: var(--ink-secondary); }
+.grid {
+  padding: 16rpx;
+  column-count: 2;
+  column-gap: 16rpx;
+}
+.grid__cell {
+  break-inside: avoid;
+  margin-bottom: 24rpx;
+}
