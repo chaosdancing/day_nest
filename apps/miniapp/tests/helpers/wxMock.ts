@@ -16,6 +16,10 @@ export interface WxMock {
   queueImageInfo(r: { width: number; height: number }): void;
   /** Configure the next wx.compressImage success payload. */
   queueCompressResult(r: { tempFilePath: string }): void;
+  /** Configure the next wx.uploadFile success payload. */
+  queueUploadFile(r: { statusCode: number; data: string }): void;
+  /** Captures every wx.uploadFile call in order. */
+  uploadFileCalls: Array<{ url: string; filePath: string; name: string; formData: Record<string, string> }>;
 }
 
 export function installWxMock(opts: WxMockOptions = {}): WxMock {
@@ -25,6 +29,8 @@ export function installWxMock(opts: WxMockOptions = {}): WxMock {
   const loginQueue: Array<{ code: string }> = [];
   const imageInfoQueue: Array<{ width: number; height: number }> = [];
   const compressQueue: Array<{ tempFilePath: string }> = [];
+  const uploadQueueResults: Array<{ statusCode: number; data: string }> = [];
+  const uploadFileCalls: WxMock['uploadFileCalls'] = [];
   const navStack: WxMock['navStack'] = [];
 
   const wx = {
@@ -103,6 +109,23 @@ export function installWxMock(opts: WxMockOptions = {}): WxMock {
       }
       Promise.resolve().then(() => o.success?.(next));
     },
+    uploadFile: (o: {
+      url: string;
+      filePath: string;
+      name: string;
+      formData: Record<string, string>;
+      success?: (r: { statusCode: number; data: string }) => void;
+      fail?: (e: unknown) => void;
+    }) => {
+      uploadFileCalls.push({ url: o.url, filePath: o.filePath, name: o.name, formData: o.formData });
+      const next = uploadQueueResults.shift();
+      if (!next) {
+        o.fail?.(new Error('no queued uploadFile result'));
+        return { abort: () => undefined };
+      }
+      Promise.resolve().then(() => o.success?.(next));
+      return { abort: () => undefined };
+    },
   };
 
   (globalThis as Record<string, unknown>).wx = wx;
@@ -115,6 +138,8 @@ export function installWxMock(opts: WxMockOptions = {}): WxMock {
     navStack,
     queueImageInfo: (r) => { imageInfoQueue.push(r); },
     queueCompressResult: (r) => { compressQueue.push(r); },
+    queueUploadFile: (r) => { uploadQueueResults.push(r); },
+    uploadFileCalls,
   };
 }
 
