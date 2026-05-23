@@ -1,0 +1,9 @@
+<view class="tile polaroid" style="transform: rotate({{angle}}deg);" bindtap="onTap">
+  <view class="tape tape--{{tape}}"></view>
+  <image class="polaroid__photo" src="{{thumbnailUrl}}" mode="aspectFill" lazy-load="true"></image>
+  <view wx:if="{{caption}}" class="polaroid__caption">{{caption}}</view>
+  <view wx:if="{{showHeart}}" class="tile__heart {{favoritedByMe ? 'tile__heart--on' : ''}}" catchtap="onFavoriteTap">
+    <view class="tile__heart-shape"></view>
+    <view wx:if="{{favoriteCount > 0}}" class="tile__heart-count">{{favoriteCount}}</view>
+  </view>
+</view>

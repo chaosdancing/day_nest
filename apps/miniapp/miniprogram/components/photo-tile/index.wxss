@@ -1,0 +1,23 @@
+.tile {
+  width: 100%;
+}
+.tile__heart {
+  position: absolute;
+  top: 12rpx;
+  right: 12rpx;
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 12rpx;
+  background: rgba(255,255,255,.85);
+  border-radius: 999rpx;
+  box-shadow: var(--shadow-sticker);
+}
+.tile__heart-shape {
+  width: 28rpx;
+  height: 28rpx;
+  background-color: var(--paper-aged);
+  clip-path: path('M14 25 L4 14 A6 6 0 0 1 14 6 A6 6 0 0 1 24 14 Z');
+}
+.tile__heart--on .tile__heart-shape { background-color: var(--ink-sticker); }
+.tile__heart-count { font-size: 22rpx; color: var(--ink-secondary); }
