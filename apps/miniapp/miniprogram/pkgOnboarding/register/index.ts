@@ -70,7 +70,8 @@ Page({
         const body = res.data as { error?: { code?: string; message?: string } };
         const code2 = body.error?.code ?? '';
         const message =
-          code2 === 'INVALID_INVITE' ? '邀请码无效或已过期'
+          code2 === 'INVALID_INVITE' ? '邀请码无效'
+          : code2 === 'INVITE_EXPIRED' ? '邀请码已过期'
           : code2 === 'INVITE_ALREADY_USED' ? '邀请码已被使用'
           : code2 === 'USERNAME_TAKEN' ? '登录名已被占用'
           : code2 === 'WECHAT_ALREADY_BOUND' ? '此微信已绑定其他账号'
