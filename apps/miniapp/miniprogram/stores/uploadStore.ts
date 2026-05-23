@@ -33,8 +33,14 @@ function todayLocal(): string {
 }
 
 function newDraftId(): string {
-  const maybe = (crypto as { randomUUID?: () => string }).randomUUID?.();
-  if (typeof maybe === 'string') return maybe;
+  // WeChat mini-program runtime does NOT expose a `crypto` global; only
+  // `wx.getRandomValues` exists. Referencing `crypto` bare would throw
+  // `ReferenceError` at module-load. Guard with `typeof` (the only existence
+  // check that survives an undeclared identifier).
+  if (typeof crypto !== 'undefined') {
+    const maybe = (crypto as { randomUUID?: () => string }).randomUUID?.();
+    if (typeof maybe === 'string') return maybe;
+  }
   return 'd-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
 }
 

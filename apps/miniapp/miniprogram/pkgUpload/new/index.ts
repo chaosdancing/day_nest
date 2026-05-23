@@ -50,6 +50,7 @@ Page({
   } as PageData,
 
   onLoad() {
+    compressedPaths.clear();
     uploadStore.reset();
     this.syncFromStore();
     unsubscribe = uploadStore.subscribe(() => this.syncFromStore());
@@ -58,6 +59,7 @@ Page({
   },
 
   onUnload() {
+    compressedPaths.clear();
     unsubscribe?.();
     unsubscribe = null;
     titleSearch?.cancel();
@@ -117,9 +119,13 @@ Page({
         height: f.height ?? 0,
         size: f.size,
       }));
+      // Capture emptiness BEFORE the store mutation: addPhotos runs its
+      // subscribers synchronously (syncFromStore → setData), and setData
+      // updates `this.data` synchronously — so reading
+      // `this.data.photos.length` after addPhotos always sees the new items.
+      const wasEmpty = this.data.photos.length === 0;
       uploadStore.addPhotos(items);
-      // Background EXIF for default-date heuristic on the FIRST photo only.
-      if (this.data.photos.length === 0 && items[0]) {
+      if (wasEmpty && items[0]) {
         void this.tryDefaultDateFrom(items[0].originalPath);
       }
     } catch {
@@ -144,6 +150,7 @@ Page({
   onRemovePhoto(e: WechatMiniprogram.TouchEvent) {
     if (this.data.uploading) return;
     const id = e.currentTarget.dataset.id as string;
+    compressedPaths.delete(id);
     uploadStore.removePhoto(id);
   },
 
@@ -243,10 +250,10 @@ Page({
             uploadUrl: token.uploadUrl,
             filePath: compressed.path,
           });
-          await Promise.race([
-            Promise.resolve(exifByPhoto.get(p.id)),
-            new Promise<null>((r) => setTimeout(() => r(null), 50)),
-          ]);
+          // takenAt is best-effort: whatever the parallel EXIF read has landed
+          // into `exifByPhoto` by the time the upload returns is good enough.
+          // The previous Promise.race-against-Promise.resolve idiom was dead
+          // code (the already-resolved branch always won), so we drop it.
           uploadStore.setStage(p.id, {
             kind: 'done',
             fileKey: ret.key,
@@ -294,8 +301,19 @@ Page({
       }
       setTimeout(() => wx.navigateBack(), 700);
     } catch (err) {
+      // Reset any photos still mid-pipeline so the cell overlay reflects the
+      // failure (otherwise "上传 0%" / "压缩中…" stays stuck) AND so that the
+      // subscriber-driven syncFromStore re-runs to recompute `canSubmit` with
+      // `uploading=false`, letting the user retry.
+      const cur = uploadStore.get();
+      for (const photo of cur.photos) {
+        if (photo.stage.kind === 'uploading' || photo.stage.kind === 'compressing') {
+          uploadStore.setStage(photo.id, { kind: 'failed', error: String(err) });
+        }
+      }
       wx.showToast({ title: '上传失败', icon: 'none' });
       this.setData({ uploading: false });
+      this.syncFromStore();
       console.error('upload submit', err);
     }
   },

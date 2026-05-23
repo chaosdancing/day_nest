@@ -17,7 +17,6 @@ import { collectionsService } from '../../../miniapp/miniprogram/lib/services/co
 describe('miniapp upload — end-to-end against real Fastify', () => {
   let mock: WxMock;
   let ctx: Awaited<ReturnType<typeof buildApp>>;
-  let userId: string;
 
   beforeEach(async () => {
     mock = installWxMock();
@@ -31,7 +30,6 @@ describe('miniapp upload — end-to-end against real Fastify', () => {
         passwordHash: await hashPassword('uploaderpw123'),
       },
     });
-    userId = user.id;
     const accessToken = await signAccess(
       { sub: user.id },
       ctx.config.jwt.secret,
