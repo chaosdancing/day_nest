@@ -1,0 +1,42 @@
+<view class="page">
+  <view class="head">
+    <text class="head__emoji">🔗</text>
+    <view class="head__title scribble">绑定慢慢记</view>
+    <view class="head__sub mono-label">LINK YOUR ACCOUNT</view>
+  </view>
+
+  <view class="hint">把你的微信和已有的慢慢记账号关联起来。</view>
+
+  <view class="field">
+    <view class="label mono-label">登录名</view>
+    <input
+      class="input"
+      placeholder-class="input-placeholder"
+      placeholder="输入登录名"
+      value="{{username}}"
+      bindinput="onUsername"
+    />
+  </view>
+
+  <view class="field">
+    <view class="label mono-label">密码</view>
+    <input
+      class="input"
+      placeholder-class="input-placeholder"
+      password="{{true}}"
+      placeholder="输入密码"
+      value="{{password}}"
+      bindinput="onPassword"
+    />
+  </view>
+
+  <button class="primary" disabled="{{!canSubmit || loading}}" bindtap="onSubmit">
+    {{loading ? '绑定中...' : '绑定并进入'}}
+  </button>
+
+  <view wx:if="{{error}}" class="error">{{error}}</view>
+
+  <view class="secondary" bindtap="onGoRegister">
+    没有账号？用邀请码注册
+  </view>
+</view>

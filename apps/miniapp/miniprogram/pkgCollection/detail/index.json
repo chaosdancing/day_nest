@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "回忆详情",
+  "usingComponents": {
+    "photo-tile": "/components/photo-tile/index",
+    "tape-chip": "/components/tape-chip/index",
+    "tag-picker": "/components/tag-picker/index"
+  }
+}

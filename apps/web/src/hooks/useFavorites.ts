@@ -34,7 +34,11 @@ export function useToggleFavorite() {
     mutationFn: async ({ photoId, favorited }) => {
       const res = favorited
         ? await api.post<PhotoDTO>(`/photos/${photoId}/favorite`)
-        : await api.delete<PhotoDTO>(`/photos/${photoId}/favorite`);
+        // Some browser/proxy combinations preserve `content-type:
+        // application/json` on DELETE but send an empty body, which Fastify
+        // rejects before the route runs. Send an explicit empty JSON object
+        // so the request is well-formed while the route still ignores body.
+        : await api.delete<PhotoDTO>(`/photos/${photoId}/favorite`, { data: {} });
       return res.data;
     },
     onSuccess: (photo, vars) => {

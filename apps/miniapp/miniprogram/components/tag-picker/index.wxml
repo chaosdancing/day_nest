@@ -1,0 +1,26 @@
+<view class="picker">
+  <view class="chips">
+    <view wx:for="{{value}}" wx:key="*this" class="chip">
+      #{{item}}
+      <view class="chip__x" data-tag="{{item}}" bindtap="onRemove">×</view>
+    </view>
+    <input
+      class="chip__input"
+      placeholder="{{placeholder}}"
+      value="{{draft}}"
+      bindinput="onInput"
+      bindconfirm="onConfirm"
+      confirm-type="done"
+      maxlength="40"
+    />
+  </view>
+  <view wx:if="{{visibleSuggestions.length > 0}}" class="suggest">
+    <view
+      wx:for="{{visibleSuggestions}}"
+      wx:key="*this"
+      class="suggest__chip"
+      data-tag="{{item}}"
+      bindtap="onPickSuggest"
+    >#{{item}}</view>
+  </view>
+</view>

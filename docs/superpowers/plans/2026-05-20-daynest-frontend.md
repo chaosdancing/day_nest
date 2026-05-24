@@ -252,7 +252,7 @@ Wrapper for sections that should sit on a darker kraft paper, with inner shadow.
 
 ## Task 7: App shell + header
 
-- [ ] `AppHeader` — top bar with logo wordmark (handwritten), nav links (时间轴 / 标签 / 上传), user menu with avatar
+- [ ] `AppHeader` — top bar with logo wordmark (handwritten), nav links (时光轴 / 标签 / 上传), user menu with avatar
 - [ ] Layout shell wraps all routes
 
 ---

@@ -1,0 +1,63 @@
+{
+  "pages": [
+    "pages/login/index",
+    "pages/bind/index",
+    "pages/dev-login/index",
+    "pages/timeline/index",
+    "pages/favorites/index",
+    "pages/tags/index",
+    "pages/me/index"
+  ],
+  "subPackages": [
+    {
+      "root": "pkgOnboarding/",
+      "name": "pkgOnboarding",
+      "pages": ["register/index"]
+    },
+    {
+      "root": "pkgCollection/",
+      "name": "pkgCollection",
+      "pages": ["detail/index", "viewer/index"]
+    },
+    {
+      "root": "pkgTags/",
+      "name": "pkgTags",
+      "pages": ["pinboard/index", "rename/index"]
+    },
+    {
+      "root": "pkgUpload/",
+      "name": "pkgUpload",
+      "pages": ["new/index"]
+    }
+  ],
+  "preloadRule": {
+    "pages/timeline/index": {
+      "network": "wifi",
+      "packages": ["pkgCollection", "pkgUpload"]
+    },
+    "pages/tags/index": {
+      "network": "wifi",
+      "packages": ["pkgTags"]
+    }
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#6E5F4E",
+    "selectedColor": "#2A2520",
+    "backgroundColor": "#FBF4E4",
+    "list": [
+      { "pagePath": "pages/timeline/index", "text": "时光轴" },
+      { "pagePath": "pages/favorites/index", "text": "最爱" },
+      { "pagePath": "pages/tags/index", "text": "标签" },
+      { "pagePath": "pages/me/index", "text": "我的" }
+    ]
+  },
+  "window": {
+    "navigationBarBackgroundColor": "#FBF4E4",
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "慢慢记",
+    "backgroundColor": "#FBF4E4"
+  },
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

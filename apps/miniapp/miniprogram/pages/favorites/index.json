@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "最爱",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "page-hero": "/components/page-hero/index",
+    "photo-tile": "/components/photo-tile/index"
+  }
+}

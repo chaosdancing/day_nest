@@ -5,6 +5,7 @@ import helmet from '@fastify/helmet';
 import type { AppConfig } from './config.js';
 import type { StorageProvider } from './storage/provider.js';
 import type { PrismaClient } from '@prisma/client';
+import type { WechatClient } from './wechat/client.js';
 import { authPlugin } from './auth/plugin.js';
 import { AppError } from './lib/errors.js';
 import { registerInviteRoutes } from './routes/invites.js';
@@ -14,11 +15,13 @@ import { registerCollectionRoutes } from './routes/collections.js';
 import { registerPhotoRoutes } from './routes/photos.js';
 import { registerTagRoutes } from './routes/tags.js';
 import { registerFavoritesRoutes } from './routes/favorites.js';
+import { registerWechatRoutes } from './routes/wechat.js';
 
 export type AppDeps = {
   config: AppConfig;
   storage: StorageProvider;
   prisma: PrismaClient;
+  wechat: WechatClient;
 };
 
 declare module 'fastify' {
@@ -74,6 +77,7 @@ export async function buildServer(
     await registerPhotoRoutes(app);
     await registerTagRoutes(app);
     await registerFavoritesRoutes(app);
+    await registerWechatRoutes(app);
   }
 
   return app;

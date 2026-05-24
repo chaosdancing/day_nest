@@ -3,6 +3,7 @@ import {
   RegisterInput,
   LoginInput,
   UpdateProfileInput,
+  RefreshTokenInput,
   type AuthResponse,
 } from '@daynest/shared';
 import { hashPassword, verifyPassword } from '../auth/password.js';
@@ -17,6 +18,7 @@ type UserRecord = {
   username: string;
   displayName: string;
   avatarKey: string | null;
+  wechatOpenId: string | null;
 };
 
 function toUserDTO(u: UserRecord) {
@@ -25,6 +27,7 @@ function toUserDTO(u: UserRecord) {
     username: u.username,
     displayName: u.displayName,
     avatarKey: u.avatarKey,
+    hasWechatBound: u.wechatOpenId !== null,
   };
 }
 
@@ -116,6 +119,54 @@ export async function registerAuthRoutes(app: FastifyInstance) {
     });
     if (!user) throw new AppError(401, 'USER_GONE', 'user not found');
     return issueTokens(app, reply, user);
+  });
+
+  // Body-mode refresh for the WeChat mini-app, which can't carry HttpOnly cookies.
+  // Returns BOTH tokens in the body, and also sets the refresh cookie so web
+  // clients hitting this endpoint stay in sync.
+  app.post('/api/auth/refresh-token', async (req, reply) => {
+    const parsed = RefreshTokenInput.safeParse(req.body);
+    if (!parsed.success) {
+      throw new AppError(
+        400,
+        'VALIDATION_ERROR',
+        parsed.error.issues.map((i) => i.message).join('; ')
+      );
+    }
+    let claims;
+    try {
+      claims = await verifyRefresh(
+        parsed.data.refreshToken,
+        app.deps.config.jwt.refreshSecret
+      );
+    } catch {
+      throw new AppError(401, 'BAD_REFRESH', 'invalid refresh');
+    }
+    const user = await app.deps.prisma.user.findUnique({
+      where: { id: claims.sub },
+    });
+    if (!user) throw new AppError(401, 'USER_GONE', 'user not found');
+
+    const access = await signAccess(
+      { sub: user.id },
+      app.deps.config.jwt.secret,
+      app.deps.config.jwt.accessTtl
+    );
+    const refresh = await signRefresh(
+      { sub: user.id },
+      app.deps.config.jwt.refreshSecret,
+      app.deps.config.jwt.refreshTtl
+    );
+    reply.setCookie(REFRESH_COOKIE, refresh, {
+      httpOnly: true,
+      secure: app.deps.config.env === 'production',
+      sameSite: 'lax',
+      path: '/api/auth',
+      domain: app.deps.config.cookieDomain,
+      maxAge: app.deps.config.jwt.refreshTtl,
+    });
+
+    return { accessToken: access, refreshToken: refresh };
   });
 
   app.post('/api/auth/logout', async (_req, reply) => {

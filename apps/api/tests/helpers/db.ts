@@ -34,6 +34,7 @@ const TABLES = [
   'Collection',
   'Invite',
   'Tag',
+  'WechatSubscription',
   'User',
 ];
 

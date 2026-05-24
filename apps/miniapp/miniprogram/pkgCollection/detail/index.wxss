@@ -1,0 +1,213 @@
+.page {
+  background: var(--paper-cream);
+  min-height: 100vh;
+  padding-bottom: 80rpx;
+  overflow-x: hidden;
+}
+
+.empty {
+  padding: 200rpx 48rpx;
+  text-align: center;
+}
+.empty__emoji { display: inline-block; font-size: 80rpx; line-height: 1; }
+.empty__title { margin-top: 16rpx; font-size: 52rpx; line-height: 1.1; }
+
+/* Hero polaroid — mirrors apps/web/src/pages/CollectionDetailPage.tsx
+   <Polaroid aspectRatio={16/10} className="max-w-2xl mx-auto" />.
+   Generous side padding so the rotated card + shadow have room. */
+.hero {
+  padding: 48rpx 56rpx 16rpx;
+  position: relative;
+}
+.hero__polaroid {
+  margin: 0 auto;
+  max-width: 600rpx;
+  position: relative;
+}
+/* 16:10 aspect ratio via the standard padding-top hack so it renders
+   reliably on WeChat where `aspect-ratio` is patchy. */
+.hero__frame {
+  padding-top: 62.5%;
+}
+
+/* Header — handwritten title + meta. Visual parity with apps/web/src/pages/CollectionDetailPage.tsx */
+.header {
+  padding: 24rpx 32rpx 24rpx;
+  text-align: center;
+}
+.header__date {
+  margin-bottom: 4rpx;
+}
+.header__title {
+  font-size: 84rpx;
+  line-height: 1.1;
+  color: var(--ink-primary);
+  word-break: break-word;
+}
+.header__edit {
+  margin: 14rpx auto 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 252, 245, .78);
+  border: 1px solid rgba(168, 138, 92, .32);
+  color: var(--ink-secondary);
+  font-size: 24rpx;
+  box-shadow: 0 4rpx 12rpx rgba(42, 37, 32, .08);
+}
+.header__loc {
+  margin-top: 16rpx;
+  font-size: 26rpx;
+  color: var(--ink-secondary);
+}
+.header__desc {
+  margin-top: 16rpx;
+  font-size: 28rpx;
+  color: var(--ink-primary);
+  line-height: 1.6;
+  text-align: left;
+}
+.header__tags {
+  margin-top: 20rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  justify-content: center;
+}
+.header__count {
+  margin-top: 24rpx;
+}
+
+.grid {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 40rpx 40rpx 120rpx;
+  overflow-x: hidden;
+}
+.masonry {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-start;
+  gap: 24rpx;
+}
+.masonry__col {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.grid__cell {
+  padding: 18rpx 10rpx 0;
+  box-sizing: border-box;
+  margin-bottom: 36rpx;
+}
+
+.edit-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(42, 37, 32, .42);
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+}
+.edit-drawer {
+  width: 100%;
+  max-height: 82vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 30rpx 32rpx 72rpx;
+  background: var(--paper-cream);
+  border-radius: 28rpx 28rpx 0 0;
+  box-shadow: 0 -16rpx 42rpx rgba(42, 37, 32, .22);
+}
+.edit__handle {
+  width: 82rpx;
+  height: 7rpx;
+  border-radius: 999rpx;
+  margin: 0 auto 22rpx;
+  background: rgba(168, 138, 92, .36);
+}
+.edit__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 22rpx;
+}
+.edit__title {
+  font-size: 52rpx;
+  line-height: 1.05;
+  color: var(--kraft-dark);
+}
+.edit__field {
+  display: block;
+  margin-top: 22rpx;
+}
+.edit__row {
+  display: flex;
+  gap: 22rpx;
+  align-items: flex-start;
+}
+.edit__field--half {
+  flex: 1;
+  min-width: 0;
+}
+.edit__label {
+  display: block;
+  margin-bottom: 10rpx;
+  font-family: var(--font-mono);
+  font-size: 20rpx;
+  letter-spacing: 4rpx;
+  color: var(--ink-secondary);
+}
+.edit__input,
+.edit__textarea,
+.edit__picker {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(168, 138, 92, .3);
+  border-radius: 18rpx;
+  background: rgba(255, 252, 245, .78);
+  color: var(--ink-primary);
+  font-size: 28rpx;
+}
+.edit__input,
+.edit__picker {
+  min-height: 72rpx;
+  line-height: 72rpx;
+  padding: 0 18rpx;
+}
+.edit__input--hand {
+  font-family: var(--font-hand);
+  font-size: 34rpx;
+}
+.edit__textarea {
+  min-height: 150rpx;
+  padding: 16rpx 18rpx;
+  line-height: 1.45;
+  font-family: var(--font-serif);
+}
+.edit__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 18rpx;
+  margin-top: 30rpx;
+  padding-top: 22rpx;
+  border-top: 1px solid rgba(168, 138, 92, .22);
+}
+.edit__cancel,
+.edit__save {
+  padding: 14rpx 28rpx;
+  border-radius: 999rpx;
+  font-size: 26rpx;
+}
+.edit__cancel {
+  color: var(--ink-secondary);
+}
+.edit__save {
+  background: var(--kraft-base);
+  color: var(--paper-cream);
+  box-shadow: 0 8rpx 20rpx rgba(42, 37, 32, .16);
+}

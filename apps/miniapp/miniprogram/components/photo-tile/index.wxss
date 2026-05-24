@@ -1,0 +1,90 @@
+/* PhotoTile — single polaroid card used by Favorites + CollectionDetail.
+   Inherits .polaroid base styles (white bg, shadow, padding 20/20/88/20)
+   and the .polaroid__photo-frame padding-top 4:3 trick. Only adds the
+   heart overlay + a touch-feedback transition. */
+
+:host {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.tile {
+  width: 100%;
+  box-sizing: border-box;
+  /* Override the base polaroid bottom padding: photo-tile usually doesn't
+     render a caption, so the giant 88rpx bottom band would feel empty. The
+     stacked-polaroid keeps the bigger band because IT shows the caption. */
+  padding: 14rpx 14rpx 18rpx 14rpx;
+  transform-origin: center center;
+  transition: transform 220ms ease;
+}
+
+/* When a caption IS provided (Favorites passes the collection title),
+   render it INLINE under the photo instead of absolute-positioned. Avoids
+   the empty-band-vs-caption-needs-room conflict.
+   Visual parity with apps/web/src/pages/FavoritesPage.tsx — `font-hand`,
+   left-aligned, truncate, kraft-dark color. */
+.tile .polaroid__caption {
+  position: static;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  margin-top: 10rpx;
+  padding: 0 4rpx 0;
+  font-family: var(--font-hand);
+  font-size: 28rpx;
+  line-height: 1.15;
+  color: var(--kraft-dark);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Small mono-date / scope line under the caption. Mirrors web's
+   `<p className="font-mono text-[10px] uppercase tracking-widest text-ink/40">`. */
+.tile__subtitle {
+  margin: 4rpx 4rpx 2rpx;
+  font-size: 18rpx;
+  letter-spacing: 4rpx;
+  color: rgba(42, 37, 32, .42);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ♡ / ♥ overlay heart. Pure Unicode glyph (clip-path SVG was unreliable
+   on older WX baselibs and rendered as a colored rectangle). */
+.tile__heart {
+  position: absolute;
+  top: 18rpx;
+  right: 18rpx;
+  display: inline-flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 4rpx 12rpx;
+  background: rgba(255, 255, 255, .92);
+  border-radius: 999rpx;
+  box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, .15);
+  z-index: 5;
+}
+.tile__heart-glyph {
+  font-size: 32rpx;
+  line-height: 1;
+  color: rgba(42, 37, 32, .55);
+}
+.tile__heart--on .tile__heart-glyph {
+  color: var(--pin-red);
+  text-shadow: 0 1rpx 2rpx rgba(210, 59, 59, .25);
+}
+.tile__heart-count {
+  font-family: var(--font-mono);
+  font-size: 20rpx;
+  color: var(--ink-secondary);
+  padding-right: 2rpx;
+}
+.tile__heart--on .tile__heart-count {
+  color: var(--pin-red);
+}

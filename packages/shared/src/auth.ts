@@ -19,6 +19,7 @@ export const UserDTO = z.object({
   username: z.string(),
   displayName: z.string(),
   avatarKey: z.string().nullable(),
+  hasWechatBound: z.boolean(),
 });
 export type UserDTO = z.infer<typeof UserDTO>;
 

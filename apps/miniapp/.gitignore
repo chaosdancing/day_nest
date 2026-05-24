@@ -1,0 +1,6 @@
+node_modules/
+miniprogram/dist/
+miniprogram/styles/tokens.wxss
+project.private.config.json
+ci-key/
+*.log

@@ -1,0 +1,21 @@
+<view class="page">
+  <view class="hero">
+    <view class="hero__brand mono-label">DAYNEST · 慢慢记</view>
+    <view class="hero__title scribble">收纳烟火日常</view>
+    <view class="hero__title scribble">酿造专属回忆</view>
+  </view>
+
+  <button class="primary" disabled="{{loading}}" bindtap="onWechatLogin">
+    {{loading ? '请稍候...' : '微信一键进入'}}
+  </button>
+
+  <view class="secondary" bindtap="onGoRegister">
+    没有慢慢记账号？用邀请码注册
+  </view>
+
+  <view wx:if="{{showDevLogin}}" class="secondary secondary--dev" bindtap="onGoDevLogin">
+    开发登录（账号密码，仅 DevTools / 体验版）
+  </view>
+
+  <view wx:if="{{error}}" class="error">{{error}}</view>
+</view>

@@ -1,0 +1,21 @@
+{
+  "name": "@daynest/miniapp",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p .",
+    "build:watch": "tsc -p . --watch",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "tokens": "node scripts/generate-tokens-wxss.mjs"
+  },
+  "dependencies": {
+    "@daynest/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "miniprogram-api-typings": "^3.12.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}

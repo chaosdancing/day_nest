@@ -1,0 +1,12 @@
+<view class="bar">
+  <view
+    wx:for="{{list}}"
+    wx:key="pagePath"
+    class="item {{active === index ? 'item--active' : ''}}"
+    data-idx="{{index}}"
+    bindtap="onTap"
+  >
+    <view class="icon">{{item.icon}}</view>
+    <view class="label">{{item.text}}</view>
+  </view>
+</view>

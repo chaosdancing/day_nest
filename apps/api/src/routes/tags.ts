@@ -44,6 +44,64 @@ export async function registerTagRoutes(app: FastifyInstance) {
       );
   });
 
+  app.get(
+    '/api/tags/:name/photos',
+    { onRequest: [app.requireUser] },
+    async (req) => {
+      const { name } = req.params as { name: string };
+      const query = req.query as { limit?: string; cursor?: string };
+      const tag = await findTagByEncodedName(app, name);
+      const limit = Math.max(1, Math.min(50, Number(query.limit ?? 30) || 30));
+      const rows = await app.deps.prisma.photo.findMany({
+        where: {
+          tags: { some: { tagId: tag.id } },
+        },
+        include: {
+          tags: { include: { tag: true } },
+          favorites: { select: { userId: true } },
+          collection: {
+            select: {
+              id: true,
+              title: true,
+              occurredOn: true,
+              location: true,
+            },
+          },
+        },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: limit + 1,
+        ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
+      });
+      const page = rows.slice(0, limit);
+      return {
+        items: page.map((p) => ({
+          photo: {
+            id: p.id,
+            collectionId: p.collectionId,
+            fileKey: p.fileKey,
+            width: p.width,
+            height: p.height,
+            caption: p.caption,
+            takenAt: p.takenAt ? p.takenAt.toISOString() : null,
+            orderIndex: p.orderIndex,
+            uploadedBy: p.uploadedById,
+            thumbnailUrl: app.deps.storage.signThumbnail(p.fileKey, 800),
+            tags: p.tags.map((pt) => pt.tag.displayName),
+            favoriteCount: p.favorites.length,
+            favoritedByMe: p.favorites.some((f) => f.userId === req.user.id),
+          },
+          collection: {
+            id: p.collection.id,
+            title: p.collection.title,
+            occurredOn: p.collection.occurredOn.toISOString().slice(0, 10),
+            location: p.collection.location,
+          },
+        })),
+        nextCursor: rows.length > limit ? rows[limit]!.id : null,
+      };
+    }
+  );
+
   /**
    * PATCH /api/tags/:name
    *

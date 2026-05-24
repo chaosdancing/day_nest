@@ -1,0 +1,44 @@
+<view class="filters">
+  <scroll-view class="filters__chips" scroll-x="true" enhanced="{{true}}" show-scrollbar="{{false}}">
+    <block wx:for="{{presets}}" wx:key="key">
+      <view class="chip {{active === item.key ? 'chip--on' : ''}}">
+        <view
+          class="chip__btn {{active === item.key && item.key !== 'all' ? 'chip__btn--has-clear' : ''}}"
+          data-key="{{item.key}}"
+          bindtap="onPresetTap"
+        >
+          <text class="chip__emoji">{{item.emoji}}</text>
+          <text class="chip__label">{{item.label}}</text>
+        </view>
+        <view
+          wx:if="{{active === item.key && item.key !== 'all'}}"
+          class="chip__clear"
+          catchtap="onClearActive"
+        >×</view>
+      </view>
+    </block>
+  </scroll-view>
+
+  <view wx:if="{{active === 'custom'}}" class="filters__custom">
+    <text class="filters__custom-label">RANGE</text>
+    <picker mode="date" value="{{customFrom}}" bindchange="onCustomFrom">
+      <view class="filters__date">{{customFrom || '起 ▾'}}</view>
+    </picker>
+    <text class="filters__dash">→</text>
+    <picker mode="date" value="{{customTo}}" bindchange="onCustomTo">
+      <view class="filters__date">{{customTo || '止 ▾'}}</view>
+    </picker>
+  </view>
+
+  <view class="filters__search {{location ? 'filters__search--filled' : ''}}">
+    <text class="filters__search-icon">📍</text>
+    <input
+      class="filters__search-input"
+      placeholder="地点 (北京 / 海边)"
+      placeholder-class="filters__search-placeholder"
+      value="{{location}}"
+      bindinput="onLocation"
+    />
+    <view wx:if="{{location}}" class="filters__search-clear" catchtap="onLocationClear">×</view>
+  </view>
+</view>

@@ -1,0 +1,37 @@
+<view class="stack">
+  <!-- Back layers — peek from behind, no caption, no interaction. -->
+  <view
+    wx:for="{{backLayers}}"
+    wx:key="key"
+    class="polaroid stack__back"
+    style="transform: {{item.transform}};"
+  >
+    <view class="polaroid__photo-frame">
+      <image
+        class="polaroid__photo"
+        src="{{item.thumb}}"
+        mode="aspectFill"
+        lazy-load="true"
+      />
+    </view>
+  </view>
+
+  <!-- Front cover — defines the bounding box. -->
+  <view
+    wx:if="{{frontThumb}}"
+    class="polaroid stack__front"
+    style="transform: rotate({{frontAngle}}deg);"
+  >
+    <view wx:if="{{tape >= 0}}" class="tape tape--{{tape}}"></view>
+    <view class="polaroid__photo-frame">
+      <image
+        class="polaroid__photo"
+        src="{{frontThumb}}"
+        mode="aspectFill"
+        lazy-load="true"
+      />
+    </view>
+    <view wx:if="{{caption}}" class="polaroid__caption stack__caption">{{caption}}</view>
+    <view wx:if="{{photoCount > 1}}" class="stack__count">📷 {{photoCount}}</view>
+  </view>
+</view>

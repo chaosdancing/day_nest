@@ -1,0 +1,105 @@
+<view class="page">
+  <page-hero
+    emoji="💖"
+    title="最爱"
+    subtitle="FAVORITES · {{items.length}} {{items.length === 1 ? 'STAMP' : 'STAMPS'}}"
+    motion="bounce"
+    emojiClass="tinted-red"
+  />
+
+  <view wx:if="{{loading && items.length === 0}}" class="empty">
+    <text class="empty__emoji">💝</text>
+    <view class="empty__title scribble">正在翻心愿盒...</view>
+  </view>
+  <view wx:elif="{{!loading && items.length === 0}}" class="empty">
+    <text class="empty__emoji">🤍</text>
+    <view class="empty__title scribble">还没有最爱</view>
+    <view class="empty__sub">打开时光轴，点照片右上角的小心心 ♡ 标成最爱。</view>
+  </view>
+
+  <scroll-view
+    class="grid"
+    scroll-y="true"
+    enable-back-to-top="true"
+    bindscrolltolower="onLoadMore"
+  >
+    <view class="masonry">
+      <view class="masonry__col">
+        <view
+          wx:for="{{leftItems}}"
+          wx:key="id"
+          class="grid__cell"
+        >
+          <!-- Photo polaroid — natural aspect ratio gives the masonry stagger. -->
+          <photo-tile
+            photoId="{{item.photo.id}}"
+            thumbnailUrl="{{item.photo.thumbnailUrl}}"
+            caption="{{item.collection.title}}"
+            subtitle="{{item.displayDate}}"
+            frameStyle="{{item.frameStyle}}"
+            tiltDeg="{{item.tiltDeg}}"
+            favoritedByMe="{{true}}"
+            favoriteCount="{{item.photo.favoriteCount}}"
+            bind:phototap="onPhotoTap"
+            bind:favoritetap="onFavoriteToggle"
+          />
+
+          <!-- "Who else loved this" actor list — mirrors web's <ul> under the
+               polaroid. Up to 3 lines + a "+N more" footer. -->
+          <view wx:if="{{item.actors.length}}" class="actors">
+            <view
+              wx:for="{{item.actors}}"
+              wx:for-item="actor"
+              wx:key="userId"
+              class="actors__line"
+            >
+              <text class="actors__heart">♥</text>
+              <text class="actors__name">{{actor.label}}</text>
+            </view>
+            <view wx:if="{{item.remainingActors > 0}}" class="actors__more mono-label">
+              +{{item.remainingActors}} 也最爱了
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="masonry__col">
+        <view
+          wx:for="{{rightItems}}"
+          wx:key="id"
+          class="grid__cell"
+        >
+          <photo-tile
+            photoId="{{item.photo.id}}"
+            thumbnailUrl="{{item.photo.thumbnailUrl}}"
+            caption="{{item.collection.title}}"
+            subtitle="{{item.displayDate}}"
+            frameStyle="{{item.frameStyle}}"
+            tiltDeg="{{item.tiltDeg}}"
+            favoritedByMe="{{true}}"
+            favoriteCount="{{item.photo.favoriteCount}}"
+            bind:phototap="onPhotoTap"
+            bind:favoritetap="onFavoriteToggle"
+          />
+
+          <view wx:if="{{item.actors.length}}" class="actors">
+            <view
+              wx:for="{{item.actors}}"
+              wx:for-item="actor"
+              wx:key="userId"
+              class="actors__line"
+            >
+              <text class="actors__heart">♥</text>
+              <text class="actors__name">{{actor.label}}</text>
+            </view>
+            <view wx:if="{{item.remainingActors > 0}}" class="actors__more mono-label">
+              +{{item.remainingActors}} 也最爱了
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{loadingMore}}" class="footer">加载更多…</view>
+    <view wx:elif="{{!nextCursor && items.length > 0}}" class="footer">到底了</view>
+  </scroll-view>
+</view>

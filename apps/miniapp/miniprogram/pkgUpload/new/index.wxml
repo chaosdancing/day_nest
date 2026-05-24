@@ -1,0 +1,141 @@
+<view class="page">
+  <page-hero
+    emoji="📸"
+    title="{{photos.length ? '这次回忆叫什么' : '上传一段回忆'}}"
+    subtitle="{{photos.length ? 'STEP 2 · 填资料' : 'STEP 1 · 选照片'}} · {{photos.length}} PHOTOS"
+    motion="bounce"
+  />
+
+  <view wx:if="{{photos.length === 0}}" class="dropzone" bindtap="onPickMore">
+    <view class="dropzone__emoji">🖼️</view>
+    <view class="dropzone__title scribble">点击选择照片</view>
+    <view class="dropzone__sub">单次最多 50 张 · 端上压缩后上传</view>
+  </view>
+
+  <view wx:else class="photos-card">
+    <view class="card-head">
+      <view>
+        <view class="card-head__title scribble">照片草稿</view>
+        <view class="card-head__sub mono-label">{{photos.length}} SELECTED</view>
+      </view>
+      <view wx:if="{{!uploading && photos.length < 50}}" class="add-more" bindtap="onPickMore">
+        <text class="add-more__plus">+</text>
+        <text class="add-more__text">添加</text>
+      </view>
+    </view>
+
+    <view class="masonry">
+      <view class="masonry__col">
+        <view wx:for="{{leftPhotos}}" wx:key="id" class="draft">
+          <view class="draft__polaroid" style="transform: rotate({{item.tiltDeg}}deg);">
+            <view class="tape tape--{{index % 4}}"></view>
+            <view class="draft__frame" style="{{item.frameStyle}}">
+              <image class="draft__img" src="{{item.thumbPath}}" mode="aspectFill" />
+            </view>
+            <view class="draft__caption mono-label">
+              {{item.stage.kind === 'queued' ? 'READY' : item.stage.kind}}
+            </view>
+            <view wx:if="{{item.stage.kind === 'compressing'}}" class="draft__overlay">压缩中…</view>
+            <view wx:elif="{{item.stage.kind === 'uploading'}}" class="draft__overlay">上传 {{item.stage.percent}}%</view>
+            <view wx:elif="{{item.stage.kind === 'failed'}}" class="draft__overlay draft__overlay--err">失败</view>
+            <view wx:elif="{{item.stage.kind === 'done'}}" class="draft__overlay draft__overlay--ok">✓</view>
+            <view wx:if="{{!uploading}}" class="draft__del" data-id="{{item.id}}" catchtap="onRemovePhoto">×</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="masonry__col">
+        <view wx:for="{{rightPhotos}}" wx:key="id" class="draft">
+          <view class="draft__polaroid" style="transform: rotate({{item.tiltDeg}}deg);">
+            <view class="tape tape--{{index % 4}}"></view>
+            <view class="draft__frame" style="{{item.frameStyle}}">
+              <image class="draft__img" src="{{item.thumbPath}}" mode="aspectFill" />
+            </view>
+            <view class="draft__caption mono-label">
+              {{item.stage.kind === 'queued' ? 'READY' : item.stage.kind}}
+            </view>
+            <view wx:if="{{item.stage.kind === 'compressing'}}" class="draft__overlay">压缩中…</view>
+            <view wx:elif="{{item.stage.kind === 'uploading'}}" class="draft__overlay">上传 {{item.stage.percent}}%</view>
+            <view wx:elif="{{item.stage.kind === 'failed'}}" class="draft__overlay draft__overlay--err">失败</view>
+            <view wx:elif="{{item.stage.kind === 'done'}}" class="draft__overlay draft__overlay--ok">✓</view>
+            <view wx:if="{{!uploading}}" class="draft__del" data-id="{{item.id}}" catchtap="onRemovePhoto">×</view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="form-card">
+    <view class="form-card__title mono-label">COLLECTION INFO</view>
+
+    <view class="field field--title">
+      <view class="field__label mono-label">标题</view>
+    <input
+      class="input input--hand"
+      placeholder="给这次回忆起个名字"
+      placeholder-class="input-placeholder"
+      value="{{title}}"
+      bindinput="onTitleInput"
+      maxlength="200"
+    />
+    </view>
+
+    <view wx:if="{{mergeCandidateTitle}}" class="merge">
+      <text class="merge__emoji">📚</text>
+      已存在「{{mergeCandidateTitle}}」
+      <switch class="merge__switch" checked="{{mergeIntoId !== ''}}" bindchange="onMergeToggle" color="#8B6E44" />
+      合并
+    </view>
+
+    <view class="field-row">
+      <view class="field field--half">
+        <view class="field__label mono-label">🗓 日期</view>
+        <picker mode="date" value="{{occurredOn}}" bindchange="onDateChange">
+          <view class="input input--picker">{{occurredOn}}</view>
+        </picker>
+      </view>
+
+      <view class="field field--half">
+        <view class="field__label mono-label">📍 地点</view>
+    <input
+      class="input"
+          placeholder="选填"
+      placeholder-class="input-placeholder"
+      value="{{location}}"
+      bindinput="onLocationInput"
+      maxlength="200"
+    />
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field__label mono-label">📝 描述</view>
+    <textarea
+      class="textarea"
+        placeholder="写点什么吧…"
+      placeholder-class="input-placeholder"
+      value="{{description}}"
+      bindinput="onDescriptionInput"
+      maxlength="10000"
+      auto-height="true"
+    />
+    </view>
+
+    <view class="field">
+      <view class="field__label mono-label">🏷 集合标签</view>
+    <tag-picker value="{{tags}}" suggest="{{tagSuggestions}}" bind:change="onTagsChange" />
+    </view>
+  </view>
+
+  <view wx:if="{{uploading}}" class="progress">
+    <view class="progress__bar"><view class="progress__fill" style="width: {{progressPercent}}%"></view></view>
+    <view class="progress__text">{{progressLabel}}</view>
+  </view>
+
+  <view class="footer">
+    <view class="footer__count mono-label">{{photos.length}} 张</view>
+    <button class="submit {{canSubmit ? '' : 'submit--disabled'}}" disabled="{{!canSubmit}}" bindtap="onSubmit">
+      {{uploading ? '上传中…' : (mergeIntoId ? '🔗 加入「' + mergeCandidateTitle + '」' : '🌟 完成 · 收进相册')}}
+    </button>
+  </view>
+</view>

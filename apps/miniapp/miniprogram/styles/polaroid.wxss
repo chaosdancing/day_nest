@@ -1,0 +1,69 @@
+/* Polaroid frame primitives. Pure WXSS, no images.
+   Visual reference: apps/web/src/components/scrapbook/Polaroid.tsx.
+   Web uses Tailwind shadow-polaroid + bg-white; we mirror those.
+
+   NOTE on aspect-ratio: WeChat <image> elements do NOT honour the CSS
+   `aspect-ratio` property reliably (especially on older base libraries),
+   so we wrap each photo in a `.polaroid__photo-frame` that uses the
+   classic padding-top:75% trick to lock a 4:3 box. The <image> inside
+   absolutely fills that box. This works on every WeChat baselib. */
+
+.polaroid {
+  background: #FFFFFF;
+  padding: 20rpx 20rpx 88rpx 20rpx;
+  border-radius: 4rpx;
+  /* Mirrors Tailwind shadow-polaroid: 0 8px 24px rgba(0,0,0,.18). */
+  box-shadow: 0 6rpx 18rpx rgba(0, 0, 0, .18);
+  position: relative;
+}
+
+.polaroid__photo-frame {
+  position: relative;
+  width: 100%;
+  padding-top: 75%; /* 4:3 */
+  background: var(--paper-aged);
+  border-radius: 2rpx;
+  overflow: hidden;
+}
+.polaroid__photo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Handwritten caption sitting on the bottom band of the polaroid frame. */
+.polaroid__caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14rpx;
+  text-align: center;
+  font-family: var(--font-hand);
+  font-size: 32rpx;
+  line-height: 1.1;
+  color: var(--kraft-dark);
+  padding: 0 24rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Decorative washi tape on top edge. Color via .tape--<n> hash bucket. */
+.tape {
+  position: absolute;
+  top: -14rpx;
+  left: 50%;
+  width: 96rpx;
+  height: 28rpx;
+  transform: translateX(-50%) rotate(-2deg);
+  opacity: .82;
+  border-radius: 2rpx;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06);
+}
+.tape--0 { background: linear-gradient(180deg, rgba(212,182,140,.85), rgba(212,182,140,.55)); }
+.tape--1 { background: linear-gradient(180deg, rgba(210,59,59,.45), rgba(210,59,59,.25)); }
+.tape--2 { background: linear-gradient(180deg, rgba(168,139,92,.80), rgba(168,139,92,.50)); }
+.tape--3 { background: linear-gradient(180deg, rgba(59,110,210,.40), rgba(59,110,210,.22)); }

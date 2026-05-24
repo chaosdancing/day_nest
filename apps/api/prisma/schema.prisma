@@ -14,12 +14,15 @@ model User {
   passwordHash  String
   avatarKey     String?
   createdAt     DateTime @default(now())
+  wechatOpenId  String?  @unique
+  wechatBoundAt DateTime?
 
   collections   Collection[]    @relation("CollectionCreator")
   photos        Photo[]         @relation("PhotoUploader")
   invitesIssued Invite[]        @relation("InviteIssuer")
   tagsCreated   Tag[]           @relation("TagCreator")
   favorites     PhotoFavorite[] @relation("UserFavorites")
+  wechatSubs    WechatSubscription[]
 }
 
 model Invite {
@@ -118,4 +121,16 @@ model CollectionTag {
   tag          Tag        @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([collectionId, tagId])
+}
+
+model WechatSubscription {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  templateId  String
+  quota       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, templateId])
 }
