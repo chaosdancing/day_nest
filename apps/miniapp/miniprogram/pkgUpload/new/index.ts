@@ -7,6 +7,7 @@ import { compressImage } from '../../lib/imageCompress.js';
 import { readExifFromPath } from '../../lib/exif.js';
 import { createUploadQueue } from '../../lib/uploadQueue.js';
 import { debounce, type DebouncedFn } from '../../lib/debounce.js';
+import { stableAngle } from '../../lib/hash.js';
 
 let unsubscribe: (() => void) | null = null;
 let titleSearch: DebouncedFn<[string]> | null = null;
@@ -14,8 +15,54 @@ let titleSearch: DebouncedFn<[string]> | null = null;
 const QUEUE_CONCURRENCY = 10;
 const COMPRESS_LONG_EDGE = 1600;
 
+type DraftPhotoView = DraftPhoto & {
+  frameStyle: string;
+  tiltDeg: number;
+};
+
+function photoFrameStyle(photo: DraftPhoto): string {
+  if (!photo.width || !photo.height) return '';
+  const raw = (photo.height / photo.width) * 100;
+  const clamped = Math.max(50, Math.min(160, raw));
+  return `padding-top: ${Number(clamped.toFixed(2))}%`;
+}
+
+function toPhotoView(photo: DraftPhoto, index: number): DraftPhotoView {
+  const sign = index % 2 === 0 ? -1 : 1;
+  return {
+    ...photo,
+    frameStyle: photoFrameStyle(photo),
+    tiltDeg: stableAngle(`upload-${photo.id}`, 2) + sign * 2,
+  };
+}
+
+function estimateCardHeight(photo: DraftPhotoView): number {
+  const raw = photo.width && photo.height ? (photo.height / photo.width) * 100 : 75;
+  return Math.max(50, Math.min(160, raw)) + 30;
+}
+
+function splitColumns(photos: DraftPhotoView[]): { left: DraftPhotoView[]; right: DraftPhotoView[] } {
+  const left: DraftPhotoView[] = [];
+  const right: DraftPhotoView[] = [];
+  let leftHeight = 0;
+  let rightHeight = 0;
+  for (const photo of photos) {
+    const h = estimateCardHeight(photo);
+    if (leftHeight <= rightHeight) {
+      left.push(photo);
+      leftHeight += h;
+    } else {
+      right.push(photo);
+      rightHeight += h;
+    }
+  }
+  return { left, right };
+}
+
 interface PageData {
   photos: DraftPhoto[];
+  leftPhotos: DraftPhotoView[];
+  rightPhotos: DraftPhotoView[];
   title: string;
   description: string;
   location: string;
@@ -34,6 +81,8 @@ interface PageData {
 Page({
   data: {
     photos: [],
+    leftPhotos: [],
+    rightPhotos: [],
     title: '',
     description: '',
     location: '',
@@ -71,8 +120,11 @@ Page({
     const canSubmit = s.photos.length > 0 && s.title.trim().length > 0 && !this.data.uploading;
     const done = s.photos.filter((p) => p.stage.kind === 'done').length;
     const total = s.photos.length;
+    const columns = splitColumns(s.photos.map((photo, index) => toPhotoView(photo, index)));
     this.setData({
       photos: s.photos,
+      leftPhotos: columns.left,
+      rightPhotos: columns.right,
       title: s.title,
       description: s.description,
       location: s.location,

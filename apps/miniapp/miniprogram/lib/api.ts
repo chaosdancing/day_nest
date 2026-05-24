@@ -24,6 +24,15 @@ export interface ApiClient {
 export interface ApiClientOptions {
   tokens: TokenProvider;
   refreshUrl: string;
+  /**
+   * Called when an authenticated request fails 401 and refresh has been
+   * exhausted (no refresh token, or refresh request itself rejected).
+   * Wired up at app boot to redirect to /pages/login/index so the user
+   * doesn't get stuck behind silent "操作失败" toasts.
+   *
+   * Pure-API tests pass no handler — they consume the returned 401 directly.
+   */
+  onAuthFailure?: () => void;
 }
 
 function wxRequest<T>(req: ApiRequest): Promise<ApiResponse<T>> {
@@ -81,6 +90,10 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
     if (res.statusCode === 401 && allowRetry && req.url !== opts.refreshUrl) {
       const ok = await refreshOnce();
       if (ok) return send<T>(req, false);
+      // Refresh failed (no refresh token or refresh rejected). Surface this
+      // to the host app so it can kick the user back to login instead of
+      // letting pages show generic "操作失败" toasts forever.
+      opts.onAuthFailure?.();
     }
     return res;
   }

@@ -1,23 +1,82 @@
+/* StackedPolaroid — visual reference: apps/web/src/components/scrapbook/StackedPolaroid.tsx.
+   Front polaroid is in the normal flow and defines the bounding box; back
+   layers are `position: absolute` with matching inset so they're sized to
+   match, then translated outward and rotated to peek.
+   The .polaroid / .polaroid__photo-frame rules from styles/polaroid.wxss
+   apply because the component opts into styleIsolation:'apply-shared'. */
+
+/* Component host element — ensure it's a block-level box that fills the
+   parent so .stack's `width: 100%` actually resolves. Some WeChat
+   renderers default custom components to inline-block which collapses
+   width to content. */
+:host {
+  display: block;
+  width: 100%;
+}
+
 .stack {
   position: relative;
-  width: 360rpx;
-  height: 320rpx;
+  width: 100%;
+  /* Horizontal breathing room so the back layers' outward translate
+     (20-28rpx) + rotated corners + the front polaroid's shadow have room
+     to render without being clipped by the row container. */
+  padding: 22rpx 36rpx 18rpx;
+  box-sizing: border-box;
 }
-.stack__slot {
+
+/* Front cover. .polaroid base provides bg/padding/shadow.
+   Specificity hack `.polaroid.stack__front` so this wins against the
+   global `.polaroid { position: relative }` (same class-specificity, but
+   we declare the relative explicitly here too so source-order can't
+   bite us). z-index 2 so the front paints above the back layers (which
+   come earlier in DOM AND get z-index:1). */
+.polaroid.stack__front {
+  position: relative;
+  z-index: 2;
+}
+
+/* Back layers — stretched to the same footprint as the front polaroid
+   (the front sits in normal flow inside the .stack's 22/36/18 padding,
+   so we just inset by the same values to overlap exactly), then
+   translated outward via inline `transform`. pointer-events:none so the
+   front view's bindtap is never stolen by a back layer.
+   `.polaroid.stack__back` matches both classes for higher specificity
+   than the global `.polaroid { position: relative }`, guaranteeing the
+   absolute positioning wins regardless of stylesheet source order.
+   No negative z-index: WeChat's renderer sometimes pushes z-index:-1
+   nodes BEHIND the page background. We rely on DOM order (back layers
+   first, front layer last) for stacking. */
+.polaroid.stack__back {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 320rpx;
-  padding: 14rpx 14rpx 60rpx 14rpx;
+  left: 36rpx;
+  right: 36rpx;
+  top: 22rpx;
+  bottom: 18rpx;
+  pointer-events: none;
+  opacity: .85;
+  z-index: 1;
 }
+
+.stack__caption {
+  /* Override the absolute-positioned base caption with a larger size + a
+     bit more bottom inset so a 4-char title centers nicely in the band. */
+  bottom: 26rpx;
+  font-size: 38rpx;
+  line-height: 1.15;
+  color: var(--ink-primary);
+  padding: 0 28rpx;
+}
+
 .stack__count {
   position: absolute;
-  right: -16rpx;
-  bottom: -8rpx;
-  background: var(--ink-primary);
+  right: 14rpx;
+  bottom: 14rpx;
+  background: rgba(42, 37, 32, .85);
   color: var(--paper-cream);
+  font-family: var(--font-mono);
   font-size: 22rpx;
-  padding: 4rpx 14rpx;
+  letter-spacing: 1rpx;
+  padding: 6rpx 14rpx;
   border-radius: 999rpx;
   box-shadow: var(--shadow-sticker);
   z-index: 10;

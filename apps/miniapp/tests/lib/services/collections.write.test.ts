@@ -53,6 +53,39 @@ describe('collectionsService.append', () => {
   });
 });
 
+describe('collectionsService.update', () => {
+  let mock: WxMock;
+  beforeEach(() => {
+    mock = installWxMock();
+    authStore.reset();
+    authStore.setTokens('a1', 'r1');
+  });
+  afterEach(() => uninstallWxMock());
+
+  it('PATCHes collection metadata and tags', async () => {
+    mock.queueResponse({ statusCode: 200, data: { id: 'c-edit', title: 'Edited', photos: [], previewPhotos: [], tags: [], photoCount: 0 } });
+    await collectionsService.update('c-edit', {
+      title: 'Edited',
+      location: 'Home',
+      description: null,
+      occurredOn: '2026-05-25',
+      occurredUntil: null,
+      tags: ['家'],
+    });
+    const req = mock.requests[0];
+    expect(req?.method).toBe('PATCH');
+    expect(req?.url).toMatch(/\/api\/collections\/c-edit$/);
+    expect(req?.data).toEqual({
+      title: 'Edited',
+      location: 'Home',
+      description: null,
+      occurredOn: '2026-05-25',
+      occurredUntil: null,
+      tags: ['家'],
+    });
+  });
+});
+
 describe('collectionsService.byTitle', () => {
   let mock: WxMock;
   beforeEach(() => {

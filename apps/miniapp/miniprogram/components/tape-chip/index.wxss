@@ -1,0 +1,39 @@
+/* TapeChip — visually approximates apps/web/src/components/scrapbook/TapeBadge.tsx.
+   Web uses random ±tilt + tape gradient + handwritten font; we render a flat
+   pill with a single rotation passed in via `tiltDeg`. */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 6rpx 18rpx;
+  border-radius: 4rpx;
+  font-family: var(--font-hand);
+  font-size: 26rpx;
+  line-height: 1.2;
+  letter-spacing: 1rpx;
+  color: var(--ink-primary);
+  background: rgba(210, 176, 59, .22);
+  box-shadow: 0 1px 2px rgba(0,0,0,.08);
+  transition: transform 200ms ease;
+}
+
+.chip--active {
+  background: rgba(210, 59, 59, .55);
+  color: #FFF7E8;
+}
+
+.chip__count {
+  font-family: var(--font-mono);
+  font-size: 20rpx;
+  letter-spacing: 1rpx;
+  opacity: .7;
+  padding-left: 4rpx;
+  border-left: 1px solid rgba(0,0,0,.12);
+}
+
+/* Tone variants — pick via hash of the tag id to vary across a row. */
+.chip--tone-0 { background: rgba(210, 176, 59, .22); }
+.chip--tone-1 { background: rgba(210, 59, 59, .18); }
+.chip--tone-2 { background: rgba(59, 110, 210, .18); }
+.chip--tone-3 { background: rgba(168, 138, 92, .25); }

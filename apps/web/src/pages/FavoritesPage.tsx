@@ -59,7 +59,7 @@ export function FavoritesPage() {
           <p className="mt-4 text-ink/60 dark:text-paper/60">
             打开{' '}
             <Link to="/" className="text-kraft-dark underline underline-offset-4 dark:text-kraft-light">
-              时间轴
+              时光轴
             </Link>{' '}
             ，点照片左上角的小心心 ♡ 收藏起来。
           </p>

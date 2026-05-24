@@ -1,13 +1,18 @@
 .bar {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 110rpx;
-  padding-bottom: env(safe-area-inset-bottom);
-  background: var(--paper-cream);
-  border-top: 1px solid var(--paper-aged);
+  left: 28rpx;
+  right: 28rpx;
+  bottom: calc(env(safe-area-inset-bottom) + 18rpx);
+  height: 104rpx;
+  padding: 10rpx 12rpx;
+  box-sizing: border-box;
+  background: rgba(255, 252, 245, .92);
+  border: 1px solid rgba(168, 138, 92, .22);
+  border-radius: 999rpx;
+  box-shadow: 0 12rpx 34rpx rgba(42, 37, 32, .18);
+  backdrop-filter: blur(10rpx);
   display: flex;
+  gap: 6rpx;
   z-index: 100;
 }
 .item {
@@ -16,16 +21,32 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6rpx;
+  gap: 2rpx;
+  min-width: 0;
+  border-radius: 999rpx;
   color: var(--ink-secondary);
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
 }
-.item--active { color: var(--ink-primary); }
-.dot {
-  width: 12rpx;
-  height: 12rpx;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: .35;
+.item--active {
+  color: var(--ink-primary);
+  background: rgba(168, 138, 92, .16);
+  transform: translateY(-2rpx);
 }
-.item--active .dot { opacity: 1; background: var(--ink-sticker); }
-.label { font-size: 22rpx; }
+.icon {
+  height: 34rpx;
+  line-height: 34rpx;
+  font-size: 26rpx;
+  color: currentColor;
+  opacity: .72;
+}
+.item--active .icon {
+  opacity: 1;
+  color: var(--ink-sticker);
+}
+.label {
+  font-size: 20rpx;
+  line-height: 1.2;
+  font-weight: 600;
+  color: currentColor;
+  white-space: nowrap;
+}

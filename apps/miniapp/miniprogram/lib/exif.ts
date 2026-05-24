@@ -99,7 +99,10 @@ function formatExifDate(raw: string): string | null {
   // EXIF format: "YYYY:MM:DD HH:MM:SS"
   const m = raw.match(/^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})$/);
   if (!m) return null;
-  return `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}`;
+  // EXIF DateTimeOriginal does not carry timezone info. The API contract
+  // requires an ISO datetime, so mark it explicitly as UTC instead of sending
+  // a timezone-less local string that Zod rejects.
+  return `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`;
 }
 
 /**

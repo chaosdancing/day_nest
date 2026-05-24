@@ -6,7 +6,7 @@
     data-idx="{{index}}"
     bindtap="onTap"
   >
-    <view class="dot"></view>
+    <view class="icon">{{item.icon}}</view>
     <view class="label">{{item.text}}</view>
   </view>
 </view>

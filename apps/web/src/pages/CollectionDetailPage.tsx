@@ -31,7 +31,7 @@ export function CollectionDetailPage() {
           to="/"
           className="text-kraft-dark underline dark:text-kraft-light"
         >
-          回到时间轴 📖
+          回到时光轴 📖
         </Link>
       </div>
     );

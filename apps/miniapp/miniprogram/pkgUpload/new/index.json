@@ -1,6 +1,7 @@
 {
-  "navigationBarTitleText": "新建集合",
+  "navigationBarTitleText": "新建回忆",
   "usingComponents": {
+    "page-hero": "/components/page-hero/index",
     "tag-picker": "/components/tag-picker/index"
   }
 }

@@ -2,10 +2,10 @@ Component({
   data: {
     active: 0,
     list: [
-      { pagePath: '/pages/timeline/index', text: '时间轴' },
-      { pagePath: '/pages/favorites/index', text: '收藏' },
-      { pagePath: '/pages/tags/index', text: '标签' },
-      { pagePath: '/pages/me/index', text: '我的' },
+      { pagePath: '/pages/timeline/index', text: '时光轴', icon: '📖' },
+      { pagePath: '/pages/favorites/index', text: '最爱', icon: '❤️' },
+      { pagePath: '/pages/tags/index', text: '标签', icon: '🏷' },
+      { pagePath: '/pages/me/index', text: '我的', icon: '👤' },
     ],
   },
   methods: {

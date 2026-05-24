@@ -1,26 +1,109 @@
-.page { background: var(--paper-cream); min-height: 100vh; display: flex; flex-direction: column; }
-.empty { padding: 200rpx 0; text-align: center; color: var(--ink-secondary); font-size: 26rpx; }
-.grid {
-  flex: 1;
-  padding: 16rpx;
-  column-count: 2;
-  column-gap: 16rpx;
-}
-.grid__cell {
-  break-inside: avoid;
-  margin-bottom: 24rpx;
+.page {
+  background: var(--paper-cream);
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
+  overflow-x: hidden;
 }
-.grid__meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 8rpx;
-  font-size: 22rpx;
+
+/* Empty state — matches Timeline's emoji-led empty */
+.empty {
+  padding: 80rpx 48rpx;
+  text-align: center;
+}
+.empty__emoji {
+  display: inline-block;
+  font-size: 80rpx;
+  line-height: 1;
+  animation: fav-pulse 2.4s ease-in-out infinite;
+}
+.empty__title {
+  margin-top: 16rpx;
+  font-size: 56rpx;
+  line-height: 1.1;
+}
+.empty__sub {
+  margin-top: 24rpx;
+  font-size: 26rpx;
   color: var(--ink-secondary);
+  line-height: 1.6;
 }
-.grid__date {}
-.grid__by {}
-.footer { padding: 32rpx 0; text-align: center; color: var(--ink-secondary); font-size: 24rpx; column-span: all; }
+@keyframes fav-pulse {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6rpx); }
+}
+
+.grid {
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+  /* Extra top padding prevents the first row's rotated card/tape from being
+     clipped by the scroll-view viewport. Wider side padding gives the right
+     column enough breathing room for rotation, shadow and the heart badge. */
+  padding: 48rpx 40rpx 200rpx;
+  overflow-x: hidden;
+}
+
+/* Explicit two-column masonry. We do not use CSS `column-count` here because
+   WeChat's simulator can leave all children in the first column inside
+   scroll-view. The page JS pre-splits items into left/right columns. */
+.masonry {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-start;
+  gap: 24rpx;
+}
+.masonry__col {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.grid__cell {
+  padding: 18rpx 10rpx 0;
+  box-sizing: border-box;
+  margin-bottom: 36rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+/* "Who else loved this" actor list rendered under the polaroid, mirrors
+   apps/web/src/pages/FavoritesPage.tsx <ul> at the bottom of each cell. */
+.actors {
+  padding: 0 6rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+.actors__line {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.3;
+  color: rgba(42, 37, 32, .65);
+}
+.actors__heart {
+  font-size: 24rpx;
+  color: var(--pin-red);
+  flex-shrink: 0;
+}
+.actors__name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.actors__more {
+  margin-top: 2rpx;
+  font-size: 18rpx;
+  color: rgba(42, 37, 32, .42);
+}
+
+.footer {
+  padding: 32rpx 0;
+  text-align: center;
+  color: var(--ink-secondary);
+  font-size: 24rpx;
+}

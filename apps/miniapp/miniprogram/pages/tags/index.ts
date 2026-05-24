@@ -46,11 +46,12 @@ Page({
 
   onTagTap(e: WechatMiniprogram.TouchEvent) {
     const name = e.currentTarget.dataset.name as string;
+    const scope = (e.currentTarget.dataset.scope as string) || 'all';
     if (!name) return;
     const tag = this.data.tags.find((t) => t.name === name);
     const display = tag?.displayName ?? name;
     wx.navigateTo({
-      url: `/pkgTags/pinboard/index?tag=${encodeURIComponent(name)}&display=${encodeURIComponent(display)}`,
+      url: `/pkgTags/pinboard/index?tag=${encodeURIComponent(name)}&display=${encodeURIComponent(display)}&scope=${encodeURIComponent(scope)}`,
     });
   },
 });

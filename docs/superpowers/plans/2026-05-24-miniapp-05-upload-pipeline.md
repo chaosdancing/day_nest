@@ -7,6 +7,7 @@
 **Why this is the heaviest plan in the series:** uploads need to handle the full pipeline (pick → exif → compress → token → direct-to-Qiniu → commit), parallel scheduling with progress UI, and graceful failure handling. Plus a tag picker and a fuzzy collection-title merge prompt. Backend is already complete — `POST /api/uploads/token` mints Qiniu tokens, `POST /api/collections` commits new collections, `POST /api/collections/:id/append` adds to existing ones, `GET /api/collections/by-title` fuzzy-matches. We add only the miniapp client.
 
 **Architecture:**
+
 - **Upload draft** lives in a new `uploadStore` (zustand-style) — selected photos with per-photo status (`queued` / `compressing` / `uploading` / `done` / `failed`), overall progress, draft metadata (title, description, location, tags, occurredOn).
 - **Per-photo pipeline** is a generator: pick → read EXIF (from original) → compress to ≤1600px-long-edge JPEG q75 → request a Qiniu upload token → `wx.uploadFile` to Qiniu → record `fileKey` + Qiniu-returned width/height. EXIF and compress steps run in series per photo (compress mutates the temp path); the token+upload step is parallel-bounded by an `uploadQueue` with concurrency **10**.
 - **Title fuzzy merge:** as the user types the title, a debounced `GET /api/collections/by-title?title=...` surfaces matches. If the user picks one, the submit path switches from `POST /api/collections` to `POST /api/collections/:id/append`.
@@ -14,9 +15,10 @@
 
 **Tech Stack:** Native WXML/WXSS/JS · TypeScript · Vitest · `@daynest/shared` DTOs · existing Plan 02+03+04 infra (`createApiClient`, `authStore`, `themeStore`, `collectionsService`, `tagsService`, `_http.ts`, `wxBridge`, `_client.ts`).
 
-**Companion spec:** [`../specs/2026-05-22-miniapp-design.md`](../specs/2026-05-22-miniapp-design.md) — §3.3 (upload page tree), §4.6 (upload pipeline), §5.2 (write-side wire contracts).
+**Companion spec:** `[../specs/2026-05-22-miniapp-design.md](../specs/2026-05-22-miniapp-design.md)` — §3.3 (upload page tree), §4.6 (upload pipeline), §5.2 (write-side wire contracts).
 
 **Backend dependency** (already on `main`, no changes required this plan):
+
 - `POST /api/uploads/token` body `{ ext, count, collectionDraftId? }` → `{ tokens: [{ token, key, uploadUrl, expiresAt }, ...] }`
 - `POST /api/collections` body `CollectionCreateInput` → `CollectionDetailDTO`
 - `POST /api/collections/:id/append` body `CollectionAppendInput` → `CollectionDetailDTO`
@@ -24,11 +26,13 @@
 - `GET /api/tags` (for autocomplete)
 
 Qiniu form upload contract (already used by the web client — see `apps/web/src/lib/uploads.ts`):
+
 - POST `multipart/form-data` to `uploadUrl`
 - Fields: `token` (the upload token), `key` (the file key), `file` (the binary content)
 - Response (success): `200` JSON `{ key, hash, size, width, height }` (the `returnBody` template configured in `apps/api/src/storage/qiniu.ts:43-49`)
 
 **Scope of this plan:**
+
 - ✅ `lib/exif.ts` — minimal JPEG EXIF parser for `DateTimeOriginal` (the only field needed)
 - ✅ `lib/imageCompress.ts` — `wx.compressImage` wrapper
 - ✅ `lib/uploadQueue.ts` — concurrency-bounded promise scheduler
@@ -42,6 +46,7 @@ Qiniu form upload contract (already used by the web client — see `apps/web/src
 - ✅ Cross-package E2E smoke test (`apps/api/tests/wechat/miniapp-upload.test.ts`)
 
 **Out of scope (deferred to Plan 06):**
+
 - ❌ Subscribe-message prompts at favorite-time
 - ❌ Settings page (`displayName` edit, WeChat unbind)
 - ❌ Invites page
@@ -55,38 +60,43 @@ Qiniu form upload contract (already used by the web client — see `apps/web/src
 
 ### New files
 
-| Path | Purpose |
-|---|---|
-| `apps/miniapp/miniprogram/lib/exif.ts` | Tiny EXIF reader (DateTimeOriginal only) |
-| `apps/miniapp/tests/lib/exif.test.ts` | EXIF tests using small JPEG fixtures |
-| `apps/miniapp/miniprogram/lib/imageCompress.ts` | `wx.compressImage` wrapper |
-| `apps/miniapp/tests/lib/imageCompress.test.ts` | imageCompress tests |
-| `apps/miniapp/miniprogram/lib/uploadQueue.ts` | Concurrency-bounded promise scheduler |
-| `apps/miniapp/tests/lib/uploadQueue.test.ts` | Queue tests |
-| `apps/miniapp/miniprogram/lib/services/uploads.ts` | Token + Qiniu upload service |
-| `apps/miniapp/tests/lib/services/uploads.test.ts` | uploads tests |
-| `apps/miniapp/tests/lib/services/collections.write.test.ts` | tests for create/append/byTitle |
-| `apps/miniapp/miniprogram/stores/uploadStore.ts` | Global upload draft + queue state |
-| `apps/miniapp/tests/stores/uploadStore.test.ts` | uploadStore tests |
-| `apps/miniapp/miniprogram/components/tag-picker/index.{ts,wxml,wxss,json}` | Tag autocomplete component |
-| `apps/miniapp/tests/components/tag-picker.test.ts` | tag-picker unit tests |
-| `apps/miniapp/miniprogram/pkgUpload/new/index.{ts,wxml,wxss,json}` | Upload composition page |
-| `apps/api/tests/wechat/miniapp-upload.test.ts` | Cross-package E2E smoke test |
-| `apps/miniapp/tests/fixtures/exif-2024-01-15.jpg.base64` | Base64-encoded JPEG fixture with EXIF |
+
+| Path                                                                       | Purpose                                  |
+| -------------------------------------------------------------------------- | ---------------------------------------- |
+| `apps/miniapp/miniprogram/lib/exif.ts`                                     | Tiny EXIF reader (DateTimeOriginal only) |
+| `apps/miniapp/tests/lib/exif.test.ts`                                      | EXIF tests using small JPEG fixtures     |
+| `apps/miniapp/miniprogram/lib/imageCompress.ts`                            | `wx.compressImage` wrapper               |
+| `apps/miniapp/tests/lib/imageCompress.test.ts`                             | imageCompress tests                      |
+| `apps/miniapp/miniprogram/lib/uploadQueue.ts`                              | Concurrency-bounded promise scheduler    |
+| `apps/miniapp/tests/lib/uploadQueue.test.ts`                               | Queue tests                              |
+| `apps/miniapp/miniprogram/lib/services/uploads.ts`                         | Token + Qiniu upload service             |
+| `apps/miniapp/tests/lib/services/uploads.test.ts`                          | uploads tests                            |
+| `apps/miniapp/tests/lib/services/collections.write.test.ts`                | tests for create/append/byTitle          |
+| `apps/miniapp/miniprogram/stores/uploadStore.ts`                           | Global upload draft + queue state        |
+| `apps/miniapp/tests/stores/uploadStore.test.ts`                            | uploadStore tests                        |
+| `apps/miniapp/miniprogram/components/tag-picker/index.{ts,wxml,wxss,json}` | Tag autocomplete component               |
+| `apps/miniapp/tests/components/tag-picker.test.ts`                         | tag-picker unit tests                    |
+| `apps/miniapp/miniprogram/pkgUpload/new/index.{ts,wxml,wxss,json}`         | Upload composition page                  |
+| `apps/api/tests/wechat/miniapp-upload.test.ts`                             | Cross-package E2E smoke test             |
+| `apps/miniapp/tests/fixtures/exif-2024-01-15.jpg.base64`                   | Base64-encoded JPEG fixture with EXIF    |
+
 
 ### Modified files
 
-| Path | Change |
-|---|---|
-| `apps/miniapp/miniprogram/lib/services/collections.ts` | Add `create`, `append`, `byTitle` methods |
-| `apps/miniapp/miniprogram/app.json` | Register `pkgUpload` subpackage + wifi preload |
-| `apps/miniapp/miniprogram/pages/timeline/index.wxml` | Add `+` FAB |
-| `apps/miniapp/miniprogram/pages/timeline/index.wxss` | FAB styles |
-| `apps/miniapp/miniprogram/pages/timeline/index.ts` | FAB tap → navigate to upload |
-| `apps/api/tsconfig.json` | Add `tests/wechat/miniapp-upload.test.ts` to `exclude` |
+
+| Path                                                   | Change                                                 |
+| ------------------------------------------------------ | ------------------------------------------------------ |
+| `apps/miniapp/miniprogram/lib/services/collections.ts` | Add `create`, `append`, `byTitle` methods              |
+| `apps/miniapp/miniprogram/app.json`                    | Register `pkgUpload` subpackage + wifi preload         |
+| `apps/miniapp/miniprogram/pages/timeline/index.wxml`   | Add `+` FAB                                            |
+| `apps/miniapp/miniprogram/pages/timeline/index.wxss`   | FAB styles                                             |
+| `apps/miniapp/miniprogram/pages/timeline/index.ts`     | FAB tap → navigate to upload                           |
+| `apps/api/tsconfig.json`                               | Add `tests/wechat/miniapp-upload.test.ts` to `exclude` |
+
 
 ### Files NOT touched
-- `apps/api/src/**` — backend frozen for Plan 05
+
+- `apps/api/src/`** — backend frozen for Plan 05
 - `packages/shared/src/**` — no DTO additions (reuse existing `CollectionCreateInput` / `CollectionAppendInput` / `PhotoInput`)
 - Plan 02/03/04 pages and components — reused as-is
 
@@ -132,7 +142,7 @@ export function parseExif(buf: ArrayBuffer): ExifInfo;
 export function readExifFromPath(filePath: string): Promise<ExifInfo>;
 ```
 
-- [ ] **Step 1: Create the fixture**
+- **Step 1: Create the fixture**
 
 The fixture is a small JPEG with a known `DateTimeOriginal` of `2024:01:15 10:30:00`. Generate it once with a Node script and check in the base64. Put it under `apps/miniapp/tests/fixtures/exif-2024-01-15.jpg.base64`. In `exif.test.ts`, decode the base64 to an ArrayBuffer.
 
@@ -177,7 +187,7 @@ console.log('wrote ' + jpg.length + ' bytes');
 "
 ```
 
-- [ ] **Step 2: Write the failing test**
+- **Step 2: Write the failing test**
 
 `apps/miniapp/tests/lib/exif.test.ts`:
 
@@ -221,7 +231,7 @@ describe('parseExif', () => {
 });
 ```
 
-- [ ] **Step 3: Run — must fail**
+- **Step 3: Run — must fail**
 
 ```bash
 pnpm --filter @daynest/miniapp test
@@ -229,7 +239,7 @@ pnpm --filter @daynest/miniapp test
 
 Expected: `exif.test.ts` fails with `Cannot find module '.../lib/exif.js'`.
 
-- [ ] **Step 4: Create `apps/miniapp/miniprogram/lib/exif.ts`**
+- **Step 4: Create `apps/miniapp/miniprogram/lib/exif.ts`**
 
 ```typescript
 /**
@@ -366,11 +376,11 @@ export function readExifFromPath(filePath: string): Promise<ExifInfo> {
 }
 ```
 
-- [ ] **Step 5: Run — must pass**
+- **Step 5: Run — must pass**
 
 Expected: prior **74** + 4 new = **78**.
 
-- [ ] **Step 6: Commit**
+- **Step 6: Commit**
 
 ```bash
 git add apps/miniapp/miniprogram/lib/exif.ts apps/miniapp/tests/lib/exif.test.ts apps/miniapp/tests/fixtures/exif-2024-01-15.jpg.base64
@@ -403,7 +413,7 @@ export function compressImage(opts: {
 
 The implementation calls `wx.getImageInfo` first (to know the source dimensions), computes a scale-down target, then `wx.compressImage({ src, quality, compressedWidth, compressedHeight })`.
 
-- [ ] **Step 1: Write the failing test**
+- **Step 1: Write the failing test**
 
 ```typescript
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -458,7 +468,7 @@ describe('compressImage', () => {
 });
 ```
 
-- [ ] **Step 2: Extend `tests/helpers/wxMock.ts`**
+- **Step 2: Extend `tests/helpers/wxMock.ts`**
 
 Add `imageInfoQueue` and `compressQueue` plus `getImageInfo` and `compressImage` handlers. Append to the existing harness:
 
@@ -504,7 +514,7 @@ export interface WxMock {
 
 After the `WxMock` interface update, simplify the test file to drop the casts — the methods are reachable directly on `mock`.
 
-- [ ] **Step 3: Create `apps/miniapp/miniprogram/lib/imageCompress.ts`**
+- **Step 3: Create `apps/miniapp/miniprogram/lib/imageCompress.ts`**
 
 ```typescript
 export interface CompressResult {
@@ -559,11 +569,11 @@ function scale(srcW: number, srcH: number, longEdge: number): { width: number; h
 }
 ```
 
-- [ ] **Step 4: Run — must pass**
+- **Step 4: Run — must pass**
 
 Expected: 78 + 4 = **82**.
 
-- [ ] **Step 5: Commit**
+- **Step 5: Commit**
 
 ```bash
 git add apps/miniapp/miniprogram/lib/imageCompress.ts apps/miniapp/tests/lib/imageCompress.test.ts apps/miniapp/tests/helpers/wxMock.ts
@@ -594,7 +604,7 @@ export interface UploadQueue {
 export function createUploadQueue(opts: UploadQueueOptions): UploadQueue;
 ```
 
-- [ ] **Step 1: Write the failing test**
+- **Step 1: Write the failing test**
 
 ```typescript
 import { describe, it, expect } from 'vitest';
@@ -657,9 +667,8 @@ describe('createUploadQueue', () => {
 });
 ```
 
-- [ ] **Step 2: Run — must fail**
-
-- [ ] **Step 3: Create `apps/miniapp/miniprogram/lib/uploadQueue.ts`**
+- **Step 2: Run — must fail**
+- **Step 3: Create `apps/miniapp/miniprogram/lib/uploadQueue.ts`**
 
 ```typescript
 export interface UploadQueueOptions {
@@ -724,11 +733,11 @@ export function createUploadQueue(opts: UploadQueueOptions): UploadQueue {
 }
 ```
 
-- [ ] **Step 4: Run — must pass**
+- **Step 4: Run — must pass**
 
 Expected: 82 + 4 = **86**.
 
-- [ ] **Step 5: Commit**
+- **Step 5: Commit**
 
 ```bash
 git add apps/miniapp/miniprogram/lib/uploadQueue.ts apps/miniapp/tests/lib/uploadQueue.test.ts
@@ -742,6 +751,7 @@ git commit -m "feat(miniapp): bounded-concurrency promise queue for parallel upl
 **Files:** Create `apps/miniapp/miniprogram/lib/services/uploads.ts` + `apps/miniapp/tests/lib/services/uploads.test.ts`.
 
 The service wraps two operations:
+
 1. `requestTokens({ ext, count, collectionDraftId? })` → `POST /api/uploads/token` returning `UploadTokenBundle[]`
 2. `uploadToQiniu({ token, key, uploadUrl, filePath })` → `wx.uploadFile` multipart POST to Qiniu, returns the Qiniu return-body (`{ key, hash, size, width, height }`)
 
@@ -769,7 +779,7 @@ export const uploadsService = {
 };
 ```
 
-- [ ] **Step 1: Write the failing test**
+- **Step 1: Write the failing test**
 
 Tests use the existing wxMock + a NEW `queueUploadFile` helper. Extend `tests/helpers/wxMock.ts` analogously to Task 2 to handle `wx.uploadFile`:
 
@@ -883,9 +893,8 @@ describe('uploadsService.uploadToQiniu', () => {
 });
 ```
 
-- [ ] **Step 2: Run — must fail**
-
-- [ ] **Step 3: Create `apps/miniapp/miniprogram/lib/services/uploads.ts`**
+- **Step 2: Run — must fail**
+- **Step 3: Create `apps/miniapp/miniprogram/lib/services/uploads.ts`**
 
 ```typescript
 import { apiClient } from './_client.js';
@@ -961,11 +970,11 @@ export const uploadsService = {
 };
 ```
 
-- [ ] **Step 4: Run — must pass**
+- **Step 4: Run — must pass**
 
 Expected: 86 + 5 = **91**.
 
-- [ ] **Step 5: Commit**
+- **Step 5: Commit**
 
 ```bash
 git add apps/miniapp/miniprogram/lib/services/uploads.ts apps/miniapp/tests/lib/services/uploads.test.ts apps/miniapp/tests/helpers/wxMock.ts
@@ -980,7 +989,7 @@ git commit -m "feat(miniapp): uploadsService — token request + direct-to-Qiniu
 
 Reuse the existing shared `CollectionCreateInput` / `CollectionAppendInput` types. The `byTitle` response shape isn't in `@daynest/shared` so we declare it locally.
 
-- [ ] **Step 1: Write the failing test**
+- **Step 1: Write the failing test**
 
 ```typescript
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -1066,9 +1075,8 @@ describe('collectionsService.byTitle', () => {
 });
 ```
 
-- [ ] **Step 2: Run — must fail**
-
-- [ ] **Step 3: Extend `collections.ts`**
+- **Step 2: Run — must fail**
+- **Step 3: Extend `collections.ts`**
 
 Append to `apps/miniapp/miniprogram/lib/services/collections.ts`:
 
@@ -1129,11 +1137,11 @@ export interface ByTitleResponse {
 
 The shared `CollectionCreateInput` includes optional `description` / `occurredUntil` / `location` (`.nullable().default(null)`) and required `title` / `occurredOn` / `photos`. The miniapp UI always provides nulls explicitly for the optional fields rather than relying on Zod defaults (the wire goes through `wx.request`, not through Zod parsing on the client side).
 
-- [ ] **Step 4: Run — must pass**
+- **Step 4: Run — must pass**
 
 Expected: 91 + 4 = **95**.
 
-- [ ] **Step 5: Commit**
+- **Step 5: Commit**
 
 ```bash
 git add apps/miniapp/miniprogram/lib/services/collections.ts apps/miniapp/tests/lib/services/collections.write.test.ts
@@ -1183,7 +1191,7 @@ export interface UploadStoreState {
 
 The implementation uses `lib/store.ts`'s `createStore` — same pattern as `authStore` and `themeStore`. Add helpers as standalone functions that take a store reference (mirror the `authStore.ts` pattern).
 
-- [ ] **Step 1: Write the failing test**
+- **Step 1: Write the failing test**
 
 ```typescript
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -1253,7 +1261,7 @@ describe('uploadStore', () => {
 });
 ```
 
-- [ ] **Step 2: Create `apps/miniapp/miniprogram/stores/uploadStore.ts`**
+- **Step 2: Create `apps/miniapp/miniprogram/stores/uploadStore.ts`**
 
 ```typescript
 import { createStore } from '../lib/store.js';
@@ -1353,11 +1361,11 @@ export const uploadStore = {
 };
 ```
 
-- [ ] **Step 3: Run — must pass**
+- **Step 3: Run — must pass**
 
 Expected: 95 + 7 = **102**.
 
-- [ ] **Step 4: Commit**
+- **Step 4: Commit**
 
 ```bash
 git add apps/miniapp/miniprogram/stores/uploadStore.ts apps/miniapp/tests/stores/uploadStore.test.ts
@@ -1371,6 +1379,7 @@ git commit -m "feat(miniapp): uploadStore — per-photo stage machine + draft me
 **Files:** Create `apps/miniapp/miniprogram/components/tag-picker/index.{ts,wxml,wxss,json}` + `apps/miniapp/tests/components/tag-picker.test.ts`.
 
 Behavior:
+
 - Displays an array of selected tag chips (deletable on tap-X)
 - An input below for typing a new tag
 - A suggestion strip showing matching existing tags (from `tagsService.list()` if `suggest` prop populated)
@@ -1393,13 +1402,13 @@ properties: {
 
 The component is "controlled" — parent owns the `value` array and reacts to `change`.
 
-- [ ] **Step 1: Create `index.json`**
+- **Step 1: Create `index.json`**
 
 ```json
 { "component": true, "usingComponents": {} }
 ```
 
-- [ ] **Step 2: Create `index.wxml`**
+- **Step 2: Create `index.wxml`**
 
 ```html
 <view class="picker">
@@ -1430,7 +1439,7 @@ The component is "controlled" — parent owns the `value` array and reacts to `c
 </view>
 ```
 
-- [ ] **Step 3: Create `index.wxss`**
+- **Step 3: Create `index.wxss`**
 
 ```css
 .picker { display: flex; flex-direction: column; gap: 12rpx; }
@@ -1478,7 +1487,7 @@ The component is "controlled" — parent owns the `value` array and reacts to `c
 }
 ```
 
-- [ ] **Step 4: Create `index.ts`**
+- **Step 4: Create `index.ts`**
 
 ```typescript
 Component({
@@ -1533,7 +1542,7 @@ Component({
 });
 ```
 
-- [ ] **Step 5: Write the test**
+- **Step 5: Write the test**
 
 `apps/miniapp/tests/components/tag-picker.test.ts`:
 
@@ -1572,11 +1581,11 @@ describe('tag-picker filter logic', () => {
 
 The "real" tag-picker component is exercised via the page in manual verification. The pure utility test catches the filter logic bug class that would surface in DevTools.
 
-- [ ] **Step 6: Run — must pass**
+- **Step 6: Run — must pass**
 
 Expected: 102 + 3 = **105**.
 
-- [ ] **Step 7: Commit**
+- **Step 7: Commit**
 
 ```bash
 git add apps/miniapp/miniprogram/components/tag-picker apps/miniapp/tests/components/tag-picker.test.ts
@@ -1589,7 +1598,7 @@ git commit -m "feat(miniapp): tag-picker component (chip + autocomplete + dedupe
 
 **Files:** Modify `apps/miniapp/miniprogram/app.json`.
 
-- [ ] **Step 1: Extend `subPackages`**
+- **Step 1: Extend `subPackages`**
 
 Add to the `subPackages` array:
 
@@ -1601,7 +1610,7 @@ Add to the `subPackages` array:
 }
 ```
 
-- [ ] **Step 2: Extend `preloadRule`**
+- **Step 2: Extend `preloadRule`**
 
 Add an entry:
 
@@ -1614,13 +1623,13 @@ Add an entry:
 
 (Merge with the existing `pages/timeline/index` entry — it already lists `pkgCollection`.)
 
-- [ ] **Step 3: Verify tsc**
+- **Step 3: Verify tsc**
 
 ```bash
 pnpm --filter @daynest/miniapp build
 ```
 
-- [ ] **Step 4: Commit**
+- **Step 4: Commit**
 
 ```bash
 git add apps/miniapp/miniprogram/app.json
@@ -1642,11 +1651,11 @@ This is the heart of Plan 05 — picker, metadata form, fuzzy-title autocomplete
 3. **Metadata form:** title (debounced fuzzy lookup), description, location, occurredOn (datepicker), tags (tag-picker component).
 4. **Fuzzy match:** when `byTitle` returns an exact match, show a "和「XX」合并？" toggle. When toggled on, store the matched collection id and switch the submit path to `append`.
 5. **Submit:** disabled until `photos.length > 0 && title.length > 0`. On tap:
-   - Set each queued photo's stage to `compressing` then run `compressImage` serially per photo (parallel here would thrash mobile decoders).
-   - Once compressed, request `uploadsService.requestTokens({ ext: 'jpg', count, collectionDraftId: draftId })`.
-   - Schedule `uploadToQiniu` per (photo, token) pair on a 10-concurrent `uploadQueue`. On per-photo success, set stage to `done` with `fileKey` + Qiniu-returned width/height.
-   - When all done, build the `CollectionCreateInput` (or `CollectionAppendInput` if `mergeIntoId` is set) and call the appropriate service.
-   - On success, `wx.showToast` + `wx.navigateBack`. On failure, show the failed photos and a retry button.
+  - Set each queued photo's stage to `compressing` then run `compressImage` serially per photo (parallel here would thrash mobile decoders).
+  - Once compressed, request `uploadsService.requestTokens({ ext: 'jpg', count, collectionDraftId: draftId })`.
+  - Schedule `uploadToQiniu` per (photo, token) pair on a 10-concurrent `uploadQueue`. On per-photo success, set stage to `done` with `fileKey` + Qiniu-returned width/height.
+  - When all done, build the `CollectionCreateInput` (or `CollectionAppendInput` if `mergeIntoId` is set) and call the appropriate service.
+  - On success, `wx.showToast` + `wx.navigateBack`. On failure, show the failed photos and a retry button.
 
 ### Step 1: Create `index.json`
 
@@ -2092,15 +2101,14 @@ Page({
 const compressedPaths = new Map<string, { path: string; w: number; h: number }>();
 ```
 
-- [ ] **Step 5: Verify tsc**
+- **Step 5: Verify tsc**
 
 ```bash
 pnpm --filter @daynest/miniapp build
 ```
 
-- [ ] **Step 6: Verify miniapp tests still pass at **105** (no new tests in this task — page covered by manual + smoke).
-
-- [ ] **Step 7: Commit**
+- **Step 6: Verify miniapp tests still pass at **105** (no new tests in this task — page covered by manual + smoke).
+- **Step 7: Commit**
 
 ```bash
 git add apps/miniapp/miniprogram/pkgUpload
@@ -2115,7 +2123,7 @@ git commit -m "feat(miniapp): pkgUpload/new — picker, metadata, fuzzy merge, p
 
 A circular floating action button in the bottom-right of the timeline. Hidden when scrolling? — no, keep it simple, always visible.
 
-- [ ] **Step 1: Extend `index.wxml`**
+- **Step 1: Extend `index.wxml`**
 
 Inside `<view class="page">`, after the closing `</scroll-view>`, add:
 
@@ -2125,7 +2133,7 @@ Inside `<view class="page">`, after the closing `</scroll-view>`, add:
 </view>
 ```
 
-- [ ] **Step 2: Extend `index.wxss`**
+- **Step 2: Extend `index.wxss`**
 
 Append:
 
@@ -2152,7 +2160,7 @@ Append:
 }
 ```
 
-- [ ] **Step 3: Add `onFabTap` to `index.ts`**
+- **Step 3: Add `onFabTap` to `index.ts`**
 
 Inside the `Page({...})` methods block (after `onCardTap`):
 
@@ -2162,7 +2170,7 @@ Inside the `Page({...})` methods block (after `onCardTap`):
   },
 ```
 
-- [ ] **Step 4: Verify tsc + tests**
+- **Step 4: Verify tsc + tests**
 
 ```bash
 pnpm --filter @daynest/miniapp build
@@ -2171,7 +2179,7 @@ pnpm --filter @daynest/miniapp test
 
 Test count unchanged at **105**.
 
-- [ ] **Step 5: Commit**
+- **Step 5: Commit**
 
 ```bash
 git add apps/miniapp/miniprogram/pages/timeline
@@ -2185,6 +2193,7 @@ git commit -m "feat(miniapp): timeline FAB to launch upload flow"
 **Files:** Modify `apps/api/tsconfig.json` + Create `apps/api/tests/wechat/miniapp-upload.test.ts`.
 
 Cross-package smoke. Exercises:
+
 1. `uploadsService.requestTokens({ ext, count, collectionDraftId })` against real Fastify
 2. `collectionsService.byTitle(title)` (no match → null)
 3. `collectionsService.create(body)` end-to-end — verifies the created collection appears in `collectionsService.list()`
@@ -2397,33 +2406,31 @@ git commit -m "test(miniapp): end-to-end smoke for upload pipeline (tokens + cre
 After all 11 commits, smoke-test in WeChat DevTools:
 
 1. Boot the api:
-   ```bash
+  ```bash
    pnpm --filter @daynest/api dev
-   ```
-
+  ```
 2. Open DevTools → `apps/miniapp/` → 不校验合法域名.
-
 3. Walk through:
-   - Timeline → tap `+` FAB → upload page opens fresh.
-   - Tap "+" cell → pick 3 photos. Verify thumbnails appear with `queued` state.
-   - First photo's EXIF should default the date picker (if the chosen image has DateTimeOriginal).
-   - Type a title. Confirm the title doesn't truncate during Chinese IME (the page uses raw `bindinput`; if it's noticeably bad we'd add `useIMEDebouncedValue` — but for now the debounce is only used for the fuzzy lookup, not for setData, so IME is fine).
-   - Type the title of an existing collection — observe the "已存在「X」 合并" toggle appear. Flip it on. Verify the submit button label changes to "加入「X」".
-   - Add a few tags via the tag-picker. Tap a suggestion. Type a new one and press 完成.
-   - Tap 创建集合 / 加入. Watch the progress bar tick. Verify each photo's overlay flips compressing → uploading X% → ✓.
-   - On success: toast + auto-navigateBack. Verify the new/updated collection appears on the timeline.
-
+  - Timeline → tap `+` FAB → upload page opens fresh.
+  - Tap "+" cell → pick 3 photos. Verify thumbnails appear with `queued` state.
+  - First photo's EXIF should default the date picker (if the chosen image has DateTimeOriginal).
+  - Type a title. Confirm the title doesn't truncate during Chinese IME (the page uses raw `bindinput`; if it's noticeably bad we'd add `useIMEDebouncedValue` — but for now the debounce is only used for the fuzzy lookup, not for setData, so IME is fine).
+  - Type the title of an existing collection — observe the "已存在「X」 合并" toggle appear. Flip it on. Verify the submit button label changes to "加入「X」".
+  - Add a few tags via the tag-picker. Tap a suggestion. Type a new one and press 完成.
+  - Tap 创建集合 / 加入. Watch the progress bar tick. Verify each photo's overlay flips compressing → uploading X% → ✓.
+  - On success: toast + auto-navigateBack. Verify the new/updated collection appears on the timeline.
 4. Failure modes worth poking:
-   - Cancel `wx.chooseMedia` → no toast.
-   - Submit with 0 photos → button is disabled.
-   - Submit with 0 title → button is disabled.
-   - Force a Qiniu 401 by tampering with the token (e.g., via DevTools network mock) → failed overlay appears.
+  - Cancel `wx.chooseMedia` → no toast.
+  - Submit with 0 photos → button is disabled.
+  - Submit with 0 title → button is disabled.
+  - Force a Qiniu 401 by tampering with the token (e.g., via DevTools network mock) → failed overlay appears.
 
 ---
 
 ## Self-Review
 
 **Spec coverage** (against `2026-05-22-miniapp-design.md`):
+
 - §3.3 Upload page tree (`pkgUpload/new/index`) — Task 9 ✅
 - §4.6 Pipeline (pick → exif → compress → token → upload → commit) — Tasks 1–9 ✅
 - §5.2 Wire contracts (POST `/api/uploads/token`, POST `/api/collections`, POST `/api/collections/:id/append`, GET `/api/collections/by-title`) — Tasks 4, 5 ✅
@@ -2432,14 +2439,17 @@ After all 11 commits, smoke-test in WeChat DevTools:
 - Client-side compression — Tasks 2 + 9 ✅
 
 **Type consistency:**
+
 - `CollectionCreateInput` / `CollectionAppendInput` from `@daynest/shared` — used unchanged.
 - `PhotoInput` (required `fileKey`, optional `caption`, `takenAt`, `tags`) — matched at the call site.
 - Qiniu `returnBody` shape matches `apps/api/src/storage/qiniu.ts:43-49` (`key`, `hash`, `size`, `width`, `height`).
 
 **Plan boundary check:**
+
 - Tasks 1–7 are foundations + components; Tasks 8–10 wire into the existing app; Task 11 is the cross-package smoke. Order is intentional — page comes AFTER its dependencies, FAB last.
 
 **Placeholder scan:**
+
 - No `TODO` / `later` / `implement appropriate error handling`.
 - Every code block is complete.
 - Every command has expected output.

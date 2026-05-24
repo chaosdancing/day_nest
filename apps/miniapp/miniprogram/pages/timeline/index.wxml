@@ -1,52 +1,82 @@
 <view class="page">
+  <page-hero
+    emoji="📖"
+    title="时光轴"
+    subtitle="TIMELINE · {{items.length}} ENTRIES"
+    motion="wobble"
+  />
+
   <timeline-filters bind:change="onFilterChange" />
 
-  <view class="search">
+  <view class="search {{searchInput ? 'search--filled' : ''}}">
+    <text class="search__icon">🔎</text>
     <input
       class="search__input"
-      placeholder="按集合名搜索"
+      placeholder="按集合名搜索 (周末 / 生日 …)"
+      placeholder-class="search__placeholder"
       value="{{searchInput}}"
       bindinput="onSearchInput"
       confirm-type="search"
       bindconfirm="onSearchConfirm"
     />
-    <view wx:if="{{searchInput}}" class="search__clear" bindtap="onSearchClear">清空</view>
+    <view wx:if="{{searchInput}}" class="search__clear" catchtap="onSearchClear">×</view>
   </view>
 
-  <view wx:if="{{loading && items.length === 0}}" class="empty">读取中…</view>
-  <view wx:elif="{{!loading && items.length === 0}}" class="empty">还没有集合</view>
+  <view wx:if="{{loading && items.length === 0}}" class="empty">
+    <text class="empty__emoji">📖</text>
+    <view class="empty__title scribble">正在翻开相册...</view>
+  </view>
+  <view wx:elif="{{!loading && items.length === 0}}" class="empty">
+    <text class="empty__emoji">📭</text>
+    <view class="empty__title scribble">空相册</view>
+    <view class="empty__sub">还没有任何回忆，点右下角 + 上传第一个集合 📸</view>
+  </view>
 
   <scroll-view
-    class="list"
+    class="list {{isScrolling ? 'list--scrolling' : ''}}"
     scroll-y="true"
     enable-back-to-top="true"
+    enhanced="{{true}}"
+    bindscroll="onListScroll"
     bindscrolltolower="onLoadMore"
   >
     <view
       wx:for="{{items}}"
       wx:key="id"
       class="row"
+      style="animation-delay: {{index * 60}}ms;"
       data-id="{{item.id}}"
       bindtap="onCardTap"
     >
-      <view class="row__rail">
-        <view class="row__dot"></view>
-        <view class="row__date">{{item.occurredOn}}</view>
+      <view class="row__dot"></view>
+
+      <view class="row__meta">
+        <text class="row__date">{{item.displayDate}}</text>
+        <text wx:if="{{item.location}}" class="row__loc serif">· {{item.location}}</text>
       </view>
+
       <view class="row__card">
-        <stacked-polaroid
-          previewPhotos="{{item.previewPhotos}}"
-          photoCount="{{item.photoCount}}"
-          caption="{{item.title}}"
-        />
-        <view wx:if="{{item.location}}" class="row__location">{{item.location}}</view>
+        <view class="row__polaroid">
+          <stacked-polaroid
+            previewPhotos="{{item.previewPhotos}}"
+            photoCount="{{item.photoCount}}"
+            caption="{{item.title}}"
+          />
+        </view>
+
         <view wx:if="{{item.tags.length}}" class="row__tags">
-          <view wx:for="{{item.tags}}" wx:for-item="tag" wx:key="id" class="row__tag">#{{tag.displayName}}</view>
+          <tape-chip
+            wx:for="{{item.tags}}"
+            wx:for-item="tag"
+            wx:key="id"
+            label="{{tag.displayName}}"
+            tiltSeed="{{item.id}}-{{tag.id}}"
+          />
         </view>
       </view>
     </view>
 
-    <view wx:if="{{loadingMore}}" class="footer">加载更多…</view>
+    <view wx:if="{{loadingMore}}" class="footer">正在翻下一页...</view>
     <view wx:elif="{{!nextCursor && items.length > 0}}" class="footer">到底了</view>
   </scroll-view>
 

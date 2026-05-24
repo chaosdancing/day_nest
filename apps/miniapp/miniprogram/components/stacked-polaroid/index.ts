@@ -5,8 +5,36 @@ interface PhotoLike {
   thumbnailUrl: string;
 }
 
+interface BackLayer {
+  /** Stable WX key. */
+  key: string;
+  thumb: string;
+  /** Computed `transform:` string applied via inline style. */
+  transform: string;
+}
+
+/**
+ * StackedPolaroid (timeline collection card).
+ *
+ * Mirrors apps/web/src/components/scrapbook/StackedPolaroid.tsx — up to two
+ * REAL back photos peek out behind the front cover, deterministically
+ * offset and rotated so the same collection always lands in the same
+ * arrangement.
+ *
+ *   1 photo  → single polaroid (no stack)
+ *   2 photos → one back layer pushed left
+ *   3+ photos → two back layers, fanned left + right
+ *
+ * Front cover is rendered in the normal flow so it defines the bounding
+ * box; back layers are `position: absolute; inset: 0`, scaled into the
+ * same footprint but translated outward to peek.
+ *
+ * `apply-shared` styleIsolation is required so the shared `.polaroid` /
+ * `.polaroid__photo-frame` rules in styles/polaroid.wxss actually apply
+ * to <view class="polaroid"> inside this component.
+ */
 Component({
-  options: { multipleSlots: false },
+  options: { multipleSlots: false, styleIsolation: 'apply-shared' },
   properties: {
     previewPhotos: {
       type: Array,
@@ -22,39 +50,45 @@ Component({
     },
   },
   data: {
-    slots: [] as Array<{
-      // Unique per-slot key so wx:key avoids dup-key warnings when a
-      // collection has fewer than 3 preview photos.
-      key: string;
-      thumb: string;
-      angle: number;
-      tape: number;
-      offsetX: number;
-      offsetY: number;
-    }>,
+    frontThumb: '',
+    frontAngle: 0,
+    tape: -1,
+    backLayers: [] as BackLayer[],
   },
   observers: {
     previewPhotos(list: PhotoLike[]) {
-      const items = (list ?? []).slice(0, 3);
-      const slots: typeof this.data.slots = [];
-      // back-most first, top-most last — push only present photos so that the
-      // WXML never renders empty slots and wx:key stays unique.
-      for (let i = 2; i >= 0; i--) {
-        const p = items[i];
-        if (!p) continue;
-        const angle = i === 0 ? stableAngle(p.id, 1) : stableAngle(p.id, 6);
-        const offsetX = i === 0 ? 0 : (i === 1 ? 14 : 28);
-        const offsetY = i === 0 ? 0 : (i === 1 ? 10 : 20);
-        slots.push({
+      const items = (list ?? []).filter((p) => p && p.thumbnailUrl);
+      const front = items[0];
+      if (!front) {
+        this.setData({ frontThumb: '', frontAngle: 0, tape: -1, backLayers: [] });
+        return;
+      }
+      const back = items.slice(1, 3);
+      const backLayers: BackLayer[] = back.map((p, i) => {
+        // Sign alternates: first back layer goes left (-), second goes right (+).
+        // Matches web's `sign = i === 0 ? -1 : 1`.
+        const sign = i === 0 ? -1 : 1;
+        // Tilt ±9..±11° away from the front. Smaller than before so the
+        // rotated corners don't blow past the timeline row's right edge.
+        const baseAngle = stableAngle(`${p.id}-back`, 3);
+        const angle = baseAngle + sign * 6;
+        // 14rpx + 6rpx per layer outward; 10rpx + 6rpx down. Tightened from
+        // 20/14 so the stack stays compact under the new max-width:530rpx
+        // timeline cards while still showing a clear "pile" silhouette.
+        const dx = sign * (14 + i * 6);
+        const dy = 10 + i * 6;
+        return {
           key: p.id,
           thumb: p.thumbnailUrl,
-          angle,
-          tape: stableInt(p.id, 4),
-          offsetX,
-          offsetY,
-        });
-      }
-      this.setData({ slots });
+          transform: `translate(${dx}rpx, ${dy}rpx) rotate(${angle}deg)`,
+        };
+      });
+      this.setData({
+        frontThumb: front.thumbnailUrl,
+        frontAngle: stableAngle(front.id, 2),
+        tape: stableInt(front.id, 4),
+        backLayers,
+      });
     },
   },
 });

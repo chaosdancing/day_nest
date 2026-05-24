@@ -6,7 +6,7 @@ import { cn } from '@/lib/cn';
 import { displayInitial } from '@/lib/displayInitial';
 
 const navItems = [
-  { to: '/', label: '时间轴', end: true },
+  { to: '/', label: '时光轴', end: true },
   { to: '/favorites', label: '最爱' },
   { to: '/tags', label: '标签' },
   { to: '/upload', label: '上传' },

@@ -2,6 +2,7 @@
   "navigationBarTitleText": "标签",
   "enablePullDownRefresh": true,
   "usingComponents": {
-    "stacked-polaroid": "/components/stacked-polaroid/index"
+    "stacked-polaroid": "/components/stacked-polaroid/index",
+    "photo-tile": "/components/photo-tile/index"
   }
 }

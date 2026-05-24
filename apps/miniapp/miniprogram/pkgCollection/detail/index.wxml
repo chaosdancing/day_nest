@@ -1,37 +1,140 @@
 <view class="page">
-  <view wx:if="{{loading}}" class="empty">读取中…</view>
+  <view wx:if="{{loading}}" class="empty">
+    <text class="empty__emoji">📔</text>
+    <view class="empty__title scribble">正在翻这本相册...</view>
+  </view>
   <block wx:elif="{{!loading && collection}}">
+    <!-- Hero polaroid — mirrors apps/web/src/pages/CollectionDetailPage.tsx
+         (Polaroid with aspectRatio={16/10}, max-w-2xl, mx-auto). -->
+    <view wx:if="{{collection.coverPhoto}}" class="hero">
+      <view class="polaroid hero__polaroid" style="transform: rotate({{heroAngle}}deg);">
+        <view class="tape tape--{{heroTape}}"></view>
+        <view class="polaroid__photo-frame hero__frame">
+          <image
+            class="polaroid__photo"
+            src="{{collection.coverPhoto.thumbnailUrl}}"
+            mode="aspectFill"
+          />
+        </view>
+      </view>
+    </view>
+
     <view class="header">
-      <view class="header__title">{{collection.title}}</view>
-      <view class="header__meta">
-        <text class="header__date">{{collection.occurredOn}}</text>
-        <text wx:if="{{collection.location}}" class="header__sep">·</text>
-        <text wx:if="{{collection.location}}" class="header__location">{{collection.location}}</text>
+      <view class="header__date mono-label">{{displayDate}}</view>
+      <view class="header__title scribble">{{collection.title}}</view>
+      <view class="header__edit" bindtap="onEditTap">
+        <text>✏️</text>
+        <text>编辑回忆</text>
       </view>
+
+      <view wx:if="{{collection.location}}" class="header__loc serif">📍 {{collection.location}}</view>
+
       <view wx:if="{{collection.description}}" class="header__desc">{{collection.description}}</view>
+
       <view wx:if="{{collection.tags.length}}" class="header__tags">
-        <view wx:for="{{collection.tags}}" wx:key="id" class="chip">#{{item.displayName}}</view>
+        <tape-chip
+          wx:for="{{collection.tags}}"
+          wx:key="id"
+          label="{{item.displayName}}"
+          tiltSeed="{{collection.id}}-{{item.id}}"
+        />
       </view>
-      <view class="header__count">共 {{collection.photoCount}} 张</view>
+
+      <view class="header__count mono-label">📷 {{collection.photoCount}} PHOTOS</view>
     </view>
 
     <view class="grid">
-      <view
-        wx:for="{{collection.photos}}"
-        wx:key="id"
-        class="grid__cell"
-        id="photo-{{item.id}}"
-      >
-        <photo-tile
-          photoId="{{item.id}}"
-          thumbnailUrl="{{item.thumbnailUrl}}"
-          caption=""
-          favoritedByMe="{{item.favoritedByMe}}"
-          favoriteCount="{{item.favoriteCount}}"
-          bind:tap="onPhotoTap"
-          bind:favoritetap="onFavoriteToggle"
-        />
+      <view class="masonry">
+        <view class="masonry__col">
+          <view
+            wx:for="{{leftPhotos}}"
+            wx:key="id"
+            class="grid__cell"
+            id="photo-{{item.id}}"
+          >
+            <photo-tile
+              photoId="{{item.id}}"
+              thumbnailUrl="{{item.thumbnailUrl}}"
+              caption="{{item.caption || ''}}"
+              frameStyle="{{item.frameStyle}}"
+              favoritedByMe="{{item.favoritedByMe}}"
+              favoriteCount="{{item.favoriteCount}}"
+              bind:phototap="onPhotoTap"
+              bind:favoritetap="onFavoriteToggle"
+            />
+          </view>
+        </view>
+
+        <view class="masonry__col">
+          <view
+            wx:for="{{rightPhotos}}"
+            wx:key="id"
+            class="grid__cell"
+            id="photo-{{item.id}}"
+          >
+            <photo-tile
+              photoId="{{item.id}}"
+              thumbnailUrl="{{item.thumbnailUrl}}"
+              caption="{{item.caption || ''}}"
+              frameStyle="{{item.frameStyle}}"
+              favoritedByMe="{{item.favoritedByMe}}"
+              favoriteCount="{{item.favoriteCount}}"
+              bind:phototap="onPhotoTap"
+              bind:favoritetap="onFavoriteToggle"
+            />
+          </view>
+        </view>
       </view>
     </view>
   </block>
+
+  <view wx:if="{{editOpen}}" class="edit-mask" bindtap="onEditClose">
+    <view class="edit-drawer" catchtap="onEditNoop">
+      <view class="edit__handle"></view>
+      <view class="edit__head">
+        <view>
+          <view class="mono-label">MEMORY INFO</view>
+          <view class="edit__title scribble">编辑回忆</view>
+        </view>
+      </view>
+
+      <label class="edit__field">
+        <text class="edit__label">标题</text>
+        <input class="edit__input edit__input--hand" value="{{draftTitle}}" bindinput="onTitleInput" maxlength="200" />
+      </label>
+
+      <view class="edit__row">
+        <label class="edit__field edit__field--half">
+          <text class="edit__label">日期</text>
+          <picker mode="date" value="{{draftOccurredOn}}" bindchange="onDateChange">
+            <view class="edit__input edit__picker">{{draftOccurredOn}}</view>
+          </picker>
+        </label>
+        <label class="edit__field edit__field--half">
+          <text class="edit__label">地点</text>
+          <input class="edit__input" value="{{draftLocation}}" bindinput="onLocationInput" maxlength="200" placeholder="在哪里" />
+        </label>
+      </view>
+
+      <label class="edit__field">
+        <text class="edit__label">描述</text>
+        <textarea class="edit__textarea" value="{{draftDescription}}" bindinput="onDescriptionInput" maxlength="10000" placeholder="写点关于这段回忆的说明…" />
+      </label>
+
+      <view class="edit__field">
+        <text class="edit__label">标签</text>
+        <tag-picker
+          value="{{draftTags}}"
+          suggest="{{tagSuggestions}}"
+          placeholder="输入或选择标签"
+          bind:change="onTagsChange"
+        />
+      </view>
+
+      <view class="edit__actions">
+        <view class="edit__cancel" bindtap="onEditClose">取消</view>
+        <view class="edit__save" bindtap="onSaveEdit">{{savingEdit ? '保存中…' : '保存修改'}}</view>
+      </view>
+    </view>
+  </view>
 </view>

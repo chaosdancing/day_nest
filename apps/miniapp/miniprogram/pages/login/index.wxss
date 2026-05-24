@@ -1,43 +1,64 @@
 .page {
   min-height: 100vh;
-  padding: 200rpx 48rpx 80rpx;
+  padding: 160rpx 48rpx 80rpx;
   background: var(--paper-cream);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
 }
-.hero { text-align: center; margin-bottom: 120rpx; }
-.brand {
-  font-size: 96rpx;
-  font-weight: 600;
-  color: var(--ink-primary);
+
+.hero {
+  text-align: center;
+  margin-bottom: 120rpx;
+}
+.hero__brand {
+  font-family: var(--font-mono);
+  font-size: 22rpx;
   letter-spacing: 8rpx;
+  color: var(--kraft-dark);
+  opacity: .75;
 }
-.tagline {
-  margin-top: 16rpx;
-  font-size: 32rpx;
-  color: var(--ink-secondary);
+.hero__title {
+  display: block;
+  font-size: 96rpx;
+  line-height: 1.2;
+  color: var(--ink-primary);
 }
-.tagline--sub { margin-top: 4rpx; }
+.hero__title + .hero__title {
+  margin-top: 8rpx;
+}
+
+/* Login primary button. WeChat <button> ships with its own default
+   width/padding/min-height that's a hair too narrow for our pill style,
+   so we force width and add horizontal padding explicitly. */
 .primary {
   width: 100%;
   background: var(--ink-primary);
   color: #FBF4E4;
-  padding: 28rpx 0;
+  padding: 30rpx 48rpx;
   border-radius: 999rpx;
   font-size: 32rpx;
   letter-spacing: 4rpx;
+  line-height: 1.4;
 }
 .primary[disabled] { opacity: .6; }
+
 .secondary {
   margin-top: 48rpx;
+  text-align: center;
   font-size: 26rpx;
   color: var(--ink-secondary);
   text-decoration: underline;
 }
+.secondary--dev {
+  margin-top: 24rpx;
+  color: var(--kraft-dark);
+  font-size: 22rpx;
+  opacity: .7;
+}
 .error {
   margin-top: 32rpx;
   font-size: 26rpx;
-  color: var(--ink-sticker);
+  color: var(--pin-red);
   text-align: center;
 }

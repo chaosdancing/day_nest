@@ -2,7 +2,7 @@
   "miniprogramRoot": "miniprogram/",
   "compileType": "miniprogram",
   "libVersion": "3.4.0",
-  "appid": "touristappid",
+  "appid": "wx7cffb790e92a012c",
   "projectname": "daynest-miniapp",
   "setting": {
     "es6": true,
@@ -10,15 +10,34 @@
     "postcss": true,
     "minified": true,
     "newFeature": true,
-    "useCompilerPlugins": ["typescript"],
+    "useCompilerPlugins": [
+      "typescript"
+    ],
     "uglifyFileName": true,
     "preloadBackgroundData": false,
     "showShadowRootInWxmlPanel": false,
-    "useStaticServer": true
+    "useStaticServer": true,
+    "compileWorklet": false,
+    "uploadWithSourceMap": true,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
   },
-  "scripts": {
-    "beforeCompile": "",
-    "beforePreview": "",
-    "beforeUpload": ""
-  }
+  "simulatorPluginLibVersion": {},
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "editorSetting": {}
 }

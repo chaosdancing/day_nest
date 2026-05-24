@@ -23,10 +23,10 @@ describe('parseExif', () => {
     expect(parseExif(buf).dateTimeOriginal).toBeNull();
   });
 
-  it('reads DateTimeOriginal from a JPEG with a populated EXIF block', () => {
+  it('reads DateTimeOriginal as an API-compatible ISO datetime', () => {
     const buf = loadFixture('exif-2024-01-15.jpg');
     const info = parseExif(buf);
-    expect(info.dateTimeOriginal).toBe('2024-01-15T10:30:00');
+    expect(info.dateTimeOriginal).toBe('2024-01-15T10:30:00Z');
   });
 
   it('does not throw on truncated input', () => {

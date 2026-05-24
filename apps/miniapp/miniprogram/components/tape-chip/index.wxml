@@ -1,0 +1,8 @@
+<view
+  class="chip chip--tone-{{resolvedTone}} {{active ? 'chip--active' : ''}}"
+  style="transform: rotate({{tiltDeg}}deg);"
+  bindtap="onTap"
+>
+  <text class="chip__label">{{label}}</text>
+  <text wx:if="{{count !== ''}}" class="chip__count">{{count}}</text>
+</view>

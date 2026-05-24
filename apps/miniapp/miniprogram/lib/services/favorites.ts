@@ -29,7 +29,10 @@ export const favoritesService = {
 
   async remove(photoId: string): Promise<void> {
     const url = `${resolveApiBase()}/api/photos/${encodeURIComponent(photoId)}/favorite`;
-    const res = await apiClient.request<unknown>({ url, method: 'DELETE' });
+    // Keep DELETE JSON-shaped across runtimes. Fastify rejects
+    // `content-type: application/json` with an empty body before the route
+    // handler runs, and some clients/proxies attach that header implicitly.
+    const res = await apiClient.request<unknown>({ url, method: 'DELETE', data: {} });
     ensureOk('DELETE', url, res.statusCode, res.data);
   },
 };

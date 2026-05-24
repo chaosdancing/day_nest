@@ -80,7 +80,7 @@ function BrandingSide() {
         className="md:mt-12"
       >
         <p className="font-mono text-[11px] tracking-[0.4em] text-kraft-dark/70 dark:text-paper/55">
-          DAYNEST · 朝夕居
+          DAYNEST · 慢慢记
         </p>
         <HandwrittenText
           as="h1"

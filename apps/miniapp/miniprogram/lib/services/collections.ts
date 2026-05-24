@@ -3,6 +3,7 @@ import type {
   CollectionSummaryDTO,
   CollectionCreateInput,
   CollectionAppendInput,
+  CollectionUpdateInput,
 } from '@daynest/shared';
 import { apiClient } from './_client.js';
 import { ensureOk, qs } from './_http.js';
@@ -71,6 +72,17 @@ export const collectionsService = {
       data: body,
     });
     ensureOk('POST', url, res.statusCode, res.data);
+    return res.data;
+  },
+
+  async update(id: string, body: CollectionUpdateInput): Promise<CollectionDetailDTO> {
+    const url = `${resolveApiBase()}/api/collections/${encodeURIComponent(id)}`;
+    const res = await apiClient.request<CollectionDetailDTO>({
+      url,
+      method: 'PATCH',
+      data: body,
+    });
+    ensureOk('PATCH', url, res.statusCode, res.data);
     return res.data;
   },
 

@@ -1,0 +1,7 @@
+<view class="hero hero--{{motion}}">
+  <view class="hero__emoji-wrap">
+    <text class="hero__emoji {{emojiClass}}">{{emoji}}</text>
+  </view>
+  <view class="hero__title">{{title}}</view>
+  <view wx:if="{{subtitle}}" class="hero__subtitle">{{subtitle}}</view>
+</view>

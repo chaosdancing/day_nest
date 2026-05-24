@@ -1,8 +1,16 @@
 <view class="page">
   <view class="header">
+    <view class="header__rule"></view>
     <view class="header__line">
-      <view class="header__title">#{{tagDisplay || tagName}}</view>
-      <view class="header__edit" bindtap="onEditTap">编辑</view>
+      <view class="header__hash scribble">#</view>
+      <view class="header__title scribble">{{tagDisplay || tagName}}</view>
+      <view class="header__edit" bindtap="onEditTap">
+        <text class="header__edit-emoji">✏️</text>
+        <text class="header__edit-label">编辑</text>
+      </view>
+    </view>
+    <view class="header__sub mono-label">
+      {{scope === 'photo' ? photoItems.length + ' PHOTOS' : items.length + ' MEMORIES'}}
     </view>
     <view class="header__scope">
       <view
@@ -15,8 +23,17 @@
     </view>
   </view>
 
-  <view wx:if="{{loading && items.length === 0}}" class="empty">读取中…</view>
-  <view wx:elif="{{!loading && items.length === 0}}" class="empty">该标签下还没有集合</view>
+  <view wx:if="{{loading && items.length === 0 && photoItems.length === 0}}" class="empty">
+    <text class="empty__emoji">🏷️</text>
+    <view class="empty__title scribble">读取中…</view>
+  </view>
+  <view wx:elif="{{!loading && ((scope === 'photo' && photoItems.length === 0) || (scope !== 'photo' && items.length === 0))}}" class="empty">
+    <text class="empty__emoji">📭</text>
+    <view class="empty__title scribble">{{scope === 'photo' ? '该标签下还没有照片' : '该标签下还没有回忆'}}</view>
+    <view class="empty__sub">
+      {{scope === 'photo' ? '先给照片贴上 #' + (tagDisplay || tagName) + '。' : '先回时光轴，给一个回忆贴上 #' + (tagDisplay || tagName) + '。'}}
+    </view>
+  </view>
 
   <scroll-view
     class="list"
@@ -24,25 +41,61 @@
     enable-back-to-top="true"
     bindscrolltolower="onLoadMore"
   >
-    <view
-      wx:for="{{items}}"
-      wx:key="id"
-      class="row"
-      data-id="{{item.id}}"
-      bindtap="onCardTap"
-    >
-      <stacked-polaroid
-        previewPhotos="{{item.previewPhotos}}"
-        photoCount="{{item.photoCount}}"
-        caption="{{item.title}}"
-      />
-      <view class="row__meta">
-        <text class="row__date">{{item.occurredOn}}</text>
-        <text wx:if="{{item.location}}" class="row__sep">·</text>
-        <text wx:if="{{item.location}}" class="row__location">{{item.location}}</text>
+    <block wx:if="{{scope === 'photo'}}">
+      <view class="photo-masonry">
+        <view class="photo-col">
+          <view wx:for="{{leftPhotos}}" wx:key="id" class="photo-cell">
+            <photo-tile
+              photoId="{{item.photo.id}}"
+              thumbnailUrl="{{item.photo.thumbnailUrl}}"
+              caption="{{item.collection.title}}"
+              subtitle="{{item.displayDate}}"
+              frameStyle="{{item.frameStyle}}"
+              favoritedByMe="{{item.photo.favoritedByMe}}"
+              favoriteCount="{{item.photo.favoriteCount}}"
+              bind:phototap="onPhotoTap"
+              bind:favoritetap="onFavoriteToggle"
+            />
+          </view>
+        </view>
+        <view class="photo-col">
+          <view wx:for="{{rightPhotos}}" wx:key="id" class="photo-cell">
+            <photo-tile
+              photoId="{{item.photo.id}}"
+              thumbnailUrl="{{item.photo.thumbnailUrl}}"
+              caption="{{item.collection.title}}"
+              subtitle="{{item.displayDate}}"
+              frameStyle="{{item.frameStyle}}"
+              favoritedByMe="{{item.photo.favoritedByMe}}"
+              favoriteCount="{{item.photo.favoriteCount}}"
+              bind:phototap="onPhotoTap"
+              bind:favoritetap="onFavoriteToggle"
+            />
+          </view>
+        </view>
       </view>
-    </view>
+    </block>
+
+    <block wx:else>
+      <view
+        wx:for="{{items}}"
+        wx:key="id"
+        class="row"
+        data-id="{{item.id}}"
+        bindtap="onCardTap"
+      >
+        <stacked-polaroid
+          previewPhotos="{{item.previewPhotos}}"
+          photoCount="{{item.photoCount}}"
+        />
+        <view class="row__title scribble">{{item.title}}</view>
+        <view class="row__meta">
+          <text class="row__date">{{item.displayDate}}</text>
+          <text wx:if="{{item.location}}" class="row__loc serif">· {{item.location}}</text>
+        </view>
+      </view>
+    </block>
     <view wx:if="{{loadingMore}}" class="footer">加载更多…</view>
-    <view wx:elif="{{!nextCursor && items.length > 0}}" class="footer">到底了</view>
+    <view wx:elif="{{!nextCursor && ((scope === 'photo' && photoItems.length > 0) || (scope !== 'photo' && items.length > 0))}}" class="footer">到底了</view>
   </scroll-view>
 </view>

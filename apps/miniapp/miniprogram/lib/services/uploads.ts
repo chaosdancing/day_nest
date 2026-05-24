@@ -17,6 +17,31 @@ export interface QiniuReturnBody {
   height: number;
 }
 
+function normalizePositiveInt(value: unknown, field: string): number {
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isInteger(n) || n <= 0) {
+    throw new Error(`invalid qiniu ${field}`);
+  }
+  return n;
+}
+
+function normalizeQiniuReturnBody(raw: unknown): QiniuReturnBody {
+  const parsed = raw as Partial<QiniuReturnBody> & Record<string, unknown>;
+  if (typeof parsed.key !== 'string' || parsed.key.length === 0) {
+    throw new Error('missing key in qiniu response');
+  }
+  if (typeof parsed.hash !== 'string') {
+    throw new Error('missing hash in qiniu response');
+  }
+  return {
+    key: parsed.key,
+    hash: parsed.hash,
+    size: normalizePositiveInt(parsed.size, 'size'),
+    width: normalizePositiveInt(parsed.width, 'width'),
+    height: normalizePositiveInt(parsed.height, 'height'),
+  };
+}
+
 interface RequestTokensOpts {
   ext: string;
   count: number;
@@ -57,9 +82,7 @@ export const uploadsService = {
             return;
           }
           try {
-            const parsed = JSON.parse(res.data) as QiniuReturnBody;
-            if (!parsed.key) throw new Error('missing key in qiniu response');
-            resolveOk(parsed);
+            resolveOk(normalizeQiniuReturnBody(JSON.parse(res.data)));
           } catch (e) {
             reject(e);
           }

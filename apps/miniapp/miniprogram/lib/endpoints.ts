@@ -8,4 +8,6 @@ export const endpoints = {
   refreshToken: () => `${resolveApiBase()}/api/auth/refresh-token`,
   me: () => `${resolveApiBase()}/api/auth/me`,
   subscribe: () => `${resolveApiBase()}/api/wechat/subscribe`,
+  /** Username/password login. Dev-only entry from /pages/dev-login/index. */
+  login: () => `${resolveApiBase()}/api/auth/login`,
 };

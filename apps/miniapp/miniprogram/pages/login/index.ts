@@ -18,7 +18,23 @@ interface LoginUnboundResponse {
 type LoginResponse = LoginBoundResponse | LoginUnboundResponse;
 
 Page({
-  data: { loading: false, error: '' },
+  data: { loading: false, error: '', showDevLogin: false },
+
+  onLoad() {
+    // Show the dev-login entry whenever we're NOT in a release build. In
+    // DevTools / touristappid `envVersion` may be undefined, so we treat
+    // anything other than the literal string 'release' as non-prod.
+    let env: string | undefined;
+    try {
+      env = wx.getAccountInfoSync?.()?.miniProgram?.envVersion;
+    } catch {
+      env = undefined;
+    }
+    const showDevLogin = env !== 'release';
+    // eslint-disable-next-line no-console
+    console.log('[login] envVersion=', env, ' showDevLogin=', showDevLogin);
+    this.setData({ showDevLogin });
+  },
 
   onShow() {
     const s = authStore.getState();
@@ -66,5 +82,9 @@ Page({
 
   onGoRegister() {
     wx.navigateTo({ url: '/pkgOnboarding/register/index' });
+  },
+
+  onGoDevLogin() {
+    wx.navigateTo({ url: '/pages/dev-login/index' });
   },
 });

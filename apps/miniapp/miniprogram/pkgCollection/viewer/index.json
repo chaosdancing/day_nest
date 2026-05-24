@@ -2,5 +2,7 @@
   "navigationBarTitleText": "查看照片",
   "navigationBarBackgroundColor": "#000000",
   "navigationBarTextStyle": "white",
-  "usingComponents": {}
+  "usingComponents": {
+    "tag-picker": "/components/tag-picker/index"
+  }
 }

@@ -85,7 +85,7 @@ Page({
         accessToken: res.data.accessToken,
         refreshToken: res.data.refreshToken,
       });
-      wxShowToast('欢迎加入朝夕居', 'success');
+      wxShowToast('欢迎加入慢慢记', 'success');
       wx.switchTab({ url: '/pages/timeline/index' });
     } catch (e) {
       this.setData({ loading: false, error: e instanceof Error ? e.message : '网络异常' });

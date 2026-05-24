@@ -1,16 +1,41 @@
+/* Photo viewer.
+   Visual reference: apps/web/src/pages/PhotoViewerPage.tsx — immersive
+   ink backdrop, object-contain image, glassy side chevrons and bottom
+   chrome. No white polaroid frame in viewer mode. */
+
 .viewer {
   width: 100vw;
   height: 100vh;
-  background: #000;
+  background: #181410;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
-.empty { color: #888; font-size: 26rpx; }
+
+.empty { color: rgba(255, 252, 245, .65); font-size: 26rpx; }
 .swiper { width: 100%; height: 100%; }
+
+/* Each swiper item centers a transparent movable canvas. Do NOT add a white
+   frame here; the web viewer shows the image directly on a dark backdrop. */
+.frame {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 92rpx 24rpx 190rpx; /* top: clear of heart pill,
+                                  bottom: clear of bottom status bar */
+  box-sizing: border-box;
+}
+
 .ma {
   width: 100%;
   height: 100%;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
   overflow: hidden;
 }
 .mv {
@@ -24,18 +49,8 @@
   width: 100%;
   height: 100%;
 }
-.counter {
-  position: absolute;
-  top: 40rpx;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #fff;
-  font-size: 24rpx;
-  background: rgba(0,0,0,.5);
-  padding: 6rpx 16rpx;
-  border-radius: 999rpx;
-  z-index: 10;
-}
+
+/* ─────────────────────── Top-right favorite heart ─────────────────────── */
 .heart {
   position: absolute;
   top: 40rpx;
@@ -43,43 +58,123 @@
   display: flex;
   align-items: center;
   gap: 6rpx;
-  padding: 10rpx 18rpx;
-  background: rgba(0,0,0,.5);
+  padding: 10rpx 20rpx;
+  background: rgba(255, 252, 245, .12);
+  border: 1px solid rgba(255, 252, 245, .18);
   border-radius: 999rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .22);
+  backdrop-filter: blur(14rpx);
   z-index: 10;
 }
-.heart__shape {
-  width: 28rpx;
-  height: 28rpx;
-  background-color: #FFFCF5;
-  clip-path: path('M14 25 L4 14 A6 6 0 0 1 14 6 A6 6 0 0 1 24 14 Z');
-  opacity: .7;
+.heart__glyph {
+  font-size: 36rpx;
+  line-height: 1;
+  color: rgba(255, 252, 245, .8);
 }
-.heart--on .heart__shape {
-  background-color: var(--ink-sticker);
-  opacity: 1;
+.heart--on .heart__glyph {
+  color: var(--pin-red);
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, .35);
 }
-.heart__count { font-size: 22rpx; color: #FFFCF5; }
+.heart__count {
+  font-family: var(--font-mono);
+  font-size: 22rpx;
+  color: rgba(255, 252, 245, .9);
+}
+.heart--on .heart__count { color: var(--pin-red); }
 
-.info-toggle {
+/* ─────────────────────── Prev / Next chevrons ─────────────────────── */
+.nav {
   position: absolute;
-  top: 40rpx;
-  left: 32rpx;
-  width: 56rpx;
-  height: 56rpx;
+  top: 50%;
+  width: 86rpx;
+  height: 86rpx;
+  margin-top: -43rpx;
   border-radius: 50%;
-  background: rgba(0,0,0,.5);
+  background: rgba(255, 252, 245, .12);
+  border: 1px solid rgba(255, 252, 245, .20);
+  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, .28);
+  backdrop-filter: blur(16rpx);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10;
 }
-.info-toggle__icon { color: #FFFCF5; font-size: 30rpx; }
+.nav--prev { left: 18rpx; }
+.nav--next { right: 18rpx; }
+.nav__chev {
+  color: rgba(255, 252, 245, .9);
+  font-size: 56rpx;
+  line-height: 1;
+  margin-top: -6rpx; /* visual centering — the chevron glyph sits low */
+}
 
+/* ─────────────────────── Bottom status bar ─────────────────────── */
+.bottom {
+  position: absolute;
+  left: 16rpx;
+  right: 16rpx;
+  bottom: 32rpx;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 14rpx 18rpx;
+  background: rgba(255, 252, 245, .12);
+  border: 1px solid rgba(255, 252, 245, .16);
+  border-radius: 999rpx;
+  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, .24);
+  backdrop-filter: blur(16rpx);
+  z-index: 10;
+}
+.bottom__counter {
+  font-family: var(--font-mono);
+  font-size: 24rpx;
+  letter-spacing: 2rpx;
+  color: rgba(255, 252, 245, .85);
+  flex-shrink: 0;
+}
+.bottom__tags {
+  flex: 1;
+  white-space: nowrap;
+  /* Hide overflow so the tags pill doesn't push the edit button out. */
+  overflow: hidden;
+}
+.bottom__tag {
+  display: inline-block;
+  font-family: var(--font-hand);
+  font-size: 24rpx;
+  color: var(--paper-cream);
+  background: rgba(210, 176, 59, .35);
+  padding: 2rpx 14rpx;
+  border-radius: 4rpx;
+  margin-right: 8rpx;
+}
+.bottom__edit {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 4rpx 12rpx;
+  background: rgba(255, 252, 245, .12);
+  border-radius: 999rpx;
+  flex-shrink: 0;
+}
+.bottom__edit-emoji { color: rgba(255, 252, 245, .9); font-size: 24rpx; }
+.bottom__edit-label {
+  color: rgba(255, 252, 245, .9);
+  font-family: var(--font-hand);
+  font-size: 24rpx;
+}
+
+/* iPhone home-bar safe area. WeChat exposes this via env() — we add a bit
+   of bottom padding so the pill clears the swipe gesture line. */
+.safe-area-inset-bottom {
+  bottom: calc(32rpx + env(safe-area-inset-bottom));
+}
+
+/* ─────────────────────── Info drawer (bottom sheet) ─────────────────────── */
 .info-mask {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.5);
+  background: rgba(0, 0, 0, .5);
   z-index: 20;
   display: flex;
   align-items: flex-end;
@@ -92,15 +187,95 @@
   max-height: 70vh;
   overflow-y: auto;
 }
-.info__caption { font-size: 30rpx; color: var(--ink-primary); line-height: 1.5; margin-bottom: 16rpx; }
-.info__row { display: flex; gap: 16rpx; font-size: 26rpx; margin-bottom: 12rpx; }
-.info__label { color: var(--ink-secondary); }
-.info__value { color: var(--ink-primary); }
-.info__tags { display: flex; flex-wrap: wrap; gap: 10rpx; margin-top: 12rpx; }
-.info__tag {
-  font-size: 22rpx;
-  padding: 4rpx 14rpx;
-  background: var(--paper-aged);
+.info__handle {
+  width: 80rpx;
+  height: 6rpx;
+  border-radius: 4rpx;
+  background: rgba(168, 138, 92, .35);
+  margin: 0 auto 20rpx;
+}
+.info__title {
+  font-family: var(--font-hand);
+  color: var(--kraft-dark);
+  font-size: 44rpx;
+  margin-bottom: 12rpx;
+}
+.info__caption {
+  font-size: 30rpx;
   color: var(--ink-primary);
+  line-height: 1.5;
+  margin-bottom: 16rpx;
+}
+.info__field {
+  display: block;
+  margin-top: 22rpx;
+}
+.info__textarea {
+  width: 100%;
+  min-height: 150rpx;
+  box-sizing: border-box;
+  margin-top: 10rpx;
+  padding: 16rpx 18rpx;
+  border-radius: 18rpx;
+  border: 1px solid rgba(168, 138, 92, .3);
+  background: rgba(255, 252, 245, .78);
+  color: var(--ink-primary);
+  font-size: 28rpx;
+  line-height: 1.45;
+  font-family: var(--font-serif);
+}
+.info__row {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 12rpx;
+  align-items: baseline;
+}
+.info__label {
+  font-family: var(--font-mono);
+  font-size: 22rpx;
+  letter-spacing: 4rpx;
+  color: var(--ink-secondary);
+  text-transform: uppercase;
+}
+.info__value {
+  font-family: var(--font-mono);
+  font-size: 24rpx;
+  color: var(--ink-primary);
+}
+.info__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 20rpx;
+}
+.info__tag {
+  font-family: var(--font-hand);
+  font-size: 26rpx;
+  padding: 4rpx 16rpx;
+  background: rgba(210, 176, 59, .22);
+  color: var(--ink-primary);
+  border-radius: 4rpx;
+}
+.info__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 18rpx;
+  margin-top: 28rpx;
+  padding-top: 22rpx;
+  border-top: 1px solid rgba(168, 138, 92, .22);
+}
+.info__cancel,
+.info__save {
+  padding: 14rpx 26rpx;
   border-radius: 999rpx;
+  font-size: 26rpx;
+}
+.info__cancel {
+  color: var(--ink-secondary);
+}
+.info__save {
+  background: var(--kraft-base);
+  color: var(--paper-cream);
+  box-shadow: 0 8rpx 20rpx rgba(42, 37, 32, .16);
 }

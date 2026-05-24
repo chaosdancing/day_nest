@@ -8,19 +8,53 @@ interface FilterChange {
   location?: string;
 }
 
+/**
+ * Row view shape — extends the DTO with a pre-computed `displayDate`
+ * (YYYY.MM.DD or "YYYY.MM.DD - YYYY.MM.DD" for ranged collections) so the
+ * WXML stays simple. We mirror apps/web/src/pages/TimelinePage.tsx#formatOccurred.
+ */
+type RowView = CollectionSummaryDTO & { displayDate: string };
+
+function formatOccurredDot(
+  occurredOn: string,
+  occurredUntil: string | null,
+): string {
+  const fmt = (iso: string) => {
+    const d = new Date(iso);
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}.${m}.${day}`;
+  };
+  const startStr = fmt(occurredOn);
+  if (!occurredUntil) return startStr;
+  const startDate = new Date(occurredOn).toDateString();
+  const endDate = new Date(occurredUntil).toDateString();
+  if (startDate === endDate) return startStr;
+  return `${startStr} - ${fmt(occurredUntil)}`;
+}
+
+function toRowViews(items: CollectionSummaryDTO[]): RowView[] {
+  return items.map((c) => ({
+    ...c,
+    displayDate: formatOccurredDot(c.occurredOn, c.occurredUntil),
+  }));
+}
+
 // Page-local module state for the debounce instance — kept module-scoped to
 // avoid widening Page() options with non-data instance fields (TS strict mode).
 let searchDebounce: DebouncedFn<[string]> | null = null;
+let scrollIdleTimer: ReturnType<typeof setTimeout> | null = null;
 
 Page({
   data: {
-    items: [] as CollectionSummaryDTO[],
+    items: [] as RowView[],
     nextCursor: null as string | null,
     loading: false,
     loadingMore: false,
     searchInput: '',
     activeTitle: '',
     filter: {} as FilterChange,
+    isScrolling: false,
   },
 
   onLoad() {
@@ -33,6 +67,10 @@ Page({
   onUnload() {
     searchDebounce?.cancel();
     searchDebounce = null;
+    if (scrollIdleTimer !== null) {
+      clearTimeout(scrollIdleTimer);
+      scrollIdleTimer = null;
+    }
   },
 
   onShow() {
@@ -56,7 +94,7 @@ Page({
         ...this.data.filter,
         title: this.data.activeTitle || undefined,
       });
-      this.setData({ items: res.items, nextCursor: res.nextCursor });
+      this.setData({ items: toRowViews(res.items), nextCursor: res.nextCursor });
     } catch {
       wx.showToast({ title: '加载失败', icon: 'none' });
     } finally {
@@ -75,7 +113,7 @@ Page({
         title: this.data.activeTitle || undefined,
       });
       this.setData({
-        items: [...this.data.items, ...res.items],
+        items: [...this.data.items, ...toRowViews(res.items)],
         nextCursor: res.nextCursor,
       });
     } catch {
@@ -111,6 +149,17 @@ Page({
   onCardTap(e: WechatMiniprogram.TouchEvent) {
     const id = e.currentTarget.dataset.id as string;
     wx.navigateTo({ url: `/pkgCollection/detail/index?id=${encodeURIComponent(id)}` });
+  },
+
+  onListScroll() {
+    if (!this.data.isScrolling) {
+      this.setData({ isScrolling: true });
+    }
+    if (scrollIdleTimer !== null) clearTimeout(scrollIdleTimer);
+    scrollIdleTimer = setTimeout(() => {
+      scrollIdleTimer = null;
+      this.setData({ isScrolling: false });
+    }, 180);
   },
 
   onFabTap() {

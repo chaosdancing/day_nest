@@ -136,7 +136,7 @@ export function TimelinePage() {
     <div className="relative pb-24">
       <PageHero
         emoji="📖"
-        title="时间轴"
+        title="时光轴"
         subtitle={`TIMELINE · ${items.length} ENTRIES`}
         motion="wobble"
       />

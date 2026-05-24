@@ -2,6 +2,7 @@
   "pages": [
     "pages/login/index",
     "pages/bind/index",
+    "pages/dev-login/index",
     "pages/timeline/index",
     "pages/favorites/index",
     "pages/tags/index",
@@ -45,8 +46,8 @@
     "selectedColor": "#2A2520",
     "backgroundColor": "#FBF4E4",
     "list": [
-      { "pagePath": "pages/timeline/index", "text": "时间轴" },
-      { "pagePath": "pages/favorites/index", "text": "收藏" },
+      { "pagePath": "pages/timeline/index", "text": "时光轴" },
+      { "pagePath": "pages/favorites/index", "text": "最爱" },
       { "pagePath": "pages/tags/index", "text": "标签" },
       { "pagePath": "pages/me/index", "text": "我的" }
     ]
@@ -54,11 +55,8 @@
   "window": {
     "navigationBarBackgroundColor": "#FBF4E4",
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "朝夕居",
+    "navigationBarTitleText": "慢慢记",
     "backgroundColor": "#FBF4E4"
-  },
-  "permission": {
-    "scope.userLocation": { "desc": "" }
   },
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents"

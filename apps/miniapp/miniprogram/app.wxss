@@ -4,7 +4,7 @@
 /* Reset */
 page {
   box-sizing: border-box;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  font-family: -apple-system, 'PingFang SC', sans-serif;
   background-color: var(--paper-cream);
   color: var(--ink-primary);
   font-size: 28rpx;
@@ -15,6 +15,14 @@ view, text, input, button, image {
   box-sizing: border-box;
 }
 
+input, textarea {
+  /* Hard-disable any synthetic bold / outline that WX DevTools macOS
+     simulator can apply when the input has no explicit weight. */
+  font-weight: 400;
+  -webkit-text-stroke: 0;
+  text-shadow: none;
+}
+
 button {
   background: transparent;
   border: none;
@@ -22,3 +30,30 @@ button {
   line-height: normal;
 }
 button::after { border: none; }
+
+/* ───────────────────────── Typography utilities ─────────────────────────
+   Mirror apps/web/src/styles/globals.css. Use sparingly — most components
+   define their own scoped styles.
+
+   `.scribble`     handwritten heading text (kaiti / cursive fallback)
+   `.mono-label`   uppercase wide-tracking small caps (e.g. "TIMELINE")
+   `.serif`        body emphasis (italic captions etc.)                      */
+
+.scribble {
+  font-family: var(--font-hand);
+  color: var(--kraft-dark);
+  letter-spacing: 1rpx;
+}
+
+.mono-label {
+  font-family: var(--font-mono);
+  font-size: 22rpx;
+  letter-spacing: 6rpx;
+  color: var(--ink-secondary);
+  text-transform: uppercase;
+}
+
+.serif {
+  font-family: var(--font-serif);
+  font-style: italic;
+}

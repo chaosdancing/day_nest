@@ -267,7 +267,7 @@ Document: `cp project.private.config.json.example project.private.config.json` a
     "selectedColor": "#2A2520",
     "backgroundColor": "#FBF4E4",
     "list": [
-      { "pagePath": "pages/timeline/index", "text": "时间轴" },
+      { "pagePath": "pages/timeline/index", "text": "时光轴" },
       { "pagePath": "pages/favorites/index", "text": "收藏" },
       { "pagePath": "pages/tags/index", "text": "标签" },
       { "pagePath": "pages/me/index", "text": "我的" }
@@ -276,7 +276,7 @@ Document: `cp project.private.config.json.example project.private.config.json` a
   "window": {
     "navigationBarBackgroundColor": "#FBF4E4",
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "朝夕居",
+    "navigationBarTitleText": "慢慢记",
     "backgroundColor": "#FBF4E4"
   },
   "permission": {
@@ -1618,7 +1618,7 @@ For each of `timeline`, `favorites`, `tags`, `me`, create the 4 files. Use the e
 
 `apps/miniapp/miniprogram/pages/timeline/index.json`:
 ```json
-{ "navigationBarTitleText": "时间轴", "usingComponents": {} }
+{ "navigationBarTitleText": "时光轴", "usingComponents": {} }
 ```
 
 `apps/miniapp/miniprogram/pages/timeline/index.ts`:
@@ -1636,7 +1636,7 @@ Page({
 ```html
 <view class="page">
   <view class="card">
-    <view class="title">时间轴</view>
+    <view class="title">时光轴</view>
     <view class="hint">即将上线 · v1 主线</view>
   </view>
 </view>
@@ -1715,7 +1715,7 @@ Component({
   data: {
     active: 0,
     list: [
-      { pagePath: '/pages/timeline/index', text: '时间轴' },
+      { pagePath: '/pages/timeline/index', text: '时光轴' },
       { pagePath: '/pages/favorites/index', text: '收藏' },
       { pagePath: '/pages/tags/index', text: '标签' },
       { pagePath: '/pages/me/index', text: '我的' },
@@ -1811,7 +1811,7 @@ Login is the entry page when no session exists. It has one big "微信一键进�
 - [ ] **Step 1: Create `apps/miniapp/miniprogram/pages/login/index.json`**
 
 ```json
-{ "navigationBarTitleText": "朝夕居", "navigationStyle": "default", "usingComponents": {} }
+{ "navigationBarTitleText": "慢慢记", "navigationStyle": "default", "usingComponents": {} }
 ```
 
 - [ ] **Step 2: Create `apps/miniapp/miniprogram/pages/login/index.wxml`**
@@ -1819,7 +1819,7 @@ Login is the entry page when no session exists. It has one big "微信一键进�
 ```html
 <view class="page">
   <view class="hero">
-    <view class="brand">朝夕居</view>
+    <view class="brand">慢慢记</view>
     <view class="tagline">收纳烟火日常</view>
     <view class="tagline tagline--sub">酿造专属回忆</view>
   </view>
@@ -1829,7 +1829,7 @@ Login is the entry page when no session exists. It has one big "微信一键进�
   </button>
 
   <view class="secondary" bindtap="onGoRegister">
-    没有朝夕居账号？用邀请码注册
+    没有慢慢记账号？用邀请码注册
   </view>
 
   <view wx:if="{{error}}" class="error">{{error}}</view>
@@ -1972,7 +1972,7 @@ git commit -m "feat(miniapp): login page — wx.login -> wechat-login -> bound/u
 **Files:**
 - Create: `apps/miniapp/miniprogram/pages/bind/index.{ts,wxml,wxss,json}`
 
-Bind page receives `bindToken` via `onLoad` query param. User enters daynest username + password. POST `/api/auth/wechat-bind` → on success, `authStore.setSession` + `wx.switchTab` to timeline. On failure, show error and offer "我没有朝夕居账号 → 去注册" link.
+Bind page receives `bindToken` via `onLoad` query param. User enters daynest username + password. POST `/api/auth/wechat-bind` → on success, `authStore.setSession` + `wx.switchTab` to timeline. On failure, show error and offer "我没有慢慢记账号 → 去注册" link.
 
 - [ ] **Step 1: Create `apps/miniapp/miniprogram/pages/bind/index.json`**
 
@@ -1984,8 +1984,8 @@ Bind page receives `bindToken` via `onLoad` query param. User enters daynest use
 
 ```html
 <view class="page">
-  <view class="heading">绑定朝夕居账号</view>
-  <view class="hint">把你的微信和已有的朝夕居账号关联起来。</view>
+  <view class="heading">绑定慢慢记账号</view>
+  <view class="hint">把你的微信和已有的慢慢记账号关联起来。</view>
 
   <view class="field">
     <view class="label">登录名</view>
@@ -2178,14 +2178,14 @@ Form fields: `inviteToken` (manual paste), `username`, `displayName`, `password`
 - [ ] **Step 1: Create `apps/miniapp/miniprogram/pkgOnboarding/register/index.json`**
 
 ```json
-{ "navigationBarTitleText": "注册朝夕居", "usingComponents": {} }
+{ "navigationBarTitleText": "注册慢慢记", "usingComponents": {} }
 ```
 
 - [ ] **Step 2: Create `apps/miniapp/miniprogram/pkgOnboarding/register/index.wxml`**
 
 ```html
 <view class="page">
-  <view class="heading">注册朝夕居</view>
+  <view class="heading">注册慢慢记</view>
   <view class="hint">用邀请码注册一个新账号，同时绑定当前微信。</view>
 
   <view class="field">
@@ -2342,7 +2342,7 @@ Page({
         accessToken: res.data.accessToken,
         refreshToken: res.data.refreshToken,
       });
-      wxShowToast('欢迎加入朝夕居', 'success');
+      wxShowToast('欢迎加入慢慢记', 'success');
       wx.switchTab({ url: '/pages/timeline/index' });
     } catch (e) {
       this.setData({ loading: false, error: e instanceof Error ? e.message : '网络异常' });

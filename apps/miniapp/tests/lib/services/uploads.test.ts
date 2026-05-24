@@ -60,6 +60,19 @@ describe('uploadsService.uploadToQiniu', () => {
     expect(call?.filePath).toBe('wxfile://x.jpg');
   });
 
+  it('normalizes Qiniu image dimensions from strings to numbers', async () => {
+    mock.queueUploadFile({
+      statusCode: 200,
+      data: JSON.stringify({ key: 'k1.jpg', hash: 'abc', size: '12345', width: '1600', height: '1200' }),
+    });
+    const out = await uploadsService.uploadToQiniu({
+      token: 't1', key: 'k1.jpg', uploadUrl: 'https://up.q.io', filePath: 'wxfile://x.jpg',
+    });
+    expect(out.size).toBe(12345);
+    expect(out.width).toBe(1600);
+    expect(out.height).toBe(1200);
+  });
+
   it('rejects when qiniu returns non-200', async () => {
     mock.queueUploadFile({ statusCode: 401, data: '{"error":"bad token"}' });
     await expect(uploadsService.uploadToQiniu({

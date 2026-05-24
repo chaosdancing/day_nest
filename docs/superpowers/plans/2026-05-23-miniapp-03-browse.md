@@ -1363,7 +1363,7 @@ Timeline composes everything: filter bar, fuzzy title search, paginated collecti
 
 ```json
 {
-  "navigationBarTitleText": "朝夕居",
+  "navigationBarTitleText": "慢慢记",
   "enablePullDownRefresh": true,
   "usingComponents": {
     "stacked-polaroid": "/components/stacked-polaroid/index",

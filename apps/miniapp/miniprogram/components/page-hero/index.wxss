@@ -1,0 +1,65 @@
+/* PageHero — mirrors apps/web/src/components/scrapbook/PageHero.tsx.
+   The web version uses framer-motion springs; we approximate with pure CSS
+   keyframes (entry pop + optional wobble/bounce). */
+
+.hero {
+  text-align: center;
+  padding: 48rpx 24rpx 56rpx;
+}
+
+.hero__emoji-wrap {
+  display: inline-block;
+  animation: hero-pop 480ms cubic-bezier(.22, 1.4, .36, 1) both;
+}
+
+.hero__emoji {
+  display: inline-block;
+  font-size: 96rpx;
+  line-height: 1;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.08));
+}
+
+.hero--wobble .hero__emoji {
+  animation: hero-wobble 3.6s ease-in-out infinite;
+}
+.hero--bounce .hero__emoji {
+  animation: hero-bounce 2.4s ease-in-out infinite;
+}
+
+.hero__title {
+  margin-top: 8rpx;
+  font-family: var(--font-hand);
+  color: var(--kraft-dark);
+  font-size: 88rpx;
+  line-height: 1.05;
+  letter-spacing: 2rpx;
+}
+
+.hero__subtitle {
+  margin-top: 16rpx;
+  font-family: var(--font-mono);
+  font-size: 22rpx;
+  letter-spacing: 6rpx;
+  color: var(--ink-secondary);
+  opacity: .72;
+  text-transform: uppercase;
+}
+
+/* Animations. Keep amplitudes small — large rotations hurt readability on
+   small viewports and exaggerate font-rendering jitter. */
+
+@keyframes hero-pop {
+  0%   { transform: scale(.6) translateY(8rpx); opacity: 0; }
+  100% { transform: scale(1)   translateY(0);   opacity: 1; }
+}
+@keyframes hero-wobble {
+  0%, 100% { transform: rotate(-6deg); }
+  50%      { transform: rotate( 6deg); }
+}
+@keyframes hero-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4rpx); }
+}
+
+/* Optional tint for the emoji (e.g. heart on Favorites). */
+.hero__emoji.tinted-red { color: var(--pin-red); }
