@@ -144,10 +144,12 @@ openssl rand -base64 48
 
 把两次输出分别填到 `JWT_SECRET` 和 `JWT_REFRESH_SECRET`。
 
-为了让本地脚本读到配置：
+为了让本地脚本（Prisma 等）读到配置，做一个软链接到唯一的 env 文件（只需一次，
+以后改配置只改 `/etc/daynest/.env` 即可，不用再复制）：
 
 ```bash
-cp /etc/daynest/.env /var/www/day_nest/apps/api/.env
+ln -sf /etc/daynest/.env /var/www/day_nest/apps/api/.env
+ls -l /var/www/day_nest/apps/api/.env   # 应显示 -> /etc/daynest/.env
 ```
 
 ## 7. 初始化数据库和构建
@@ -414,10 +416,9 @@ CORS_ORIGIN=https://daynest.top
 QINIU_DOMAIN=https://你的七牛CDN域名
 ```
 
-重启 API：
+重启 API（已做过软链接，不需要再复制）：
 
 ```bash
-cp /etc/daynest/.env /var/www/day_nest/apps/api/.env
 pm2 restart daynest-api
 ```
 
@@ -426,6 +427,120 @@ pm2 restart daynest-api
 ```bash
 curl -I https://daynest.top
 ```
+
+## 13.1 域名规划：www（网站）+ img（七牛图片）
+
+一个子域名在 DNS 上只能指向一个地方，所以「网站」和「图片」必须用不同子域名。
+推荐的分工：
+
+| 域名 | 用途 | 指向 | HTTPS 证书 | 自动续期 |
+|---|---|---|---|---|
+| `daynest.top` | 网站 + API | 你的服务器 | certbot | ✅ 全自动 |
+| `www.daynest.top` | 网站（301 跳主站）| 你的服务器 | certbot | ✅ 全自动 |
+| `img.daynest.top` | 七牛图片域名 | 七牛 | 七牛证书 | 见 §13.3 |
+
+> 注意：不要把 `www.daynest.top` CNAME 到七牛——那样 `www` 就变成图片域名、
+> 不能再当网站了。图片统一用 `img.daynest.top`。
+
+### 13.1.1 给 www.daynest.top 配网站 HTTPS（certbot，自动续期）
+
+**1) DNS 解析**：在腾讯云 DNSPod 给 `www` 加一条 A 记录指向服务器公网 IP。
+
+```text
+主机记录: www
+记录类型: A
+记录值:   你的服务器公网IP
+TTL:      600
+```
+
+> 如果之前给 `www` 加过别的记录（A 或 CNAME），先删掉旧的再加，避免冲突。
+> 解析生效后确认：`dig +short www.daynest.top`。
+
+**2) 用 certbot 同时覆盖两个域名**（这样 `www` 也能自动续期）：
+
+```bash
+certbot --nginx -d daynest.top -d www.daynest.top
+```
+
+**3) 让 `www` 301 跳到主站**，编辑 `/etc/nginx/sites-available/daynest`，
+新增一段 `www` 专用 server（与主站保持同一个规范来源，配合 `CORS_ORIGIN`
+和小程序 `apiBase`）：
+
+```nginx
+server {
+    listen 80;
+    listen 443 ssl http2;
+    server_name www.daynest.top;
+
+    # certbot 会自动填好这两行
+    ssl_certificate     /etc/letsencrypt/live/daynest.top/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/daynest.top/privkey.pem;
+
+    return 301 https://daynest.top$request_uri;
+}
+```
+
+检查并重载、验证：
+
+```bash
+nginx -t && systemctl reload nginx
+curl -I https://www.daynest.top   # 期望 301，Location: https://daynest.top/
+```
+
+certbot 的续期任务会一起覆盖 `www`，无需手动维护（详见 §14）。
+
+## 13.3 给 img.daynest.top 配七牛图片域名 + HTTPS
+
+图片走七牛，HTTPS 证书是在**七牛控制台**配置，**不在**你的 Nginx。
+
+### 1) 七牛绑定 img 子域名
+
+七牛控制台 → 对象存储 → 你的空间 → 域名管理。优先绑「**CDN 加速域名**」
+（支持 HTTPS 自动续签）；若提示 CDN 系统维护，可临时用「自定义源站域名」。
+绑定域名填 `img.daynest.top`，七牛会给出一个 CNAME 目标
+（如 `iovip-z0.qiniuio.com` 或某个 CDN 节点域名）。
+
+### 2) 腾讯云 DNSPod 加 CNAME
+
+```text
+主机记录: img
+记录类型: CNAME
+记录值:   七牛给出的 CNAME 目标
+TTL:      600
+```
+
+解析生效后回七牛点「刷新列表」，CNAME 状态变正常即可。
+
+### 3) 配 HTTPS 证书
+
+- **方式 A（推荐，CDN 加速域名）**：在七牛 SSL 证书服务申请 `img.daynest.top`
+  的免费 DV 证书，部署到该 CDN 域名。开启「强制 HTTPS」。
+- **方式 B（源站域名）**：在七牛控制台手动「开启 HTTPS 访问」，上传证书
+  （可用腾讯云免费证书，需 **Nginx 格式**）。源站域名没有 API，全手动。
+
+### 4) 改后端配置
+
+`img.daynest.top` 的 HTTPS 通了之后：
+
+```bash
+# /etc/daynest/.env
+QINIU_DOMAIN=https://img.daynest.top
+```
+
+```bash
+pm2 restart daynest-api
+```
+
+并把 `https://img.daynest.top` 加进小程序后台「downloadFile 合法域名」。
+
+### 5) 七牛证书续期说明
+
+- **CDN 加速域名 + 七牛免费证书**：七牛会在到期前 30 天自动发起续签，完成
+  一次域名验证后**自动部署**新证书，基本免维护。
+- **存储空间源站域名**：没有 API，HTTPS 只能控制台手动配、到期手动换。
+- **上传到七牛的自有证书（含腾讯云证书）**：七牛**不会**自动续，到期手动重传。
+- 免费 DV 证书有效期已缩短到约 90 天，手动续会很频繁，建议优先用 CDN 域名
+  的自动续签，或用 `acme.sh` / CertD 通过七牛 API 自动签发+部署（仅 CDN 域名）。
 
 ## 14. 证书自动续期
 
