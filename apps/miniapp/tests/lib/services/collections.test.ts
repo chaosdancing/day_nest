@@ -63,7 +63,7 @@ describe('collectionsService', () => {
   });
 
   it('list() throws on non-200', async () => {
-    mock.queueResponse({ statusCode: 500, data: { error: { code: 'SERVER' } } });
+    mock.queueResponse({ statusCode: 500, data: { code: 'SERVER', message: 'boom' } });
     await expect(collectionsService.list({ limit: 30 })).rejects.toThrow(/server|500/i);
   });
 });

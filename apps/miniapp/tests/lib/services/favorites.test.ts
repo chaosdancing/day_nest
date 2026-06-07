@@ -38,7 +38,7 @@ describe('favoritesService', () => {
   });
 
   it('add() throws on non-2xx', async () => {
-    mock.queueResponse({ statusCode: 404, data: { error: { code: 'NOT_FOUND' } } });
+    mock.queueResponse({ statusCode: 404, data: { code: 'NOT_FOUND', message: 'not found' } });
     await expect(favoritesService.add('p3')).rejects.toThrow();
   });
 });

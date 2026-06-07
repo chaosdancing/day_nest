@@ -1,8 +1,10 @@
+import { toWxErrMsg } from './api.js';
+
 export function wxLogin(): Promise<string> {
   return new Promise((resolve, reject) => {
     wx.login({
       success: (r) => resolve(r.code),
-      fail: (e) => reject(e instanceof Error ? e : new Error(String(e))),
+      fail: (e) => reject(new Error(toWxErrMsg(e, 'wx.login 失败'))),
     });
   });
 }

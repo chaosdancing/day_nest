@@ -36,7 +36,8 @@ describe('services/_http', () => {
     it('throws on 4xx with body error code', () => {
       expect(() =>
         ensureOk('POST', 'http://x/api/p/1/favorite', 404, {
-          error: { code: 'NOT_FOUND' },
+          code: 'NOT_FOUND',
+          message: 'photo not found',
         }),
       ).toThrow(/POST http:\/\/x\/api\/p\/1\/favorite -> 404 NOT_FOUND/);
     });
@@ -53,7 +54,7 @@ describe('services/_http', () => {
           'GET',
           'http://x/api/collections?title=secret&location=home',
           500,
-          { error: { code: 'SERVER' } },
+          { code: 'SERVER', message: 'boom' },
         );
         expect.fail('should have thrown');
       } catch (e) {

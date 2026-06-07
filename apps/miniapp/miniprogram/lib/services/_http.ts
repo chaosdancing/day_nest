@@ -34,6 +34,6 @@ export function ensureOk(
   if (statusCode >= 200 && statusCode < 300) return;
   const pathOnly = url.split('?')[0] ?? url;
   const code =
-    (body as { error?: { code?: string } })?.error?.code ?? `HTTP_${statusCode}`;
+    (body as { code?: string })?.code ?? `HTTP_${statusCode}`;
   throw new Error(`${method} ${pathOnly} -> ${statusCode} ${code}`);
 }

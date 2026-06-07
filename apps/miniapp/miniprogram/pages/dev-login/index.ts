@@ -74,7 +74,7 @@ Page({
       });
       if (res.statusCode !== 200) {
         const err =
-          (res.data as { error?: { message?: string } })?.error?.message ?? '登录失败';
+          (res.data as { message?: string })?.message ?? '登录失败';
         this.setData({ loading: false, error: err });
         return;
       }

@@ -35,6 +35,15 @@ export interface ApiClientOptions {
   onAuthFailure?: () => void;
 }
 
+/** Extract a human-readable message from a WeChat fail object ({ errMsg }). */
+export function toWxErrMsg(e: unknown, fallback: string): string {
+  if (e instanceof Error) return e.message;
+  if (e && typeof e === 'object' && typeof (e as { errMsg?: unknown }).errMsg === 'string') {
+    return (e as { errMsg: string }).errMsg;
+  }
+  return fallback;
+}
+
 function wxRequest<T>(req: ApiRequest): Promise<ApiResponse<T>> {
   return new Promise((resolve, reject) => {
     wx.request({
@@ -43,7 +52,10 @@ function wxRequest<T>(req: ApiRequest): Promise<ApiResponse<T>> {
       data: req.data as WechatMiniprogram.RequestOption['data'],
       header: req.header,
       success: (r) => resolve({ statusCode: r.statusCode, data: r.data as T }),
-      fail: (e) => reject(e instanceof Error ? e : new Error(String(e))),
+      // wx.request's fail callback hands back a plain object ({ errMsg }), not an
+      // Error — `String(e)` on it yields "[object Object]". Pull out errMsg so
+      // network failures (server down, domain not whitelisted, TLS) read clearly.
+      fail: (e) => reject(new Error(toWxErrMsg(e, 'request:fail'))),
     });
   });
 }

@@ -99,7 +99,7 @@ Page({
         this.flashNotice('ok', '展示名已更新');
       } else {
         const msg =
-          (res.data as { error?: { message?: string } })?.error?.message ?? '保存失败';
+          (res.data as { message?: string })?.message ?? '保存失败';
         this.flashNotice('err', msg);
       }
     } catch (e) {

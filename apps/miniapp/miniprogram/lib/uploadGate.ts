@@ -52,13 +52,13 @@ export async function ensureCanUpload(): Promise<boolean> {
     });
     wx.hideLoading();
     if (res.statusCode !== 200) {
-      const body = res.data as { error?: { code?: string; message?: string } };
-      const code = body.error?.code ?? '';
+      const body = res.data as { code?: string; message?: string };
+      const code = body.code ?? '';
       const message =
         code === 'INVALID_INVITE' ? '邀请码无效'
         : code === 'INVITE_EXPIRED' ? '邀请码已过期'
         : code === 'INVITE_ALREADY_USED' ? '邀请码已被使用'
-        : body.error?.message ?? '解锁失败';
+        : body.message ?? '解锁失败';
       wx.showToast({ title: message, icon: 'none' });
       return false;
     }
