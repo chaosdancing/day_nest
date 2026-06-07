@@ -1,3 +1,5 @@
+import { recordTabSwitch } from '../lib/tabTransition.js';
+
 Component({
   data: {
     active: 0,
@@ -13,6 +15,9 @@ Component({
       const idx = Number(e.currentTarget.dataset.idx);
       const target = this.data.list[idx];
       if (!target) return;
+      // Hand the slide direction to the incoming page before we switch so its
+      // onShow can play a one-shot directional slide-in.
+      recordTabSwitch(this.data.active, idx);
       this.setData({ active: idx });
       wx.switchTab({ url: target.pagePath });
     },

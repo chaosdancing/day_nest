@@ -2,6 +2,7 @@ import { wxLogin, wxShowToast } from '../../lib/wxBridge.js';
 import { createApiClient } from '../../lib/api.js';
 import { endpoints } from '../../lib/endpoints.js';
 import { authStore } from '../../stores/authStore.js';
+import { applyTheme, disposeTheme } from '../../lib/theme.js';
 import type { UserDTO } from '@daynest/shared';
 
 const api = createApiClient({ tokens: authStore, refreshUrl: endpoints.refreshToken() });
@@ -16,6 +17,7 @@ const USERNAME_RE = /^[a-zA-Z0-9_]{3,32}$/;
 
 Page({
   data: {
+    theme: '' as '' | 'dark',
     inviteToken: '',
     username: '',
     displayName: '',
@@ -23,6 +25,14 @@ Page({
     canSubmit: false,
     loading: false,
     error: '',
+  },
+
+  onLoad() {
+    applyTheme(this);
+  },
+
+  onUnload() {
+    disposeTheme(this);
   },
 
   onInviteToken(e: WechatMiniprogram.Input) { this.update({ inviteToken: e.detail.value }); },

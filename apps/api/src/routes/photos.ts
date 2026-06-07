@@ -27,7 +27,7 @@ export async function registerPhotoRoutes(app: FastifyInstance) {
 
   app.patch(
     '/api/photos/:id',
-    { onRequest: [app.requireUser] },
+    { onRequest: [app.requireUploader] },
     async (req) => {
       const { id } = req.params as { id: string };
       const parsed = Body.safeParse(req.body);
@@ -151,7 +151,7 @@ export async function registerPhotoRoutes(app: FastifyInstance) {
 
   app.delete(
     '/api/photos/:id',
-    { onRequest: [app.requireUser] },
+    { onRequest: [app.requireUploader] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const photo = await app.deps.prisma.photo.findUnique({ where: { id } });

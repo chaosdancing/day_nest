@@ -2,6 +2,7 @@ import type { CollectionSummaryDTO } from '@daynest/shared';
 import { collectionsService } from '../../lib/services/collections.js';
 import { favoritesService } from '../../lib/services/favorites.js';
 import { tagsService, type TaggedPhotoItem } from '../../lib/services/tags.js';
+import { applyTheme, disposeTheme } from '../../lib/theme.js';
 
 type Scope = 'all' | 'collection' | 'photo';
 
@@ -74,6 +75,7 @@ function splitPhotoColumns(items: PhotoView[]): { left: PhotoView[]; right: Phot
 
 Page({
   data: {
+    theme: '' as '' | 'dark',
     tagName: '' as string,
     tagDisplay: '' as string,
     scopes: SCOPES,
@@ -88,6 +90,7 @@ Page({
   },
 
   onLoad(query: Record<string, string | undefined>) {
+    applyTheme(this);
     const tag = decodeURIComponent(query.tag ?? '');
     const display = decodeURIComponent(query.display ?? tag);
     const scope = ((query.scope as Scope) || 'all');
@@ -97,6 +100,10 @@ Page({
       return;
     }
     void this.refresh();
+  },
+
+  onUnload() {
+    disposeTheme(this);
   },
 
   onShow() {

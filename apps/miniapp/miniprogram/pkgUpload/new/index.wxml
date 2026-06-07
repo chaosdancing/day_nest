@@ -1,4 +1,4 @@
-<view class="page">
+<view class="page {{theme}}">
   <page-hero
     emoji="📸"
     title="{{photos.length ? '这次回忆叫什么' : '上传一段回忆'}}"
@@ -106,6 +106,17 @@
       maxlength="200"
     />
       </view>
+    </view>
+
+    <view wx:if="{{locationMatches.length}}" class="loc-suggest">
+      <text class="loc-suggest__hint mono-label">已有地点</text>
+      <view
+        wx:for="{{locationMatches}}"
+        wx:key="*this"
+        class="loc-suggest__chip"
+        data-loc="{{item}}"
+        catchtap="onLocationPick"
+      >📍 {{item}}</view>
     </view>
 
     <view class="field">

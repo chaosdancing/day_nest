@@ -20,6 +20,9 @@ export const UserDTO = z.object({
   displayName: z.string(),
   avatarKey: z.string().nullable(),
   hasWechatBound: z.boolean(),
+  // Whether this user may post photos. Viewers (WeChat sign-ups without an
+  // invite) are false until they redeem one; everyone can browse regardless.
+  canUpload: z.boolean(),
 });
 export type UserDTO = z.infer<typeof UserDTO>;
 

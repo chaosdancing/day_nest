@@ -17,14 +17,15 @@ export const config = {
 } as const;
 
 export function resolveApiBase(): string {
-  // Symmetry with /pages/login/index — anything NOT a confirmed release
-  // build (DevTools / 体验版 / touristappid where envVersion may be
-  // empty or undefined) should hit the local dev API.
+  // 体验版('trial') and 正式版('release') must hit production so testers and
+  // reviewers scanning the trial QR reach a real backend. Only DevTools
+  // (envVersion 'develop', or undefined for touristappid) uses the local
+  // dev API.
   let env: string | undefined;
   try {
     env = wx.getAccountInfoSync?.()?.miniProgram?.envVersion;
   } catch {
     env = undefined;
   }
-  return env === 'release' ? config.apiBase : config.apiBaseDev;
+  return env === 'trial' || env === 'release' ? config.apiBase : config.apiBaseDev;
 }

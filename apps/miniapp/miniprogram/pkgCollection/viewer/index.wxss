@@ -1,7 +1,8 @@
 /* Photo viewer.
-   Visual reference: apps/web/src/pages/PhotoViewerPage.tsx — immersive
-   ink backdrop, object-contain image, glassy side chevrons and bottom
-   chrome. No white polaroid frame in viewer mode. */
+   Ink backdrop, object-contain image, glassy top bar, side chevrons and a
+   bottom action bar. No white polaroid frame in viewer mode. Chrome is always
+   visible: a lone tap is a no-op (resets zoom when pinched), double-tap
+   favorites. */
 
 .viewer {
   width: 100vw;
@@ -16,16 +17,14 @@
 .empty { color: rgba(255, 252, 245, .65); font-size: 26rpx; }
 .swiper { width: 100%; height: 100%; }
 
-/* Each swiper item centers a transparent movable canvas. Do NOT add a white
-   frame here; the web viewer shows the image directly on a dark backdrop. */
+/* Each swiper item centers a transparent movable canvas. The image fills the
+   screen (aspectFit); the glass chrome floats above it. */
 .frame {
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 92rpx 24rpx 190rpx; /* top: clear of heart pill,
-                                  bottom: clear of bottom status bar */
   box-sizing: border-box;
 }
 
@@ -39,138 +38,261 @@
   overflow: hidden;
 }
 .mv {
+  position: relative;
   width: 100%;
   height: 100%;
+}
+/* Base (thumbnail) and hi-res (original) layers share the exact same box so
+   scaling the movable-view scales both identically and the original can fade
+   in over the thumbnail without any geometry shift. */
+.mv__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* Hi-res original crossfades in once its local temp file is ready. */
+.mv__img--hi {
+  animation: mv-hi-fade 260ms ease both;
+}
+@keyframes mv-hi-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ─────────────────────────── Top bar ─────────────────────────── */
+.topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding-left: 20rpx;
+  padding-right: 24rpx;
+  padding-bottom: 14rpx;
+  /* Soft top-down scrim so white chrome reads on bright photos. */
+  background: linear-gradient(180deg, rgba(0, 0, 0, .38), rgba(0, 0, 0, 0));
+  z-index: 12;
+}
+/* Left cluster: back + info (ⓘ) buttons sit together. The spacer on the right
+   mirrors this width so the counter stays optically centered. */
+.topbar__left {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-shrink: 0;
+}
+.topbar__btn {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: rgba(255, 252, 245, .12);
+  border: 1px solid rgba(255, 252, 245, .18);
+  backdrop-filter: blur(14rpx);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  transition: transform 160ms ease, opacity 160ms ease;
 }
-.mv__img {
-  width: 100%;
-  height: 100%;
+.topbar__btn:active { transform: scale(.9); opacity: .8; }
+.topbar__back-chev {
+  color: rgba(255, 252, 245, .95);
+  font-size: 48rpx;
+  line-height: 1;
+  margin-left: -4rpx;
+}
+.topbar__counter {
+  flex: 1;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 26rpx;
+  letter-spacing: 3rpx;
+  color: rgba(255, 252, 245, .92);
+  text-shadow: 0 1rpx 4rpx rgba(0, 0, 0, .4);
+}
+/* Balances the back button (64rpx) so the counter stays optically centered. */
+.topbar__spacer {
+  flex-shrink: 0;
+  width: 64rpx;
 }
 
-/* ─────────────────────── Top-right favorite heart ─────────────────────── */
-.heart {
+/* ─────────────────── Double-tap heart-pop overlay ─────────────────── */
+.heart-pop {
   position: absolute;
-  top: 40rpx;
-  right: 32rpx;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 15;
+  pointer-events: none;
+}
+.heart-pop__glyph {
+  display: block;
+  font-size: 200rpx;
+  line-height: 1;
+  color: var(--pin-red);
+  text-shadow: 0 6rpx 22rpx rgba(0, 0, 0, .45);
+  animation: heart-pop 700ms ease-out forwards;
+}
+@keyframes heart-pop {
+  0%   { opacity: 0; transform: scale(.3); }
+  28%  { opacity: .95; transform: scale(1.18); }
+  55%  { opacity: .9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.12); }
+}
+
+/* ───────────────────── Loading-original hint ───────────────────── */
+.loading-hint {
+  position: absolute;
+  top: 16%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 16;
   display: flex;
   align-items: center;
-  gap: 6rpx;
-  padding: 10rpx 20rpx;
-  background: rgba(255, 252, 245, .12);
-  border: 1px solid rgba(255, 252, 245, .18);
+  gap: 10rpx;
+  padding: 14rpx 28rpx;
   border-radius: 999rpx;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .22);
-  backdrop-filter: blur(14rpx);
-  z-index: 10;
+  background: rgba(0, 0, 0, .56);
+  border: 1px solid rgba(255, 252, 245, .16);
+  color: rgba(255, 252, 245, .95);
+  font-size: 24rpx;
+  letter-spacing: 1rpx;
+  backdrop-filter: blur(12rpx);
+  pointer-events: none;
 }
-.heart__glyph {
-  font-size: 36rpx;
+.loading-hint__dot {
+  display: inline-block;
+  font-size: 26rpx;
   line-height: 1;
-  color: rgba(255, 252, 245, .8);
+  animation: spin 900ms linear infinite;
 }
-.heart--on .heart__glyph {
-  color: var(--pin-red);
-  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, .35);
-}
-.heart__count {
-  font-family: var(--font-mono);
-  font-size: 22rpx;
-  color: rgba(255, 252, 245, .9);
-}
-.heart--on .heart__count { color: var(--pin-red); }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ─────────────────────── Prev / Next chevrons ─────────────────────── */
 .nav {
   position: absolute;
   top: 50%;
-  width: 86rpx;
-  height: 86rpx;
-  margin-top: -43rpx;
+  width: 80rpx;
+  height: 80rpx;
+  margin-top: -40rpx;
   border-radius: 50%;
-  background: rgba(255, 252, 245, .12);
-  border: 1px solid rgba(255, 252, 245, .20);
+  background: rgba(255, 252, 245, .1);
+  border: 1px solid rgba(255, 252, 245, .16);
   box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, .28);
   backdrop-filter: blur(16rpx);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10;
+  transition: transform 160ms ease, opacity 160ms ease;
 }
 .nav--prev { left: 18rpx; }
 .nav--next { right: 18rpx; }
+.nav:active { transform: scale(.9); opacity: .8; }
 .nav__chev {
   color: rgba(255, 252, 245, .9);
-  font-size: 56rpx;
+  font-size: 54rpx;
   line-height: 1;
   margin-top: -6rpx; /* visual centering — the chevron glyph sits low */
 }
 
-/* ─────────────────────── Bottom status bar ─────────────────────── */
+/* ─────────────── Bottom chrome: caption + action bar ─────────────── */
 .bottom {
   position: absolute;
-  left: 16rpx;
-  right: 16rpx;
-  bottom: 32rpx;
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  padding: 14rpx 18rpx;
-  background: rgba(255, 252, 245, .12);
-  border: 1px solid rgba(255, 252, 245, .16);
-  border-radius: 999rpx;
-  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, .24);
-  backdrop-filter: blur(16rpx);
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  padding: 56rpx 16rpx calc(20rpx + env(safe-area-inset-bottom));
+  /* Dark scrim so the caption + glass bar read on bright photos. */
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, .34) 44%,
+    rgba(0, 0, 0, .64) 100%
+  );
 }
-.bottom__counter {
-  font-family: var(--font-mono);
-  font-size: 24rpx;
-  letter-spacing: 2rpx;
-  color: rgba(255, 252, 245, .85);
-  flex-shrink: 0;
-}
-.bottom__tags {
-  flex: 1;
-  white-space: nowrap;
-  /* Hide overflow so the tags pill doesn't push the edit button out. */
-  overflow: hidden;
-}
-.bottom__tag {
-  display: inline-block;
-  font-family: var(--font-hand);
-  font-size: 24rpx;
-  color: var(--paper-cream);
-  background: rgba(210, 176, 59, .35);
-  padding: 2rpx 14rpx;
-  border-radius: 4rpx;
-  margin-right: 8rpx;
-}
-.bottom__edit {
+
+/* Bottom-left auxiliary row holding the small EXIF (ⓘ) button. */
+.bottom__aux {
   display: flex;
   align-items: center;
-  gap: 4rpx;
-  padding: 4rpx 12rpx;
+  padding: 0 6rpx;
+}
+.infobtn {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
   background: rgba(255, 252, 245, .12);
-  border-radius: 999rpx;
-  flex-shrink: 0;
+  border: 1px solid rgba(255, 252, 245, .18);
+  backdrop-filter: blur(14rpx);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 160ms ease, opacity 160ms ease;
 }
-.bottom__edit-emoji { color: rgba(255, 252, 245, .9); font-size: 24rpx; }
-.bottom__edit-label {
+.infobtn:active { transform: scale(.9); opacity: .8; }
+.infobtn__glyph {
+  color: rgba(255, 252, 245, .95);
+  font-size: 34rpx;
+  line-height: 1;
+}
+
+/* Glassy action bar — one cohesive control cluster. */
+.actionbar {
+  display: flex;
+  align-items: stretch;
+  gap: 4rpx;
+  padding: 8rpx;
+  background: rgba(28, 24, 20, .42);
+  border: 1px solid rgba(255, 252, 245, .16);
+  border-radius: 26rpx;
+  box-shadow: 0 12rpx 34rpx rgba(0, 0, 0, .34);
+  backdrop-filter: blur(20rpx);
+}
+.act {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+  padding: 12rpx 8rpx;
+  border-radius: 20rpx;
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+.act:active {
+  transform: scale(.94);
+  background: rgba(255, 252, 245, .12);
+}
+.act__icon {
+  font-size: 38rpx;
+  line-height: 1;
   color: rgba(255, 252, 245, .9);
-  font-family: var(--font-hand);
-  font-size: 24rpx;
+}
+.act__label {
+  font-size: 20rpx;
+  line-height: 1.1;
+  color: rgba(255, 252, 245, .82);
+  white-space: nowrap;
+}
+.act--fav .act__icon,
+.act--fav .act__label {
+  color: var(--pin-red);
+}
+.act--done .act__icon,
+.act--done .act__label {
+  color: var(--pin-green);
 }
 
-/* iPhone home-bar safe area. WeChat exposes this via env() — we add a bit
-   of bottom padding so the pill clears the swipe gesture line. */
-.safe-area-inset-bottom {
-  bottom: calc(32rpx + env(safe-area-inset-bottom));
-}
-
-/* ─────────────────────── Info drawer (bottom sheet) ─────────────────────── */
+/* ─────────────────────── Info / EXIF drawer ─────────────────────── */
 .info-mask {
   position: fixed;
   inset: 0;
@@ -184,7 +306,7 @@
   background: var(--paper-cream);
   border-radius: 24rpx 24rpx 0 0;
   padding: 32rpx 32rpx 64rpx;
-  max-height: 70vh;
+  max-height: 76vh;
   overflow-y: auto;
 }
 .info__handle {
@@ -195,27 +317,89 @@
   margin: 0 auto 20rpx;
 }
 .info__title {
-  font-family: var(--font-hand);
+  font-family: var(--font-mono);
   color: var(--kraft-dark);
-  font-size: 44rpx;
-  margin-bottom: 12rpx;
+  font-size: 30rpx;
+  letter-spacing: 4rpx;
+  text-transform: uppercase;
+  margin-bottom: 18rpx;
+}
+
+/* Read-only metadata block — the lead content. */
+.info__meta {
+  padding: 6rpx 0 4rpx;
+  border-radius: 16rpx;
+}
+.info__row {
+  display: flex;
+  align-items: baseline;
+  gap: 16rpx;
+  padding: 14rpx 0;
+  border-top: 1px dashed rgba(168, 138, 92, .22);
+}
+.info__row:first-child {
+  border-top: none;
+}
+.info__label {
+  flex-shrink: 0;
+  width: 130rpx;
+  font-family: var(--font-mono);
+  font-size: 22rpx;
+  letter-spacing: 2rpx;
+  color: var(--ink-secondary);
+}
+.info__value {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 26rpx;
+  color: var(--ink-primary);
+  word-break: break-all;
+}
+
+.info__block {
+  margin-top: 20rpx;
+}
+.info__block .info__label {
+  display: block;
+  width: auto;
+  margin-bottom: 10rpx;
 }
 .info__caption {
-  font-size: 30rpx;
+  font-size: 28rpx;
   color: var(--ink-primary);
   line-height: 1.5;
-  margin-bottom: 16rpx;
+  font-family: var(--font-serif);
 }
+.info__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+.info__tag {
+  font-family: var(--font-hand);
+  font-size: 32rpx;
+  line-height: 1.3;
+  padding: 8rpx 22rpx;
+  background: rgba(210, 176, 59, .22);
+  color: var(--ink-primary);
+  border-radius: 8rpx;
+}
+
+/* Editable fields (revealed by 编辑). */
 .info__field {
   display: block;
   margin-top: 22rpx;
 }
+.info__field .info__label {
+  display: block;
+  width: auto;
+  margin-bottom: 10rpx;
+}
 .info__textarea {
   width: 100%;
-  min-height: 150rpx;
+  min-height: 96rpx;
   box-sizing: border-box;
-  margin-top: 10rpx;
-  padding: 16rpx 18rpx;
+  padding: 14rpx 18rpx;
   border-radius: 18rpx;
   border: 1px solid rgba(168, 138, 92, .3);
   background: rgba(255, 252, 245, .78);
@@ -224,38 +408,7 @@
   line-height: 1.45;
   font-family: var(--font-serif);
 }
-.info__row {
-  display: flex;
-  gap: 16rpx;
-  margin-bottom: 12rpx;
-  align-items: baseline;
-}
-.info__label {
-  font-family: var(--font-mono);
-  font-size: 22rpx;
-  letter-spacing: 4rpx;
-  color: var(--ink-secondary);
-  text-transform: uppercase;
-}
-.info__value {
-  font-family: var(--font-mono);
-  font-size: 24rpx;
-  color: var(--ink-primary);
-}
-.info__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10rpx;
-  margin-top: 20rpx;
-}
-.info__tag {
-  font-family: var(--font-hand);
-  font-size: 26rpx;
-  padding: 4rpx 16rpx;
-  background: rgba(210, 176, 59, .22);
-  color: var(--ink-primary);
-  border-radius: 4rpx;
-}
+
 .info__actions {
   display: flex;
   justify-content: flex-end;
@@ -265,6 +418,19 @@
   padding-top: 22rpx;
   border-top: 1px solid rgba(168, 138, 92, .22);
 }
+.info__edit-btn {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 28rpx;
+  border-radius: 999rpx;
+  font-size: 26rpx;
+  color: var(--ink-primary);
+  background: rgba(168, 138, 92, .16);
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+.info__edit-btn:active { transform: scale(.96); opacity: .85; }
+.info__edit-emoji { font-size: 26rpx; }
 .info__cancel,
 .info__save {
   padding: 14rpx 26rpx;

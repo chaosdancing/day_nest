@@ -33,6 +33,26 @@
 
 .field { margin-bottom: 32rpx; }
 .label { margin-bottom: 8rpx; }
+/* Username label + live bind/register mode chip on the same line. */
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+}
+.label-row .label { margin-bottom: 0; }
+.mode {
+  font-family: var(--font-mono);
+  font-size: 22rpx;
+  letter-spacing: 1rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 999rpx;
+}
+/* "选填 · 发照片才需要" hint chip next to the invite label. */
+.mode--opt {
+  color: var(--kraft-dark);
+  background: rgba(168, 138, 92, .18);
+}
 .input {
   background: #FFFCF5;
   padding: 20rpx 24rpx;

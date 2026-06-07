@@ -35,6 +35,7 @@ describe('WechatLoginResponse', () => {
           displayName: 'Alice',
           avatarKey: null,
           hasWechatBound: true,
+          canUpload: true,
         },
         accessToken: 'at',
         refreshToken: 'rt',
@@ -56,7 +57,7 @@ describe('WechatLoginResponse', () => {
       status: 'unbound',
       bindToken: 'bt-xyz',
       accessToken: 'should-be-stripped',
-      user: { id: '00000000-0000-0000-0000-000000000000', username: 'a', displayName: 'A', avatarKey: null, hasWechatBound: true },
+      user: { id: '00000000-0000-0000-0000-000000000000', username: 'a', displayName: 'A', avatarKey: null, hasWechatBound: true, canUpload: true },
     });
     expect(parsed.status).toBe('unbound');
     if (parsed.status !== 'unbound') throw new Error('unreachable');
@@ -107,14 +108,22 @@ describe('WechatBindResponse error codes', () => {
 });
 
 describe('WechatRegisterInput', () => {
-  it('accepts a valid payload', () => {
+  it('accepts a valid payload with an invite', () => {
     expect(() =>
       WechatRegisterInput.parse({
         bindToken: 'bt',
         inviteToken: 'invite-token-xyz',
         username: 'newuser',
         displayName: 'New User',
-        password: 'password123',
+      }),
+    ).not.toThrow();
+  });
+  it('accepts a valid payload WITHOUT an invite (view-only account)', () => {
+    expect(() =>
+      WechatRegisterInput.parse({
+        bindToken: 'bt',
+        username: 'newuser',
+        displayName: 'New User',
       }),
     ).not.toThrow();
   });
@@ -122,10 +131,8 @@ describe('WechatRegisterInput', () => {
     expect(() =>
       WechatRegisterInput.parse({
         bindToken: 'bt',
-        inviteToken: 'invite-token-xyz',
         username: 'has space',
         displayName: 'X',
-        password: 'password123',
       }),
     ).toThrow();
   });

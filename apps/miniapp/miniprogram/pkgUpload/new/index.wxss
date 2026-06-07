@@ -178,6 +178,35 @@
   gap: 28rpx;
   align-items: flex-start;
 }
+
+/* Location fuzzy-match suggestions — full-width row under the date/location
+   line so the chips have room to breathe. */
+.loc-suggest {
+  margin-top: 16rpx;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12rpx;
+}
+.loc-suggest__hint {
+  font-size: 22rpx;
+  color: var(--ink-secondary);
+  opacity: .7;
+}
+.loc-suggest__chip {
+  font-size: 26rpx;
+  line-height: 1.2;
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  background: var(--paper-aged);
+  color: var(--ink-primary);
+  box-shadow: var(--shadow-sticker);
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+.loc-suggest__chip:active {
+  transform: scale(.94);
+  opacity: .8;
+}
 .field--half {
   flex: 1;
   min-width: 0;

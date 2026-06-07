@@ -1,8 +1,10 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
+import { randomBytes } from 'node:crypto';
 import {
   WechatLoginInput,
   WechatBindInput,
   WechatRegisterInput,
+  RedeemInviteInput,
   SubscribeAuthInput,
 } from '@daynest/shared';
 import { AppError } from '../lib/errors.js';
@@ -20,6 +22,7 @@ type UserRecord = {
   displayName: string;
   avatarKey: string | null;
   wechatOpenId: string | null;
+  canUpload: boolean;
 };
 
 function toUserDTO(u: UserRecord) {
@@ -29,6 +32,7 @@ function toUserDTO(u: UserRecord) {
     displayName: u.displayName,
     avatarKey: u.avatarKey,
     hasWechatBound: u.wechatOpenId !== null,
+    canUpload: u.canUpload,
   };
 }
 
@@ -105,6 +109,21 @@ export async function registerWechatRoutes(app: FastifyInstance) {
     return { status: 'unbound' as const, bindToken };
   });
 
+  // Lightweight existence probe for the WeChat onboarding form: lets the client
+  // decide whether a submit should bind to an existing account (username found)
+  // or register a new one (username free). Public, since it's part of the
+  // pre-auth login flow; reveals only a boolean for a single explicit username.
+  app.get('/api/auth/username-available', async (req) => {
+    const { username } = req.query as { username?: string };
+    const u = (username ?? '').trim();
+    if (!u) return { exists: false };
+    const user = await app.deps.prisma.user.findUnique({
+      where: { username: u },
+      select: { id: true },
+    });
+    return { exists: user !== null };
+  });
+
   app.post('/api/auth/wechat-bind', async (req, reply) => {
     if (!app.deps.config.wechat.enabled) {
       throw new AppError(503, 'WECHAT_DISABLED', 'wechat client is not configured');
@@ -177,7 +196,7 @@ export async function registerWechatRoutes(app: FastifyInstance) {
         parsed.error.issues.map((i) => i.message).join('; '),
       );
     }
-    const { bindToken, inviteToken, username, displayName, password } = parsed.data;
+    const { bindToken, inviteToken, username, displayName } = parsed.data;
 
     let openid: string;
     try {
@@ -203,20 +222,30 @@ export async function registerWechatRoutes(app: FastifyInstance) {
       );
     }
 
-    // Consume invite LAST so earlier failures don't burn an invite.
-    try {
-      await consumeInvite(app.deps.prisma, inviteToken);
-    } catch (e) {
-      const code = e instanceof Error ? e.message : 'INVALID_INVITE';
-      throw new AppError(400, code, 'invite token invalid or expired');
+    // Invite is OPTIONAL. With a valid invite → upload rights; without one →
+    // a view-only account. Consume the invite LAST (and only if supplied) so
+    // earlier failures don't burn it.
+    let canUpload = false;
+    if (inviteToken) {
+      try {
+        await consumeInvite(app.deps.prisma, inviteToken);
+        canUpload = true;
+      } catch (e) {
+        const code = e instanceof Error ? e.message : 'INVALID_INVITE';
+        throw new AppError(400, code, 'invite token invalid or expired');
+      }
     }
 
-    const passwordHash = await hashPassword(password);
+    // WeChat accounts authenticate via openid, not a password. We still satisfy
+    // the non-null passwordHash column with a random, unguessable secret so the
+    // username/password login path stays closed for these accounts.
+    const passwordHash = await hashPassword(randomBytes(24).toString('base64url'));
     const user = await app.deps.prisma.user.create({
       data: {
         username,
         displayName,
         passwordHash,
+        canUpload,
         wechatOpenId: openid,
         wechatBoundAt: new Date(),
       },
@@ -225,6 +254,40 @@ export async function registerWechatRoutes(app: FastifyInstance) {
     const tokens = await issueTokens(app, reply, user);
     return { user: toUserDTO(user), ...tokens };
   });
+
+  // Upgrade a view-only account to an uploader by redeeming an invite. Lets a
+  // WeChat user who signed up "just to browse" later unlock posting photos.
+  app.post(
+    '/api/auth/redeem-invite',
+    { onRequest: [app.requireUser] },
+    async (req) => {
+      const parsed = RedeemInviteInput.safeParse(req.body);
+      if (!parsed.success) {
+        throw new AppError(
+          400,
+          'VALIDATION_ERROR',
+          parsed.error.issues.map((i) => i.message).join('; '),
+        );
+      }
+      const user = await app.deps.prisma.user.findUnique({ where: { id: req.user.id } });
+      if (!user) throw new AppError(404, 'USER_NOT_FOUND', 'user not found');
+      if (user.canUpload) {
+        // Already an uploader — don't burn the invite, just echo current state.
+        return { user: toUserDTO(user) };
+      }
+      try {
+        await consumeInvite(app.deps.prisma, parsed.data.inviteToken);
+      } catch (e) {
+        const code = e instanceof Error ? e.message : 'INVALID_INVITE';
+        throw new AppError(400, code, 'invite token invalid or expired');
+      }
+      const updated = await app.deps.prisma.user.update({
+        where: { id: user.id },
+        data: { canUpload: true },
+      });
+      return { user: toUserDTO(updated) };
+    },
+  );
 
   app.post(
     '/api/auth/wechat-unbind',

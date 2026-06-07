@@ -28,6 +28,37 @@
   margin-top: 8rpx;
 }
 
+/* Hand-painted colour accent behind ONLY the "专属回忆" characters — a single
+   rotated brush swash under the lower half of those four glyphs for a designed,
+   warm pop without colouring the whole line. */
+.hero__hl {
+  position: relative;
+  display: inline-block;
+}
+.hero__hl-fg {
+  position: relative;
+  z-index: 1;
+}
+.hero__hl-bg {
+  position: absolute;
+  left: -10rpx;
+  right: -10rpx;
+  bottom: 14rpx;
+  height: 32rpx;
+  z-index: 0;
+  border-radius: 26rpx 30rpx 22rpx 34rpx;
+  background: linear-gradient(
+    100deg,
+    var(--pin-yellow) 0%,
+    var(--ink-sticker) 48%,
+    var(--pin-red) 100%
+  );
+  opacity: .5;
+  transform: rotate(-2deg) skewX(-6deg);
+  /* A second, thinner highlight near the start gives it a brushed feel. */
+  box-shadow: 0 -10rpx 0 -4rpx rgba(210, 176, 59, .35);
+}
+
 /* Login primary button. WeChat <button> ships with its own default
    width/padding/min-height that's a hair too narrow for our pill style,
    so we force width and add horizontal padding explicitly. */

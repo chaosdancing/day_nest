@@ -1,4 +1,4 @@
-<view class="page">
+<view class="page {{theme}} {{slide}}">
   <page-hero
     emoji="💖"
     title="最爱"
@@ -28,7 +28,7 @@
         <view
           wx:for="{{leftItems}}"
           wx:key="id"
-          class="grid__cell"
+          class="grid__cell {{enterAnim ? 'grid__cell--enter' : ''}}"
         >
           <!-- Photo polaroid — natural aspect ratio gives the masonry stagger. -->
           <photo-tile
@@ -67,7 +67,7 @@
         <view
           wx:for="{{rightItems}}"
           wx:key="id"
-          class="grid__cell"
+          class="grid__cell {{enterAnim ? 'grid__cell--enter' : ''}}"
         >
           <photo-tile
             photoId="{{item.photo.id}}"

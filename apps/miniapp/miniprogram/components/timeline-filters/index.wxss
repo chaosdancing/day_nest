@@ -1,17 +1,10 @@
 /* Timeline filter bar. Visual reference: apps/web/src/pages/TimelinePage.tsx
    (sticky filter rail with emoji chips + tinted-when-filled inputs). */
 
+/* The bar lives inside the page's collapsible panel, so it's a plain
+   transparent container here — the panel provides the card surface. */
 .filters {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  margin: 0 24rpx 16rpx;
-  padding: 22rpx 18rpx;
-  border-radius: 12rpx;
-  border: 1px solid rgba(168, 138, 92, .25);
-  background: rgba(243, 230, 203, .82);
-  backdrop-filter: blur(6rpx);
-  box-shadow: 0 1px 2px rgba(0,0,0,.05);
+  display: block;
 }
 
 .filters__chips {
@@ -25,6 +18,16 @@
   align-items: stretch;
   flex-shrink: 0;
   margin-right: 12rpx;
+  border-radius: 999rpx;
+  /* When active, the CONTAINER becomes the pill so the label + × read as one
+     continuous shape (the children are clipped to the rounded outline). */
+  transition: background-color 180ms ease, box-shadow 180ms ease;
+}
+/* Active pill: single kraft-toned shape wrapping both the label and the ×. */
+.chip--on {
+  background: var(--kraft-base);
+  box-shadow: 0 1px 2px rgba(0,0,0,.08);
+  overflow: hidden;
 }
 
 .chip__btn {
@@ -35,25 +38,34 @@
   padding: 10rpx 24rpx;
   box-sizing: border-box;
   border-radius: 999rpx;
-  border: 1px solid rgba(168, 138, 92, .35);
-  background: rgba(255, 252, 245, .7);
+  /* Low-contrast kraft hairline (no white edge) so adjacent chips don't read as
+     separated white-seamed lines against the kraft bar. */
+  border: 1px solid rgba(168, 138, 92, .2);
+  background: rgba(255, 252, 245, .55);
   color: rgba(42, 37, 32, .7);
   font-size: 24rpx;
   line-height: 1.2;
-  transition: background-color 160ms ease, color 160ms ease;
+  transition: background-color 180ms ease, color 180ms ease,
+    border-color 180ms ease, transform 180ms cubic-bezier(.34, 1.56, .64, 1);
+}
+/* Tactile press feedback on the chip body. */
+.chip__btn:active {
+  transform: scale(.94);
 }
 
+/* Active label: transparent so the container pill shows through — no seam,
+   no second background. The has-clear modifier just trims the right side so
+   the label butts flush against the × without a rounded gap. */
+.chip--on .chip__btn {
+  background: transparent;
+  border-color: transparent;
+  color: #FBF4E4;
+  box-shadow: none;
+}
 .chip__btn--has-clear {
+  padding-right: 14rpx;
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
-  border-right: none;
-}
-
-.chip--on .chip__btn {
-  background: var(--kraft-base);
-  color: #FBF4E4;
-  border-color: var(--kraft-base);
-  box-shadow: 0 1px 2px rgba(0,0,0,.08);
 }
 
 .chip__emoji {
@@ -64,20 +76,25 @@
   font-size: 26rpx;
 }
 
+/* × lives INSIDE the same active pill. Fully transparent with no divider so the
+   label and × read as one continuous, seamless pill (no internal white line). */
 .chip__clear {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 44rpx;
-  padding: 0 12rpx 0 6rpx;
-  border-radius: 0 999rpx 999rpx 0;
-  background: var(--kraft-base);
-  color: rgba(251, 244, 228, .8);
+  min-width: 40rpx;
+  padding: 0 16rpx 0 6rpx;
+  background: transparent;
+  color: rgba(251, 244, 228, .85);
   font-size: 28rpx;
   line-height: 1;
+  transition: opacity 160ms ease;
+}
+.chip__clear:active {
+  opacity: .6;
 }
 
-/* Custom range row */
+/* Custom range row — animates in when 自定义 is selected (wx:if insertion). */
 .filters__custom {
   margin-top: 16rpx;
   padding-top: 16rpx;
@@ -86,21 +103,36 @@
   align-items: center;
   gap: 12rpx;
   flex-wrap: wrap;
+  animation: filters-custom-reveal 220ms cubic-bezier(.22, 1, .36, 1) both;
+}
+@keyframes filters-custom-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-10rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .filters__custom-label {
   font-family: var(--font-mono);
-  font-size: 20rpx;
+  font-size: 22rpx;
   letter-spacing: 4rpx;
-  color: rgba(42, 37, 32, .45);
+  color: var(--ink-secondary);
 }
 .filters__date {
   font-family: var(--font-mono);
-  font-size: 24rpx;
-  padding: 8rpx 16rpx;
-  border-radius: 6rpx;
-  border: 1px solid rgba(168, 138, 92, .35);
+  font-size: 26rpx;
+  padding: 10rpx 18rpx;
+  border-radius: 10rpx;
   background: rgba(255, 252, 245, .85);
+  box-shadow: inset 0 0 0 1px rgba(168, 138, 92, .3);
   color: var(--ink-primary);
+  transition: background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+.filters__date:active {
+  transform: scale(.96);
 }
 .filters__dash {
   color: rgba(42, 37, 32, .35);
@@ -116,13 +148,13 @@
   padding: 12rpx 20rpx;
   box-sizing: border-box;
   border-radius: 999rpx;
-  border: 1px solid rgba(168, 138, 92, .25);
-  background: rgba(255, 252, 245, .7);
-  transition: background-color 160ms ease, border-color 160ms ease;
+  background: rgba(255, 252, 245, .82);
+  box-shadow: inset 0 0 0 1px rgba(168, 138, 92, .18);
+  transition: background-color 160ms ease, box-shadow 160ms ease;
 }
 .filters__search--filled {
   background: rgba(168, 138, 92, .15);
-  border-color: rgba(168, 138, 92, .55);
+  box-shadow: inset 0 0 0 1px rgba(168, 138, 92, .5);
 }
 .filters__search-icon {
   font-size: 26rpx;

@@ -4,10 +4,12 @@
  * exercise the rest of the app. The entry on /pages/login/index is only
  * rendered when `envVersion === 'develop' || 'trial'`.
  */
+import type { UserDTO } from '@daynest/shared';
 import { wxShowToast } from '../../lib/wxBridge.js';
 import { createApiClient } from '../../lib/api.js';
 import { endpoints } from '../../lib/endpoints.js';
 import { authStore } from '../../stores/authStore.js';
+import { applyTheme, disposeTheme } from '../../lib/theme.js';
 
 const api = createApiClient({ tokens: authStore, refreshUrl: endpoints.refreshToken() });
 
@@ -20,23 +22,26 @@ const api = createApiClient({ tokens: authStore, refreshUrl: endpoints.refreshTo
  * for DevTools / 体验版 testing.
  */
 interface LoginResponse {
-  user: {
-    id: string;
-    username: string;
-    displayName: string;
-    avatarKey: string | null;
-    hasWechatBound: boolean;
-  };
+  user: UserDTO;
   accessToken: string;
 }
 
 Page({
   data: {
+    theme: '' as '' | 'dark',
     username: '',
     password: '',
     loading: false,
     error: '',
     canSubmit: false,
+  },
+
+  onLoad() {
+    applyTheme(this);
+  },
+
+  onUnload() {
+    disposeTheme(this);
   },
 
   onUsername(e: WechatMiniprogram.Input) {
