@@ -10,15 +10,17 @@ import type {
   PhotoDTO,
 } from '@daynest/shared';
 
-export function useFavorites() {
+export type FavoritesScope = 'all' | 'mine';
+
+export function useFavorites(scope: FavoritesScope = 'all') {
   return useInfiniteQuery<FavoritesListResponse>({
-    queryKey: ['favorites'],
+    // Scope is part of the key so 全家最爱 / 只看我的 cache independently and
+    // the toggle swaps instantly without cross-contaminating pages.
+    queryKey: ['favorites', scope],
     initialPageParam: null as string | null,
     queryFn: async ({ pageParam }) => {
-      // The API now defaults to the whole-family favorites wall ('all'); the
-      // web page intentionally keeps its long-standing "my favorites" view.
       const res = await api.get<FavoritesListResponse>('/favorites', {
-        params: { scope: 'mine', ...(pageParam ? { cursor: pageParam } : {}) },
+        params: { scope, ...(pageParam ? { cursor: pageParam } : {}) },
       });
       return res.data;
     },

@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useFavorites } from '@/hooks/useFavorites';
+import { useFavorites, type FavoritesScope } from '@/hooks/useFavorites';
 import { FavoriteHeart } from '@/components/scrapbook/FavoriteHeart';
 import { HandwrittenText } from '@/components/scrapbook/HandwrittenText';
 import { PageHero } from '@/components/scrapbook/PageHero';
@@ -16,7 +16,8 @@ function formatActor(a: FavoriteEntryDTO['favoritedBy'][number]) {
 }
 
 export function FavoritesPage() {
-  const q = useFavorites();
+  const [scope, setScope] = useState<FavoritesScope>('all');
+  const q = useFavorites(scope);
   const sentinelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!sentinelRef.current) return;
@@ -29,9 +30,6 @@ export function FavoritesPage() {
     return () => obs.disconnect();
   }, [q.hasNextPage, q.isFetchingNextPage, q.fetchNextPage]);
 
-  if (q.isLoading) {
-    return <div className="text-center text-ink/60 dark:text-paper/60 py-16">正在翻心愿盒...</div>;
-  }
   const items = q.data?.pages.flatMap((p) => p.items) ?? [];
 
   return (
@@ -45,7 +43,36 @@ export function FavoritesPage() {
         className="pb-10"
       />
 
-      {items.length === 0 ? (
+      {/* Scope switch — mirrors the mini-app: the shared family wall vs. mine. */}
+      <div className="mb-8 flex justify-center">
+        <div className="inline-flex rounded-full bg-ink/5 p-1 dark:bg-paper/10">
+          {(
+            [
+              { key: 'all', label: '全家最爱' },
+              { key: 'mine', label: '只看我的' },
+            ] as { key: FavoritesScope; label: string }[]
+          ).map((opt) => (
+            <button
+              key={opt.key}
+              type="button"
+              onClick={() => setScope(opt.key)}
+              className={`rounded-full px-5 py-1.5 text-sm font-semibold transition ${
+                scope === opt.key
+                  ? 'bg-kraft text-paper shadow-sm'
+                  : 'text-ink/55 hover:text-ink/80 dark:text-paper/55 dark:hover:text-paper/80'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {q.isLoading ? (
+        <div className="text-center text-ink/60 dark:text-paper/60 py-16">
+          正在翻心愿盒...
+        </div>
+      ) : items.length === 0 ? (
         <div className="text-center py-20">
           <motion.div
             animate={{ y: [0, -6, 0] }}
@@ -55,7 +82,9 @@ export function FavoritesPage() {
           >
             🤍
           </motion.div>
-          <HandwrittenText className="text-3xl block">还没有最爱</HandwrittenText>
+          <HandwrittenText className="text-3xl block">
+            {scope === 'mine' ? '你还没有最爱' : '还没有最爱'}
+          </HandwrittenText>
           <p className="mt-4 text-ink/60 dark:text-paper/60">
             打开{' '}
             <Link to="/" className="text-kraft-dark underline underline-offset-4 dark:text-kraft-light">
