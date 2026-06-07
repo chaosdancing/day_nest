@@ -6,6 +6,12 @@ import { buildPhotoDtoById } from '../services/photoView.js';
 const ListQuery = z.object({
   limit: z.coerce.number().int().min(1).max(60).default(30),
   cursor: z.string().optional(),
+  // 'all'  → every photo any family member has favorited (the shared "loved"
+  //          wall; each entry's favoritedBy names who loved it).
+  // 'mine' → only the current user's own favorites.
+  // Defaults to 'all' so the page reads as a family-shared favorites wall, with
+  // a client-side "只看我的" toggle narrowing to scope=mine.
+  scope: z.enum(['all', 'mine']).default('all'),
 });
 
 type Cursor = { createdAt: string; photoId: string };
@@ -37,31 +43,55 @@ export async function registerFavoritesRoutes(app: FastifyInstance) {
     { onRequest: [app.requireUser] },
     async (req) => {
       const q = ListQuery.parse(req.query);
+      const cursor = q.cursor ? decodeCursor(q.cursor) : null;
 
-      const where: Prisma.PhotoFavoriteWhereInput = {
-        userId: req.user.id,
-      };
-      if (q.cursor) {
-        const c = decodeCursor(q.cursor);
-        if (c) {
+      // Both scopes resolve to the same shape: a page of { photoId, createdAt }
+      // ordered by favorite recency (desc), keyed for cursor pagination. 'mine'
+      // pages raw favorite rows; 'all' collapses to distinct photos keyed by
+      // each photo's most-recent favorite time.
+      let sliced: Array<{ photoId: string; createdAt: Date }>;
+      let hasMore: boolean;
+
+      if (q.scope === 'mine') {
+        const where: Prisma.PhotoFavoriteWhereInput = { userId: req.user.id };
+        if (cursor) {
           where.OR = [
-            { createdAt: { lt: new Date(c.createdAt) } },
-            {
-              createdAt: new Date(c.createdAt),
-              photoId: { lt: c.photoId },
-            },
+            { createdAt: { lt: new Date(cursor.createdAt) } },
+            { createdAt: new Date(cursor.createdAt), photoId: { lt: cursor.photoId } },
           ];
         }
+        const rows = await app.deps.prisma.photoFavorite.findMany({
+          where,
+          orderBy: [{ createdAt: 'desc' }, { photoId: 'desc' }],
+          take: q.limit + 1,
+          select: { photoId: true, createdAt: true },
+        });
+        hasMore = rows.length > q.limit;
+        sliced = hasMore ? rows.slice(0, q.limit) : rows;
+      } else {
+        // Distinct photos favorited by anyone, ordered by their latest favorite.
+        // Family-scale data, so we group the full set and paginate in-memory; a
+        // photo's many favorite rows can't be cursor-filtered at the DB layer
+        // without dropping its true max(createdAt).
+        const groups = await app.deps.prisma.photoFavorite.groupBy({
+          by: ['photoId'],
+          _max: { createdAt: true },
+          orderBy: [{ _max: { createdAt: 'desc' } }, { photoId: 'desc' }],
+        });
+        let entries = groups.map((g) => ({
+          photoId: g.photoId,
+          createdAt: g._max.createdAt as Date,
+        }));
+        if (cursor) {
+          const cd = new Date(cursor.createdAt).getTime();
+          entries = entries.filter((e) => {
+            const t = e.createdAt.getTime();
+            return t < cd || (t === cd && e.photoId < cursor.photoId);
+          });
+        }
+        hasMore = entries.length > q.limit;
+        sliced = hasMore ? entries.slice(0, q.limit) : entries;
       }
-
-      const rows = await app.deps.prisma.photoFavorite.findMany({
-        where,
-        orderBy: [{ createdAt: 'desc' }, { photoId: 'desc' }],
-        take: q.limit + 1,
-        select: { photoId: true, createdAt: true },
-      });
-      const hasMore = rows.length > q.limit;
-      const sliced = hasMore ? rows.slice(0, q.limit) : rows;
 
       const items = await Promise.all(
         sliced.map(async (row) => {

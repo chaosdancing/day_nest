@@ -7,6 +7,8 @@ import { bumpContentVersion } from '../contentVersion.js';
 export interface ListFavoritesParams {
   limit?: number;
   cursor?: string;
+  /** 'all' (default, whole family) or 'mine' (current user only). */
+  scope?: 'all' | 'mine';
 }
 
 export interface ListFavoritesResponse {

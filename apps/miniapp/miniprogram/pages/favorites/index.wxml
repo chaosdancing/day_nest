@@ -7,13 +7,27 @@
     emojiClass="tinted-red"
   />
 
+  <!-- Scope switch: the shared family wall (all) vs. just my own favorites. -->
+  <view class="scope">
+    <view
+      class="scope__seg {{scope === 'all' ? 'scope__seg--on' : ''}}"
+      data-scope="all"
+      bindtap="onScopeChange"
+    >全家最爱</view>
+    <view
+      class="scope__seg {{scope === 'mine' ? 'scope__seg--on' : ''}}"
+      data-scope="mine"
+      bindtap="onScopeChange"
+    >只看我的</view>
+  </view>
+
   <view wx:if="{{loading && items.length === 0}}" class="empty">
     <text class="empty__emoji">💝</text>
     <view class="empty__title scribble">正在翻心愿盒...</view>
   </view>
   <view wx:elif="{{!loading && items.length === 0}}" class="empty">
     <text class="empty__emoji">🤍</text>
-    <view class="empty__title scribble">还没有最爱</view>
+    <view class="empty__title scribble">{{scope === 'mine' ? '你还没有最爱' : '还没有最爱'}}</view>
     <view class="empty__sub">打开时光轴，点照片右上角的小心心 ♡ 标成最爱。</view>
   </view>
 
@@ -38,7 +52,7 @@
             subtitle="{{item.displayDate}}"
             frameStyle="{{item.frameStyle}}"
             tiltDeg="{{item.tiltDeg}}"
-            favoritedByMe="{{true}}"
+            favoritedByMe="{{item.photo.favoritedByMe}}"
             favoriteCount="{{item.photo.favoriteCount}}"
             bind:phototap="onPhotoTap"
             bind:favoritetap="onFavoriteToggle"
@@ -76,7 +90,7 @@
             subtitle="{{item.displayDate}}"
             frameStyle="{{item.frameStyle}}"
             tiltDeg="{{item.tiltDeg}}"
-            favoritedByMe="{{true}}"
+            favoritedByMe="{{item.photo.favoritedByMe}}"
             favoriteCount="{{item.photo.favoriteCount}}"
             bind:phototap="onPhotoTap"
             bind:favoritetap="onFavoriteToggle"

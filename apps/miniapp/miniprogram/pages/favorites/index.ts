@@ -4,6 +4,9 @@ import { stableInt } from '../../lib/hash.js';
 import { applyTheme, disposeTheme } from '../../lib/theme.js';
 import { consumeTabSlide } from '../../lib/tabTransition.js';
 import { getContentVersion } from '../../lib/contentVersion.js';
+import { authStore } from '../../stores/authStore.js';
+
+type Scope = 'all' | 'mine';
 
 /** Pre-rendered "♥ 妈妈 · 2026.05.24" string for the actor list under the
  *  polaroid. We pre-format on the JS side because WXML doesn't have a
@@ -23,10 +26,24 @@ interface Item {
   frameStyle: string;
   /** Explicit card tilt. Alternates by list order for a less uniform first row. */
   tiltDeg: number;
+  /** Full list of people who favorited this photo. Kept so a local toggle can
+   *  add/remove the current user and re-derive the visible actor lines. */
+  favoritedBy: FavoriteEntryDTO['favoritedBy'];
   /** Up to 3 formatted actor lines for display under the polaroid. */
   actors: ActorLine[];
   /** Count of actors NOT shown ("+N more" footer). 0 means hide it. */
   remainingActors: number;
+}
+
+function deriveActors(favoritedBy: FavoriteEntryDTO['favoritedBy']): {
+  actors: ActorLine[];
+  remainingActors: number;
+} {
+  const visible = favoritedBy.slice(0, 3);
+  return {
+    actors: visible.map((a) => ({ userId: a.userId, label: formatActor(a) })),
+    remainingActors: Math.max(0, favoritedBy.length - visible.length),
+  };
 }
 
 function formatDot(iso: string): string {
@@ -61,7 +78,6 @@ function favoriteTiltDeg(photoId: string, index: number): number {
 }
 
 function toItem(e: FavoriteEntryDTO, index: number): Item {
-  const visible = e.favoritedBy.slice(0, 3);
   return {
     id: e.photo.id,
     photo: e.photo,
@@ -69,8 +85,8 @@ function toItem(e: FavoriteEntryDTO, index: number): Item {
     displayDate: formatDot(e.collection.occurredOn),
     frameStyle: photoFrameStyle(e.photo),
     tiltDeg: favoriteTiltDeg(e.photo.id, index),
-    actors: visible.map((a) => ({ userId: a.userId, label: formatActor(a) })),
-    remainingActors: Math.max(0, e.favoritedBy.length - visible.length),
+    favoritedBy: e.favoritedBy,
+    ...deriveActors(e.favoritedBy),
   };
 }
 
@@ -87,6 +103,7 @@ let lastLoadedVersion = -1;
 Page({
   data: {
     theme: '' as '' | 'dark',
+    scope: 'all' as Scope,
     items: [] as Item[],
     leftItems: [] as Item[],
     rightItems: [] as Item[],
@@ -147,7 +164,7 @@ Page({
     }
     const enter = !animatedOnce;
     try {
-      const res = await favoritesService.list({ limit: 30 });
+      const res = await favoritesService.list({ limit: 30, scope: this.data.scope });
       animatedOnce = true;
       lastLoadedVersion = getContentVersion();
       this.applyItems(res.items.map((entry, idx) => toItem(entry, idx)), res.nextCursor, enter);
@@ -163,7 +180,11 @@ Page({
     if (!this.data.nextCursor || this.data.loadingMore) return;
     this.setData({ loadingMore: true });
     try {
-      const res = await favoritesService.list({ limit: 30, cursor: this.data.nextCursor });
+      const res = await favoritesService.list({
+        limit: 30,
+        cursor: this.data.nextCursor,
+        scope: this.data.scope,
+      });
       const base = this.data.items.length;
       this.applyItems(
         [...this.data.items, ...res.items.map((entry, idx) => toItem(entry, base + idx))],
@@ -185,15 +206,65 @@ Page({
     });
   },
 
+  onScopeChange(e: WechatMiniprogram.TouchEvent) {
+    const next = e.currentTarget.dataset.scope as Scope;
+    if (next === this.data.scope) return;
+    // Reset the entrance animation so the new set staggers in, and drop the old
+    // cursor so we page from the top of the newly-scoped feed.
+    animatedOnce = false;
+    this.setData({ scope: next });
+    void this.refresh();
+  },
+
   async onFavoriteToggle(e: WechatMiniprogram.CustomEvent<{ photoId: string }>) {
     const photoId = e.detail.photoId;
     const idx = this.data.items.findIndex((i) => i.id === photoId);
     if (idx < 0) return;
-    const prev = this.data.items;
-    this.applyItems(prev.filter((_, i) => i !== idx), this.data.nextCursor, false);
+    const item = this.data.items[idx];
+    const me = authStore.getState().user;
+
+    const wasFav = item.photo.favoritedByMe;
+    const newFav = !wasFav;
+    const newCount = Math.max(0, item.photo.favoriteCount + (newFav ? 1 : -1));
+    // Drop the card when un-favoriting in "只看我的" (it's no longer mine) or
+    // when nobody loves it anymore (empty in the shared wall too).
+    const drop = !newFav && (this.data.scope === 'mine' || newCount === 0);
+
+    const prev = {
+      items: this.data.items,
+      leftItems: this.data.leftItems,
+      rightItems: this.data.rightItems,
+    };
+
+    if (drop) {
+      this.removeFromColumns(photoId);
+    } else {
+      const favoritedBy = newFav
+        ? [
+            ...item.favoritedBy.filter((a) => !me || a.userId !== me.id),
+            ...(me
+              ? [{
+                  userId: me.id,
+                  username: me.username,
+                  displayName: me.displayName,
+                  createdAt: new Date().toISOString(),
+                }]
+              : []),
+          ]
+        : item.favoritedBy.filter((a) => !me || a.userId !== me.id);
+      const patched: Item = {
+        ...item,
+        photo: { ...item.photo, favoritedByMe: newFav, favoriteCount: newCount },
+        favoritedBy,
+        ...deriveActors(favoritedBy),
+      };
+      this.patchInColumns(patched);
+    }
+
     try {
-      await favoritesService.remove(photoId);
-      // We already applied the removal locally; sync the version so returning to
+      if (newFav) await favoritesService.add(photoId);
+      else await favoritesService.remove(photoId);
+      // We already applied the change locally; sync the version so returning to
       // the tab doesn't trigger a redundant in-place refetch for our own change.
       lastLoadedVersion = getContentVersion();
     } catch (err) {
@@ -201,10 +272,30 @@ Page({
       // from "network down" from "server 5xx" — generic toasts hide which.
       // If onAuthFailure already kicked off a redirect to /pages/login, the
       // toast still fires (harmlessly) before reLaunch swaps pages.
-      const msg = err instanceof Error ? err.message : '取消最爱失败';
-      this.applyItems(prev, this.data.nextCursor, false);
+      const msg = err instanceof Error ? err.message : newFav ? '添加最爱失败' : '取消最爱失败';
+      this.setData(prev);
       wx.showToast({ title: msg.slice(0, 30), icon: 'none' });
     }
+  },
+
+  /** Replace a single card in place (items + its column) without re-splitting
+   *  the masonry, so the tapped card never jumps to the other column. */
+  patchInColumns(next: Item) {
+    const replace = (list: Item[]) => list.map((i) => (i.id === next.id ? next : i));
+    this.setData({
+      items: replace(this.data.items),
+      leftItems: replace(this.data.leftItems),
+      rightItems: replace(this.data.rightItems),
+    });
+  },
+
+  removeFromColumns(photoId: string) {
+    const drop = (list: Item[]) => list.filter((i) => i.id !== photoId);
+    this.setData({
+      items: drop(this.data.items),
+      leftItems: drop(this.data.leftItems),
+      rightItems: drop(this.data.rightItems),
+    });
   },
 
   applyItems(items: Item[], nextCursor: string | null, enterAnim?: boolean) {

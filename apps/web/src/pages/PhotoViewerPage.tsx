@@ -159,6 +159,8 @@ export function PhotoViewerPage() {
               // swiping/clicking arrows feels instant rather than flashing
               // from blurry thumbnail to full-res.
               active={Math.abs(i - currentIndex) <= 1}
+              // Only the centered slide surfaces the 缩略图/原图 badge.
+              isCurrent={i === currentIndex}
             />
           ))}
         </div>
@@ -363,22 +365,46 @@ function ViewerSlide({
   fallback,
   caption,
   active,
+  isCurrent,
 }: {
   photoId: string;
   fallback: string;
   caption: string | null;
   index: number;
   active: boolean;
+  isCurrent: boolean;
 }) {
   const url = usePhotoUrl(active ? photoId : undefined);
+  // True once the *original* (signed full-res) has actually decoded — distinct
+  // from merely having requested its URL. Drives the 原图 badge so users know
+  // they're no longer looking at the blurry thumbnail fallback.
+  const [originalLoaded, setOriginalLoaded] = useState(false);
+  const showingOriginal = !!url.data;
+
   return (
-    <div className="flex-[0_0_100%] h-full flex items-center justify-center px-4">
+    <div className="relative flex-[0_0_100%] h-full flex items-center justify-center px-4">
       <img
         src={url.data ?? fallback}
         alt={caption ?? ''}
         className="max-h-full max-w-full object-contain select-none"
         draggable={false}
+        onLoad={() => {
+          // Fires for the fallback first; only flip the flag once we've swapped
+          // in the original source.
+          if (showingOriginal) setOriginalLoaded(true);
+        }}
       />
+      {isCurrent ? (
+        <span
+          className={`absolute top-4 left-1/2 -translate-x-1/2 z-10 rounded-full px-3 py-1 text-xs font-mono backdrop-blur-sm ${
+            originalLoaded
+              ? 'bg-pin-green/25 text-paper'
+              : 'bg-paper/15 text-paper/70'
+          }`}
+        >
+          {originalLoaded ? '原图' : showingOriginal ? '原图加载中…' : '缩略图'}
+        </span>
+      ) : null}
     </div>
   );
 }
