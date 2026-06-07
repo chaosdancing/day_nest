@@ -15,8 +15,10 @@ export function useFavorites() {
     queryKey: ['favorites'],
     initialPageParam: null as string | null,
     queryFn: async ({ pageParam }) => {
+      // The API now defaults to the whole-family favorites wall ('all'); the
+      // web page intentionally keeps its long-standing "my favorites" view.
       const res = await api.get<FavoritesListResponse>('/favorites', {
-        params: pageParam ? { cursor: pageParam } : {},
+        params: { scope: 'mine', ...(pageParam ? { cursor: pageParam } : {}) },
       });
       return res.data;
     },

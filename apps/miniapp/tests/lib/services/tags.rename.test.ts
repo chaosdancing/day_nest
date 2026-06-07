@@ -69,7 +69,7 @@ describe('tagsService.rename', () => {
   it('throws on non-2xx with the api error code in the message', async () => {
     mock.queueResponse({
       statusCode: 404,
-      data: { error: { code: 'TAG_NOT_FOUND' } },
+      data: { code: 'TAG_NOT_FOUND', message: 'tag not found' },
     });
     await expect(tagsService.rename('ghost', 'New')).rejects.toThrow(/TAG_NOT_FOUND/);
   });

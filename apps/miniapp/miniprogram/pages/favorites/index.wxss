@@ -33,6 +33,31 @@
   50%      { transform: translateY(-6rpx); }
 }
 
+/* Scope switch — a small kraft-paper segmented pill, "全家最爱 / 只看我的". */
+.scope {
+  display: flex;
+  align-self: center;
+  margin: 4rpx 0 18rpx;
+  padding: 6rpx;
+  border-radius: 999rpx;
+  background: var(--paper-aged);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .06);
+}
+.scope__seg {
+  padding: 12rpx 34rpx;
+  border-radius: 999rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+  color: var(--ink-secondary);
+  transition: color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+.scope__seg--on {
+  color: var(--paper-cream);
+  background: var(--kraft-base);
+  box-shadow: var(--shadow-sticker);
+}
+
 .grid {
   flex: 1;
   width: 100%;

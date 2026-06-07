@@ -149,7 +149,7 @@ describe('favorites', () => {
     await ctx.cleanup();
   });
 
-  it('GET /api/favorites only includes photos current user favorited', async () => {
+  it('GET /api/favorites defaults to the whole family, scope=mine narrows to self', async () => {
     const ctx = await buildApp();
     const { user: alice, token: aliceToken } = await makeAuth(ctx, 'alice');
     const { token: bobToken } = await makeAuth(ctx, 'bob');
@@ -167,14 +167,27 @@ describe('favorites', () => {
       headers: { authorization: `Bearer ${bobToken}` },
     });
 
-    const r = await ctx.app.inject({
+    // Default scope ('all'): every photo any family member favorited.
+    const all = await ctx.app.inject({
       method: 'GET',
       url: '/api/favorites',
       headers: { authorization: `Bearer ${aliceToken}` },
     });
-    const body = r.json();
-    expect(body.items).toHaveLength(1);
-    expect(body.items[0].photo.id).toBe(p1.id);
+    const allBody = all.json();
+    expect(allBody.items).toHaveLength(2);
+    const ids = allBody.items.map((i: { photo: { id: string } }) => i.photo.id);
+    expect(ids).toContain(p1.id);
+    expect(ids).toContain(p2.id);
+
+    // scope=mine: only photos the caller favorited.
+    const mine = await ctx.app.inject({
+      method: 'GET',
+      url: '/api/favorites?scope=mine',
+      headers: { authorization: `Bearer ${aliceToken}` },
+    });
+    const mineBody = mine.json();
+    expect(mineBody.items).toHaveLength(1);
+    expect(mineBody.items[0].photo.id).toBe(p1.id);
 
     await ctx.cleanup();
   });

@@ -77,8 +77,8 @@ Page({
         },
       });
       if (res.statusCode !== 200) {
-        const body = res.data as { error?: { code?: string; message?: string } };
-        const code2 = body.error?.code ?? '';
+        const body = res.data as { code?: string; message?: string };
+        const code2 = body.code ?? '';
         const message =
           code2 === 'INVALID_INVITE' ? '邀请码无效'
           : code2 === 'INVITE_EXPIRED' ? '邀请码已过期'
@@ -86,7 +86,7 @@ Page({
           : code2 === 'USERNAME_TAKEN' ? '登录名已被占用'
           : code2 === 'WECHAT_ALREADY_BOUND' ? '此微信已绑定其他账号'
           : code2 === 'BIND_TOKEN_INVALID' ? '请稍后重试'
-          : body.error?.message ?? '注册失败';
+          : body.message ?? '注册失败';
         this.setData({ loading: false, error: message });
         return;
       }
