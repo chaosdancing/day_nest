@@ -15,11 +15,11 @@
   display: inline-flex;
   align-items: center;
   gap: 8rpx;
-  padding: 6rpx 16rpx;
+  padding: 8rpx 20rpx;
   background: var(--ink-primary);
   color: var(--paper-cream);
   border-radius: 999rpx;
-  font-size: 24rpx;
+  font-size: 28rpx;
 }
 .chip__x {
   font-size: 28rpx;
@@ -37,8 +37,8 @@
 }
 .suggest { display: flex; flex-wrap: wrap; gap: 10rpx; padding: 0 4rpx; }
 .suggest__chip {
-  font-size: 22rpx;
-  padding: 4rpx 14rpx;
+  font-size: 26rpx;
+  padding: 8rpx 18rpx;
   background: var(--paper-aged);
   color: var(--ink-primary);
   border-radius: 999rpx;

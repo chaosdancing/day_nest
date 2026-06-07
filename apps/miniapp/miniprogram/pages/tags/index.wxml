@@ -1,4 +1,4 @@
-<view class="page">
+<view class="page {{theme}} {{slide}}">
   <page-hero
     emoji="🏷️"
     title="标签"
@@ -16,81 +16,77 @@
     <view class="empty__sub">上传集合时给它贴上 #标签，回头从这里翻看。</view>
   </view>
 
-  <scroll-view class="scroll" scroll-y="true">
-    <view wx:if="{{popular.length > 0}}" class="block">
-      <view class="block__title mono-label">POPULAR</view>
-      <view class="cloud">
-        <tape-chip
+  <scroll-view wx:else class="scroll" scroll-y="true">
+    <view wx:if="{{popular.length > 0}}" class="section {{enterAnim ? 'section--enter' : ''}}">
+      <view class="section__head">
+        <text class="section__title">常用标签</text>
+        <text class="section__meta">POPULAR</text>
+      </view>
+      <scroll-view class="hot-rail" scroll-x="true" enhanced="true" show-scrollbar="false">
+        <view
           wx:for="{{popular}}"
           wx:key="id"
-          label="{{item.displayName}}"
-          count="{{((item.photoCount || 0) + (item.collectionCount || 0)) + ''}}"
-          tiltSeed="{{item.id}}"
+          class="hot-card"
           bind:tap="onTagTap"
           data-name="{{item.name}}"
           data-scope="{{(item.collectionCount || 0) === 0 && (item.photoCount || 0) > 0 ? 'photo' : 'all'}}"
-        />
+        >
+          <view class="hot-card__tag">
+            <text class="hot-card__star">⭐</text>
+            <text class="hot-card__rank">TOP {{index + 1}}</text>
+          </view>
+          <view class="hot-card__name"><text class="hot-card__hash">#</text>{{item.displayName}}</view>
+          <view class="hot-card__count">
+            <text class="hot-card__count-num">{{(item.photoCount || 0) + (item.collectionCount || 0)}}</text> 次收录
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <view wx:if="{{collectionTags.length > 0}}" class="section {{enterAnim ? 'section--enter' : ''}}">
+      <view class="section__head">
+        <text class="section__title">集合标签</text>
+        <text class="section__meta">{{collectionTags.length}} TAGS</text>
       </view>
-    </view>
-
-    <view class="toolbar">
-      <view
-        class="seg {{view === 'flat' ? 'seg--on' : ''}}"
-        data-view="flat"
-        bindtap="onSwitchView"
-      >平铺</view>
-      <view
-        class="seg {{view === 'categorized' ? 'seg--on' : ''}}"
-        data-view="categorized"
-        bindtap="onSwitchView"
-      >分类</view>
-    </view>
-
-    <view wx:if="{{view === 'flat'}}" class="block">
-      <view class="cloud">
-        <tape-chip
-          wx:for="{{tags}}"
+      <view class="tag-grid">
+        <view
+          wx:for="{{collectionTags}}"
           wx:key="id"
-          label="{{item.displayName}}"
-          tiltSeed="{{item.id}}"
+          class="tag-card"
           bind:tap="onTagTap"
           data-name="{{item.name}}"
-          data-scope="{{(item.collectionCount || 0) === 0 && (item.photoCount || 0) > 0 ? 'photo' : 'all'}}"
-        />
+          data-scope="collection"
+        >
+          <view class="tag-card__name"><text class="tag-card__hash">#</text>{{item.displayName}}</view>
+          <view class="tag-card__count">
+            <text class="tag-card__count-num">{{item.collectionCount || 0}}</text>
+            <text class="tag-card__count-unit">个集合</text>
+          </view>
+        </view>
       </view>
     </view>
 
-    <block wx:if="{{view === 'categorized'}}">
-      <view class="block">
-        <view class="block__title mono-label">集合维度</view>
-        <view class="cloud">
-          <tape-chip
-            wx:for="{{collectionTags}}"
-            wx:key="id"
-            label="{{item.displayName}}"
-            count="{{(item.collectionCount || 0) + ''}}"
-            tiltSeed="{{item.id}}"
-            bind:tap="onTagTap"
-            data-name="{{item.name}}"
-            data-scope="collection"
-          />
+    <view wx:if="{{photoOnlyTags.length > 0}}" class="section {{enterAnim ? 'section--enter' : ''}}">
+      <view class="section__head">
+        <text class="section__title">照片标签</text>
+        <text class="section__meta">{{photoOnlyTags.length}} TAGS</text>
+      </view>
+      <view class="tag-grid">
+        <view
+          wx:for="{{photoOnlyTags}}"
+          wx:key="id"
+          class="tag-card"
+          bind:tap="onTagTap"
+          data-name="{{item.name}}"
+          data-scope="photo"
+        >
+          <view class="tag-card__name"><text class="tag-card__hash">#</text>{{item.displayName}}</view>
+          <view class="tag-card__count">
+            <text class="tag-card__count-num">{{item.photoCount || 0}}</text>
+            <text class="tag-card__count-unit">张照片</text>
+          </view>
         </view>
       </view>
-      <view class="block">
-        <view class="block__title mono-label">照片维度</view>
-        <view class="cloud">
-          <tape-chip
-            wx:for="{{photoOnlyTags}}"
-            wx:key="id"
-            label="{{item.displayName}}"
-            count="{{(item.photoCount || 0) + ''}}"
-            tiltSeed="{{item.id}}"
-            bind:tap="onTagTap"
-            data-name="{{item.name}}"
-            data-scope="photo"
-          />
-        </view>
-      </view>
-    </block>
+    </view>
   </scroll-view>
 </view>

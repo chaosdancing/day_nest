@@ -17,8 +17,12 @@
      stacked-polaroid keeps the bigger band because IT shows the caption. */
   padding: 14rpx 14rpx 18rpx 14rpx;
   transform-origin: center center;
-  transition: transform 220ms ease;
+  transition: transform 220ms ease, opacity 160ms ease;
 }
+/* Press feedback. The card carries an inline `transform: rotate()` for its
+   scrapbook tilt, so we dim on press instead of scaling (an inline transform
+   would win over a stylesheet scale). */
+.tile:active { opacity: .82; }
 
 /* When a caption IS provided (Favorites passes the collection title),
    render it INLINE under the photo instead of absolute-positioned. Avoids

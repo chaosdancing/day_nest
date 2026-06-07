@@ -79,18 +79,35 @@ export type WechatErrorCode =
   | 'WECHAT_DISABLED';
 
 // ---- POST /api/auth/wechat-register ----
+//
+// WeChat one-tap onboarding creates a brand-new account directly (no binding to
+// an existing username, no password — the account authenticates via WeChat).
+// The invite token is OPTIONAL: omit it to register a view-only account; supply
+// a valid one to register with upload rights.
 
 export const WechatRegisterInput = z.object({
   bindToken: z.string().min(1),
-  inviteToken: z.string().min(8),
+  inviteToken: z.string().min(8).optional(),
   username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_]+$/),
   displayName: z.string().min(1).max(64),
-  password: z.string().min(8).max(128),
 });
 export type WechatRegisterInput = z.infer<typeof WechatRegisterInput>;
 
 export const WechatRegisterResponse = WechatBindResponse;
 export type WechatRegisterResponse = z.infer<typeof WechatRegisterResponse>;
+
+// ---- POST /api/auth/redeem-invite ----
+// Upgrade an existing (view-only) account to an uploader by redeeming an invite.
+
+export const RedeemInviteInput = z.object({
+  inviteToken: z.string().min(8),
+});
+export type RedeemInviteInput = z.infer<typeof RedeemInviteInput>;
+
+export const RedeemInviteResponse = z.object({
+  user: UserDTO,
+});
+export type RedeemInviteResponse = z.infer<typeof RedeemInviteResponse>;
 
 // ---- POST /api/auth/refresh-token ----
 

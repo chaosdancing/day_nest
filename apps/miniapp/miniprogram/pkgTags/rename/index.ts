@@ -1,8 +1,10 @@
 import type { TagDTO } from '@daynest/shared';
 import { tagsService } from '../../lib/services/tags.js';
 import { normalizeTagName } from '../../lib/tagName.js';
+import { applyTheme, disposeTheme } from '../../lib/theme.js';
 
 interface PageData {
+  theme: '' | 'dark';
   tagName: string;
   originalDisplay: string;
   originalNormalized: string;
@@ -16,6 +18,7 @@ interface PageData {
 
 Page({
   data: {
+    theme: '',
     tagName: '',
     originalDisplay: '',
     originalNormalized: '',
@@ -28,6 +31,7 @@ Page({
   } as PageData,
 
   async onLoad(query: Record<string, string | undefined>) {
+    applyTheme(this);
     const tag = decodeURIComponent(query.tag ?? '');
     const display = decodeURIComponent(query.display ?? tag);
     if (!tag) {
@@ -50,6 +54,10 @@ Page({
     } catch {
       // Non-fatal — the api still enforces the merge on the server.
     }
+  },
+
+  onUnload() {
+    disposeTheme(this);
   },
 
   onInput(e: WechatMiniprogram.Input) {

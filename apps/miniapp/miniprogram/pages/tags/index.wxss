@@ -1,64 +1,205 @@
 .page {
   background: var(--paper-cream);
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
+/* ───────────────────────── Empty / loading ───────────────────────── */
 .empty {
-  padding: 80rpx 48rpx;
+  padding: 96rpx 56rpx;
   text-align: center;
 }
 .empty__emoji {
   display: inline-block;
-  font-size: 80rpx;
+  font-size: 88rpx;
   line-height: 1;
+  animation: tags-pulse 2.6s ease-in-out infinite;
+}
+@keyframes tags-pulse {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6rpx); }
 }
 .empty__title {
-  margin-top: 16rpx;
+  margin-top: 20rpx;
   font-size: 56rpx;
-  line-height: 1.1;
+  line-height: 1.15;
 }
 .empty__sub {
   margin-top: 24rpx;
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: var(--ink-secondary);
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
 .scroll {
-  padding: 16rpx 24rpx 200rpx;
-}
-.block {
-  margin-bottom: 40rpx;
-}
-.block__title {
-  margin-bottom: 16rpx;
-  font-size: 22rpx;
-  letter-spacing: 6rpx;
-  color: var(--ink-secondary);
-  text-transform: uppercase;
-}
-.cloud {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16rpx 14rpx;
-  padding: 8rpx 0;
+  padding: 8rpx 28rpx 220rpx;
 }
 
-.toolbar {
-  display: flex;
-  gap: 12rpx;
-  margin-bottom: 24rpx;
+/* ───────────────────────── Section scaffold ───────────────────────── */
+.section {
+  margin-bottom: 52rpx;
 }
-.seg {
-  padding: 10rpx 24rpx;
-  border: 1px solid rgba(168, 138, 92, .35);
+/* Gentle settle-in — first load only (via `section--enter`) so returning to
+   the tab doesn't re-animate. */
+.section--enter {
+  opacity: 0;
+  animation: tags-section-in 320ms ease-out both;
+}
+.section--enter:nth-of-type(2) { animation-delay: 70ms; }
+.section--enter:nth-of-type(3) { animation-delay: 140ms; }
+@keyframes tags-section-in {
+  from { opacity: 0; transform: translateY(24rpx); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.section__head {
+  display: flex;
+  align-items: baseline;
+  gap: 16rpx;
+  margin: 0 6rpx 24rpx;
+}
+.section__title {
+  font-family: var(--font-hand);
+  font-size: 44rpx;
+  line-height: 1.1;
+  color: var(--kraft-dark);
+  letter-spacing: 1rpx;
+}
+.section__meta {
+  font-family: var(--font-mono);
+  font-size: 22rpx;
+  letter-spacing: 4rpx;
+  color: var(--ink-secondary);
+  opacity: .7;
+  text-transform: uppercase;
+}
+
+/* ───────────────────────── Hot rail (popular) ─────────────────────────
+   Horizontal highlight strip so the most-used tags read as a feature rail,
+   distinct from the grouped grids below. */
+.hot-rail {
+  white-space: nowrap;
+  /* Negative side gutters let cards bleed to the screen edge while keeping
+     the first/last card aligned with the section padding. */
+  margin: 0 -28rpx;
+  padding: 6rpx 28rpx 14rpx;
+}
+.hot-card {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: space-between;
+  vertical-align: top;
+  width: 248rpx;
+  min-height: 184rpx;
+  box-sizing: border-box;
+  margin-right: 20rpx;
+  padding: 26rpx 28rpx;
+  border-radius: 28rpx;
+  background: var(--paper-aged);
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,.05), 0 10rpx 26rpx rgba(0,0,0,.07);
+  transition: transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+}
+.hot-card:last-child { margin-right: 0; }
+.hot-card:active {
+  transform: translateY(2rpx) scale(.97);
+  opacity: .92;
+  box-shadow: 0 1rpx 4rpx rgba(0,0,0,.06);
+}
+.hot-card__tag {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 8rpx;
+  padding: 6rpx 16rpx;
   border-radius: 999rpx;
+  background: rgba(168, 138, 92, .22);
+}
+.hot-card__star { font-size: 24rpx; line-height: 1; }
+.hot-card__rank {
+  font-family: var(--font-mono);
+  font-size: 22rpx;
+  letter-spacing: 2rpx;
+  color: var(--kraft-dark);
+}
+.hot-card__name {
+  margin-top: 20rpx;
+  font-family: var(--font-hand);
+  font-size: 46rpx;
+  line-height: 1.1;
+  color: var(--ink-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hot-card__hash {
+  color: var(--kraft-dark);
+  opacity: .8;
+  margin-right: 2rpx;
+}
+.hot-card__count {
+  margin-top: 14rpx;
+  font-family: var(--font-mono);
   font-size: 24rpx;
   color: var(--ink-secondary);
-  background: rgba(255, 252, 245, .7);
 }
-.seg--on {
-  background: var(--ink-primary);
-  color: var(--paper-cream);
-  border-color: var(--ink-primary);
+.hot-card__count-num {
+  color: var(--ink-primary);
+  font-size: 30rpx;
+}
+
+/* ───────────────────────── Tag grid (2 columns) ─────────────────────────
+   `space-between` + a half-width minus half-gutter card guarantees the row can
+   never exceed 100% (no reliance on flex `gap`, which renders inconsistently
+   across WeChat base libraries and previously pushed cards past the edge). */
+.tag-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+.tag-card {
+  width: calc(50% - 11rpx);
+  margin-bottom: 22rpx;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  padding: 30rpx 28rpx;
+  border-radius: 26rpx;
+  background: var(--paper-aged);
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,.05), 0 8rpx 22rpx rgba(0,0,0,.06);
+  transition: transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+}
+.tag-card:active {
+  transform: translateY(2rpx) scale(.98);
+  opacity: .92;
+  box-shadow: 0 1rpx 4rpx rgba(0,0,0,.06);
+}
+.tag-card__name {
+  font-family: var(--font-hand);
+  font-size: 38rpx;
+  line-height: 1.2;
+  color: var(--ink-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tag-card__hash {
+  color: var(--kraft-dark);
+  opacity: .8;
+  margin-right: 2rpx;
+}
+.tag-card__count {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+}
+.tag-card__count-num {
+  font-family: var(--font-mono);
+  font-size: 32rpx;
+  line-height: 1;
+  color: var(--ink-primary);
+}
+.tag-card__count-unit {
+  font-size: 24rpx;
+  color: var(--ink-secondary);
 }

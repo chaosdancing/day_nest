@@ -1,8 +1,12 @@
 import {
   buildPresetRange,
+  formatDateInput,
   type DatePreset,
   type DateRange,
 } from '../../lib/dateRange.js';
+
+/** Default custom-range span when the user first opens 自定义: trailing 90 days. */
+const CUSTOM_DEFAULT_SPAN_DAYS = 89;
 
 /**
  * Filter bar for the timeline. Mirrors apps/web/src/pages/TimelinePage.tsx
@@ -16,7 +20,7 @@ import {
 const PRESETS: Array<{ key: DatePreset; label: string; emoji: string }> = [
   { key: 'all', label: '全部', emoji: '🌐' },
   { key: 'year', label: '今年', emoji: '🌞' },
-  { key: 'quarter', label: '近 90 天', emoji: '⏳' },
+  { key: 'month', label: '当月', emoji: '🗓️' },
   { key: 'custom', label: '自定义', emoji: '✏️' },
 ];
 
@@ -32,8 +36,19 @@ Component({
     onPresetTap(e: WechatMiniprogram.TouchEvent) {
       const key = e.currentTarget.dataset.key as DatePreset;
       if (key === 'custom') {
-        this.setData({ active: 'custom' });
-        this.emitCustom();
+        // First time into 自定义 with no range chosen yet: seed the pickers
+        // with a sensible trailing-90-day window so the user sees (and the
+        // parent receives) a concrete range instead of an empty one.
+        let { customFrom, customTo } = this.data;
+        if (!customFrom && !customTo) {
+          const today = new Date();
+          const from = new Date(today);
+          from.setDate(from.getDate() - CUSTOM_DEFAULT_SPAN_DAYS);
+          customFrom = formatDateInput(from);
+          customTo = formatDateInput(today);
+        }
+        this.setData({ active: 'custom', customFrom, customTo });
+        this.emit({ dateFrom: customFrom || undefined, dateTo: customTo || undefined });
         return;
       }
       const range = buildPresetRange(key);

@@ -15,8 +15,11 @@
   color: var(--ink-primary);
   background: rgba(210, 176, 59, .22);
   box-shadow: 0 1px 2px rgba(0,0,0,.08);
-  transition: transform 200ms ease;
+  transition: transform 200ms ease, opacity 160ms ease;
 }
+/* Press feedback — dim rather than scale, since the inline `transform:
+   rotate()` tilt would override a stylesheet scale. */
+.chip:active { opacity: .7; }
 
 .chip--active {
   background: rgba(210, 59, 59, .55);

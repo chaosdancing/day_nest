@@ -21,16 +21,24 @@ describe('dateRange', () => {
     expect(range.dateTo).toBe('2026-12-31');
   });
 
-  it('preset "quarter" spans the trailing 90 days inclusive', () => {
-    const ref = new Date('2026-05-31T00:00:00Z');
-    const range = buildPresetRange('quarter', ref);
-    expect(range.dateTo).toBe('2026-05-31');
-    // 89 days back from 2026-05-31 → 2026-03-03 (inclusive 90-day window).
-    expect(range.dateFrom).toBe('2026-03-03');
+  it('preset "month" spans the local calendar month of the reference date', () => {
+    // Mid-month noon-UTC reference so local and UTC agree on the month
+    // regardless of the test machine's timezone (same reasoning as "year").
+    const ref = new Date('2026-08-15T12:00:00Z');
+    const range = buildPresetRange('month', ref);
+    expect(range.dateFrom).toBe('2026-08-01');
+    expect(range.dateTo).toBe('2026-08-31');
+  });
+
+  it('preset "month" handles a 30-day month', () => {
+    const ref = new Date('2026-04-10T12:00:00Z');
+    const range = buildPresetRange('month', ref);
+    expect(range.dateFrom).toBe('2026-04-01');
+    expect(range.dateTo).toBe('2026-04-30');
   });
 
   it('exports DatePreset type accepting the documented values', () => {
-    const allowed: DatePreset[] = ['all', 'year', 'quarter', 'custom'];
+    const allowed: DatePreset[] = ['all', 'year', 'month', 'custom'];
     expect(allowed.length).toBe(4);
   });
 });

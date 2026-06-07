@@ -2,6 +2,7 @@ import type { FavoriteEntryDTO } from '@daynest/shared';
 import { apiClient } from './_client.js';
 import { ensureOk, qs } from './_http.js';
 import { resolveApiBase } from '../config.js';
+import { bumpContentVersion } from '../contentVersion.js';
 
 export interface ListFavoritesParams {
   limit?: number;
@@ -25,6 +26,7 @@ export const favoritesService = {
     const url = `${resolveApiBase()}/api/photos/${encodeURIComponent(photoId)}/favorite`;
     const res = await apiClient.request<unknown>({ url, method: 'POST', data: {} });
     ensureOk('POST', url, res.statusCode, res.data);
+    bumpContentVersion();
   },
 
   async remove(photoId: string): Promise<void> {
@@ -34,5 +36,6 @@ export const favoritesService = {
     // handler runs, and some clients/proxies attach that header implicitly.
     const res = await apiClient.request<unknown>({ url, method: 'DELETE', data: {} });
     ensureOk('DELETE', url, res.statusCode, res.data);
+    bumpContentVersion();
   },
 };

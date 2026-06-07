@@ -8,6 +8,7 @@ import { readExifFromPath } from '../../lib/exif.js';
 import { createUploadQueue } from '../../lib/uploadQueue.js';
 import { debounce, type DebouncedFn } from '../../lib/debounce.js';
 import { stableAngle } from '../../lib/hash.js';
+import { applyTheme, disposeTheme } from '../../lib/theme.js';
 
 let unsubscribe: (() => void) | null = null;
 let titleSearch: DebouncedFn<[string]> | null = null;
@@ -60,6 +61,7 @@ function splitColumns(photos: DraftPhotoView[]): { left: DraftPhotoView[]; right
 }
 
 interface PageData {
+  theme: '' | 'dark';
   photos: DraftPhoto[];
   leftPhotos: DraftPhotoView[];
   rightPhotos: DraftPhotoView[];
@@ -69,6 +71,10 @@ interface PageData {
   tags: string[];
   occurredOn: string;
   tagSuggestions: string[];
+  // All distinct existing locations (the pool) + the fuzzy-matched subset for
+  // the current location input.
+  locationPool: string[];
+  locationMatches: string[];
   mergeCandidateId: string;
   mergeCandidateTitle: string;
   mergeIntoId: string;
@@ -80,6 +86,7 @@ interface PageData {
 
 Page({
   data: {
+    theme: '',
     photos: [],
     leftPhotos: [],
     rightPhotos: [],
@@ -89,6 +96,8 @@ Page({
     tags: [],
     occurredOn: '',
     tagSuggestions: [],
+    locationPool: [],
+    locationMatches: [],
     mergeCandidateId: '',
     mergeCandidateTitle: '',
     mergeIntoId: '',
@@ -99,15 +108,18 @@ Page({
   } as PageData,
 
   onLoad() {
+    applyTheme(this);
     compressedPaths.clear();
     uploadStore.reset();
     this.syncFromStore();
     unsubscribe = uploadStore.subscribe(() => this.syncFromStore());
     titleSearch = debounce<[string]>(this.lookupTitle.bind(this), 400);
     void this.loadTagSuggestions();
+    void this.loadLocationSuggestions();
   },
 
   onUnload() {
+    disposeTheme(this);
     compressedPaths.clear();
     unsubscribe?.();
     unsubscribe = null;
@@ -143,6 +155,44 @@ Page({
     } catch {
       // Suggestions are a polish — silently fall back to none.
     }
+  },
+
+  async loadLocationSuggestions() {
+    try {
+      const rows = await collectionsService.locations();
+      this.setData({ locationPool: rows.map((r) => r.location) });
+      // Re-derive matches in case the user already typed before this resolved.
+      this.refreshLocationMatches(this.data.location);
+    } catch {
+      // Suggestions are a polish — silently fall back to none.
+    }
+  },
+
+  /**
+   * Fuzzy-match the typed location against existing ones: case-insensitive
+   * substring match, the exact-equal value excluded (nothing to suggest), most
+   * frequent first (the pool is already frequency-ordered). Capped to 6.
+   */
+  refreshLocationMatches(value: string) {
+    const q = value.trim().toLowerCase();
+    if (!q) {
+      if (this.data.locationMatches.length) this.setData({ locationMatches: [] });
+      return;
+    }
+    const matches = this.data.locationPool
+      .filter((loc) => {
+        const l = loc.toLowerCase();
+        return l !== q && l.includes(q);
+      })
+      .slice(0, 6);
+    this.setData({ locationMatches: matches });
+  },
+
+  onLocationPick(e: WechatMiniprogram.TouchEvent) {
+    const loc = e.currentTarget.dataset.loc as string;
+    if (!loc) return;
+    uploadStore.setMeta({ location: loc });
+    this.setData({ locationMatches: [] });
   },
 
   async onPickMore() {
@@ -242,7 +292,9 @@ Page({
   },
 
   onLocationInput(e: WechatMiniprogram.Input) {
-    uploadStore.setMeta({ location: e.detail.value });
+    const v = e.detail.value;
+    uploadStore.setMeta({ location: v });
+    this.refreshLocationMatches(v);
   },
 
   onDescriptionInput(e: WechatMiniprogram.Input) {

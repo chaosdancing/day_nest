@@ -5,15 +5,18 @@ import { AppError } from '../lib/errors.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
-    user: { id: string; username: string };
+    user: { id: string; username: string; canUpload: boolean };
   }
   interface FastifyInstance {
     requireUser: (req: FastifyRequest) => Promise<void>;
+    // Authenticates AND requires upload rights (posting photos). View-only
+    // WeChat accounts (no invite redeemed) are rejected with 403.
+    requireUploader: (req: FastifyRequest) => Promise<void>;
   }
 }
 
 export const authPlugin = fp(async (app: FastifyInstance) => {
-  app.decorate('requireUser', async function (req: FastifyRequest) {
+  async function authenticate(req: FastifyRequest) {
     const header = req.headers.authorization;
     if (!header?.startsWith('Bearer ')) {
       throw new AppError(401, 'UNAUTHENTICATED', 'missing access token');
@@ -29,6 +32,19 @@ export const authPlugin = fp(async (app: FastifyInstance) => {
       where: { id: claims.sub },
     });
     if (!user) throw new AppError(401, 'USER_GONE', 'user no longer exists');
-    req.user = { id: user.id, username: user.username };
+    req.user = { id: user.id, username: user.username, canUpload: user.canUpload };
+  }
+
+  app.decorate('requireUser', authenticate);
+
+  app.decorate('requireUploader', async function (req: FastifyRequest) {
+    await authenticate(req);
+    if (!req.user.canUpload) {
+      throw new AppError(
+        403,
+        'UPLOAD_NOT_ALLOWED',
+        'this account needs an invite to post photos',
+      );
+    }
   });
 });

@@ -1,4 +1,4 @@
-<view class="page">
+<view class="page {{theme}} {{slide}}">
   <page-hero
     emoji="📖"
     title="时光轴"
@@ -6,20 +6,41 @@
     motion="wobble"
   />
 
-  <timeline-filters bind:change="onFilterChange" />
+  <view class="controls {{filtersOpen ? 'controls--open' : ''}}">
+    <view class="controls__bar">
+      <view class="controls__search {{searchInput ? 'controls__search--filled' : ''}}">
+        <text class="controls__search-icon">🔎</text>
+        <input
+          class="controls__search-input"
+          placeholder="搜索集合名 (周末 / 生日 …)"
+          placeholder-class="controls__search-placeholder"
+          value="{{searchInput}}"
+          confirm-type="search"
+          bindfocus="onSearchFocus"
+          bindinput="onSearchInput"
+          bindconfirm="onSearchConfirm"
+        />
+        <view wx:if="{{searchInput}}" class="controls__search-clear" catchtap="onSearchClear">×</view>
+      </view>
+      <view
+        class="controls__toggle {{hasActiveFilters ? 'controls__toggle--active' : ''}}"
+        bindtap="onToggleFilters"
+      >
+        <text class="controls__toggle-label">筛选</text>
+        <text class="controls__caret">▾</text>
+      </view>
+    </view>
 
-  <view class="search {{searchInput ? 'search--filled' : ''}}">
-    <text class="search__icon">🔎</text>
-    <input
-      class="search__input"
-      placeholder="按集合名搜索 (周末 / 生日 …)"
-      placeholder-class="search__placeholder"
-      value="{{searchInput}}"
-      bindinput="onSearchInput"
-      confirm-type="search"
-      bindconfirm="onSearchConfirm"
-    />
-    <view wx:if="{{searchInput}}" class="search__clear" catchtap="onSearchClear">×</view>
+    <view wx:if="{{(summaryDate || filter.location) && !filtersOpen}}" class="controls__summary">
+      <view wx:if="{{summaryDate}}" class="sumchip">📅 {{summaryDate}}</view>
+      <view wx:if="{{filter.location}}" class="sumchip">📍 {{filter.location}}</view>
+    </view>
+
+    <view class="controls__panel">
+      <view class="controls__panel-inner">
+        <timeline-filters bind:change="onFilterChange" />
+      </view>
+    </view>
   </view>
 
   <view wx:if="{{loading && items.length === 0}}" class="empty">
@@ -43,8 +64,8 @@
     <view
       wx:for="{{items}}"
       wx:key="id"
-      class="row"
-      style="animation-delay: {{index * 60}}ms;"
+      class="row {{enterAnim ? 'row--enter' : ''}}"
+      style="animation-delay: {{enterAnim ? index * 60 : 0}}ms;"
       data-id="{{item.id}}"
       bindtap="onCardTap"
     >

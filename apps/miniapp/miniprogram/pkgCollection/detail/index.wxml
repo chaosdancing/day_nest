@@ -1,4 +1,4 @@
-<view class="page">
+<view class="page {{theme}}">
   <view wx:if="{{loading}}" class="empty">
     <text class="empty__emoji">📔</text>
     <view class="empty__title scribble">正在翻这本相册...</view>

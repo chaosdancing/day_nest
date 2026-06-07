@@ -1,49 +1,67 @@
-import type { UserDTO, ThemeMode } from '@daynest/shared';
+import type { UserDTO } from '@daynest/shared';
 import { authStore } from '../../stores/authStore.js';
-import { themeStore } from '../../stores/themeStore.js';
 import { createApiClient } from '../../lib/api.js';
 import { endpoints } from '../../lib/endpoints.js';
+import { applyTheme, disposeTheme } from '../../lib/theme.js';
+import { consumeTabSlide } from '../../lib/tabTransition.js';
 
 const api = createApiClient({
   tokens: authStore,
   refreshUrl: endpoints.refreshToken(),
 });
 
-interface ThemeOption {
-  key: ThemeMode;
-  label: string;
-  emoji: string;
-}
-
-const THEME_OPTIONS: ThemeOption[] = [
-  { key: 'system', label: '跟随系统', emoji: '⚙️' },
-  { key: 'light', label: '日间', emoji: '🌞' },
-  { key: 'dark', label: '夜间', emoji: '🌙' },
-];
+// Gate the card entrance animation to the first show; clear the slide class
+// after the one-shot tab transition.
+let animatedOnce = false;
+let slideTimer: ReturnType<typeof setTimeout> | null = null;
 
 Page({
   data: {
+    theme: '' as '' | 'dark',
     user: null as UserDTO | null,
-    themeOptions: THEME_OPTIONS,
-    themeMode: 'system' as ThemeMode,
     editing: false,
     draftDisplay: '',
     saving: false,
     notice: '',
     noticeKind: '' as 'ok' | 'err' | '',
+    slide: '' as '' | 'slide-in-right' | 'slide-in-left',
+    enterAnim: true,
   },
 
   onShow() {
+    applyTheme(this);
     const tb = typeof this.getTabBar === 'function' ? this.getTabBar() : null;
     if (tb) tb.setData({ active: 3 });
+    this.playTabSlide();
 
+    const enter = !animatedOnce;
+    animatedOnce = true;
     const user = authStore.getState().user;
-    const themeMode = themeStore.getState().mode;
     this.setData({
       user,
-      themeMode,
       draftDisplay: user?.displayName ?? '',
+      enterAnim: enter,
     });
+  },
+
+  onUnload() {
+    disposeTheme(this);
+    animatedOnce = false;
+    if (slideTimer !== null) {
+      clearTimeout(slideTimer);
+      slideTimer = null;
+    }
+  },
+
+  playTabSlide() {
+    const slide = consumeTabSlide();
+    if (!slide) return;
+    if (slideTimer !== null) clearTimeout(slideTimer);
+    this.setData({ slide });
+    slideTimer = setTimeout(() => {
+      slideTimer = null;
+      this.setData({ slide: '' });
+    }, 280);
   },
 
   /** Toggle inline edit on displayName. Tapping the value again commits. */
@@ -89,12 +107,6 @@ Page({
     } finally {
       this.setData({ saving: false });
     }
-  },
-
-  onPickTheme(e: WechatMiniprogram.TouchEvent) {
-    const mode = e.currentTarget.dataset.mode as ThemeMode;
-    themeStore.setMode(mode);
-    this.setData({ themeMode: mode });
   },
 
   onLogout() {

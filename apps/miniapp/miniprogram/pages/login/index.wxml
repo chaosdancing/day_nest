@@ -1,8 +1,8 @@
-<view class="page">
+<view class="page {{theme}}">
   <view class="hero">
     <view class="hero__brand mono-label">DAYNEST · 慢慢记</view>
     <view class="hero__title scribble">收纳烟火日常</view>
-    <view class="hero__title scribble">酿造专属回忆</view>
+    <view class="hero__title scribble">酿造<text class="hero__hl"><text class="hero__hl-bg"></text><text class="hero__hl-fg">专属回忆</text></text></view>
   </view>
 
   <button class="primary" disabled="{{loading}}" bindtap="onWechatLogin">

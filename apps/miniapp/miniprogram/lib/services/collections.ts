@@ -8,6 +8,7 @@ import type {
 import { apiClient } from './_client.js';
 import { ensureOk, qs } from './_http.js';
 import { resolveApiBase } from '../config.js';
+import { bumpContentVersion } from '../contentVersion.js';
 
 export interface ListCollectionsParams {
   limit?: number;
@@ -61,6 +62,7 @@ export const collectionsService = {
       data: body,
     });
     ensureOk('POST', url, res.statusCode, res.data);
+    bumpContentVersion();
     return res.data;
   },
 
@@ -72,6 +74,7 @@ export const collectionsService = {
       data: body,
     });
     ensureOk('POST', url, res.statusCode, res.data);
+    bumpContentVersion();
     return res.data;
   },
 
@@ -83,7 +86,18 @@ export const collectionsService = {
       data: body,
     });
     ensureOk('PATCH', url, res.statusCode, res.data);
+    bumpContentVersion();
     return res.data;
+  },
+
+  async locations(): Promise<Array<{ location: string; count: number }>> {
+    const url = `${resolveApiBase()}/api/collections/locations`;
+    const res = await apiClient.request<{ locations: Array<{ location: string; count: number }> }>({
+      url,
+      method: 'GET',
+    });
+    ensureOk('GET', url, res.statusCode, res.data);
+    return res.data.locations;
   },
 
   async byTitle(title: string): Promise<ByTitleResponse> {

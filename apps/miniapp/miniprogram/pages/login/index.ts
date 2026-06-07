@@ -1,13 +1,15 @@
+import type { UserDTO } from '@daynest/shared';
 import { wxLogin, wxShowToast } from '../../lib/wxBridge.js';
 import { createApiClient } from '../../lib/api.js';
 import { endpoints } from '../../lib/endpoints.js';
 import { authStore } from '../../stores/authStore.js';
+import { applyTheme, disposeTheme } from '../../lib/theme.js';
 
 const api = createApiClient({ tokens: authStore, refreshUrl: endpoints.refreshToken() });
 
 interface LoginBoundResponse {
   status: 'bound';
-  user: { id: string; username: string; displayName: string; avatarKey: string | null; hasWechatBound: boolean };
+  user: UserDTO;
   accessToken: string;
   refreshToken: string;
 }
@@ -18,9 +20,10 @@ interface LoginUnboundResponse {
 type LoginResponse = LoginBoundResponse | LoginUnboundResponse;
 
 Page({
-  data: { loading: false, error: '', showDevLogin: false },
+  data: { theme: '' as '' | 'dark', loading: false, error: '', showDevLogin: false },
 
   onLoad() {
+    applyTheme(this);
     // Show the dev-login entry whenever we're NOT in a release build. In
     // DevTools / touristappid `envVersion` may be undefined, so we treat
     // anything other than the literal string 'release' as non-prod.
@@ -41,6 +44,10 @@ Page({
     if (s.hydrated && s.accessToken && s.user) {
       wx.switchTab({ url: '/pages/timeline/index' });
     }
+  },
+
+  onUnload() {
+    disposeTheme(this);
   },
 
   async onWechatLogin() {

@@ -3,6 +3,7 @@ import { collectionsService } from '../../lib/services/collections.js';
 import { favoritesService } from '../../lib/services/favorites.js';
 import { tagsService } from '../../lib/services/tags.js';
 import { stableAngle, stableInt } from '../../lib/hash.js';
+import { applyTheme, disposeTheme } from '../../lib/theme.js';
 
 type PhotoView = CollectionDetailDTO['photos'][number] & {
   /** Precomputed natural-aspect frame style for photo-tile. */
@@ -68,6 +69,7 @@ function splitColumns(photos: PhotoView[]): { left: PhotoView[]; right: PhotoVie
 
 Page({
   data: {
+    theme: '' as '' | 'dark',
     collection: null as CollectionDetailDTO | null,
     leftPhotos: [] as PhotoView[],
     rightPhotos: [] as PhotoView[],
@@ -88,6 +90,7 @@ Page({
   },
 
   onLoad(query: Record<string, string | undefined>) {
+    applyTheme(this);
     const id = decodeURIComponent(query.id ?? '');
     const photoId = decodeURIComponent(query.photoId ?? '');
     if (!id) {
@@ -102,6 +105,10 @@ Page({
     }
     void this.fetch(id);
     void this.loadTagSuggestions();
+  },
+
+  onUnload() {
+    disposeTheme(this);
   },
 
   async loadTagSuggestions() {

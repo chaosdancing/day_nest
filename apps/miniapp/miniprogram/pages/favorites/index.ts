@@ -1,6 +1,9 @@
 import type { FavoriteEntryDTO } from '@daynest/shared';
 import { favoritesService } from '../../lib/services/favorites.js';
 import { stableInt } from '../../lib/hash.js';
+import { applyTheme, disposeTheme } from '../../lib/theme.js';
+import { consumeTabSlide } from '../../lib/tabTransition.js';
+import { getContentVersion } from '../../lib/contentVersion.js';
 
 /** Pre-rendered "♥ 妈妈 · 2026.05.24" string for the actor list under the
  *  polaroid. We pre-format on the JS side because WXML doesn't have a
@@ -34,8 +37,10 @@ function formatDot(iso: string): string {
 }
 
 function formatActor(a: FavoriteEntryDTO['favoritedBy'][number]): string {
-  // Mirrors apps/web/src/pages/FavoritesPage.tsx#formatActor — "<name> · YYYY.MM.DD".
-  return `${a.displayName || a.username} · ${formatDot(a.createdAt)}`;
+  // Surface the person's name front-and-center ("谁喜欢了这张照片"). The photo's
+  // own date already shows in the polaroid subtitle, so we drop the per-actor
+  // timestamp here to keep the name unambiguous and legible.
+  return a.displayName || a.username;
 }
 
 function photoFrameStyle(photo: FavoriteEntryDTO['photo']): string {
@@ -69,36 +74,88 @@ function toItem(e: FavoriteEntryDTO, index: number): Item {
   };
 }
 
+// See pages/timeline — skip the redundant refresh on first mount, re-pull on
+// every subsequent return to the tab.
+let hasShown = false;
+// Guards overlapping loads; gates the cell entrance animation to first load.
+let inFlight = false;
+let animatedOnce = false;
+let slideTimer: ReturnType<typeof setTimeout> | null = null;
+// Content version captured on the last successful list load — see pages/timeline.
+let lastLoadedVersion = -1;
+
 Page({
   data: {
+    theme: '' as '' | 'dark',
     items: [] as Item[],
     leftItems: [] as Item[],
     rightItems: [] as Item[],
     nextCursor: null as string | null,
     loading: false,
     loadingMore: false,
+    slide: '' as '' | 'slide-in-right' | 'slide-in-left',
+    enterAnim: true,
   },
 
   onShow() {
+    applyTheme(this);
     const tb = typeof this.getTabBar === 'function' ? this.getTabBar() : null;
     if (tb) tb.setData({ active: 1 });
-    if (this.data.items.length === 0 && !this.data.loading) void this.refresh();
+    this.playTabSlide();
+    if (!hasShown) {
+      hasShown = true;
+      if (this.data.items.length === 0 && !inFlight) void this.refresh();
+    } else if (this.data.items.length === 0 || getContentVersion() !== lastLoadedVersion) {
+      // Returning to the tab — only re-pull when content changed (e.g. a photo
+      // was favorited/unfavorited in the viewer/detail). Refresh in place (no
+      // clear, no re-animation). When unchanged we skip the network call → no
+      // thumbnail re-signing → no flicker.
+      void this.refresh(true);
+    }
+  },
+
+  onUnload() {
+    disposeTheme(this);
+    hasShown = false;
+    animatedOnce = false;
+    if (slideTimer !== null) {
+      clearTimeout(slideTimer);
+      slideTimer = null;
+    }
+  },
+
+  playTabSlide() {
+    const slide = consumeTabSlide();
+    if (!slide) return;
+    if (slideTimer !== null) clearTimeout(slideTimer);
+    this.setData({ slide });
+    slideTimer = setTimeout(() => {
+      slideTimer = null;
+      this.setData({ slide: '' });
+    }, 280);
   },
 
   onPullDownRefresh() {
-    this.refresh().finally(() => wx.stopPullDownRefresh());
+    this.refresh(true).finally(() => wx.stopPullDownRefresh());
   },
 
-  async refresh() {
-    if (this.data.loading) return;
-    this.setData({ loading: true, items: [], leftItems: [], rightItems: [], nextCursor: null });
+  async refresh(inPlace = false) {
+    if (inFlight) return;
+    inFlight = true;
+    if (!inPlace) {
+      this.setData({ loading: true, items: [], leftItems: [], rightItems: [], nextCursor: null });
+    }
+    const enter = !animatedOnce;
     try {
       const res = await favoritesService.list({ limit: 30 });
-      this.applyItems(res.items.map((entry, idx) => toItem(entry, idx)), res.nextCursor);
+      animatedOnce = true;
+      lastLoadedVersion = getContentVersion();
+      this.applyItems(res.items.map((entry, idx) => toItem(entry, idx)), res.nextCursor, enter);
     } catch {
       wx.showToast({ title: '加载失败', icon: 'none' });
     } finally {
-      this.setData({ loading: false });
+      inFlight = false;
+      if (!inPlace) this.setData({ loading: false });
     }
   },
 
@@ -111,6 +168,7 @@ Page({
       this.applyItems(
         [...this.data.items, ...res.items.map((entry, idx) => toItem(entry, base + idx))],
         res.nextCursor,
+        false,
       );
     } catch {
       wx.showToast({ title: '加载失败', icon: 'none' });
@@ -132,28 +190,39 @@ Page({
     const idx = this.data.items.findIndex((i) => i.id === photoId);
     if (idx < 0) return;
     const prev = this.data.items;
-    this.applyItems(prev.filter((_, i) => i !== idx), this.data.nextCursor);
+    this.applyItems(prev.filter((_, i) => i !== idx), this.data.nextCursor, false);
     try {
       await favoritesService.remove(photoId);
+      // We already applied the removal locally; sync the version so returning to
+      // the tab doesn't trigger a redundant in-place refetch for our own change.
+      lastLoadedVersion = getContentVersion();
     } catch (err) {
       // Show the real underlying error so users can tell "expired token"
       // from "network down" from "server 5xx" — generic toasts hide which.
       // If onAuthFailure already kicked off a redirect to /pages/login, the
       // toast still fires (harmlessly) before reLaunch swaps pages.
       const msg = err instanceof Error ? err.message : '取消最爱失败';
-      this.applyItems(prev, this.data.nextCursor);
+      this.applyItems(prev, this.data.nextCursor, false);
       wx.showToast({ title: msg.slice(0, 30), icon: 'none' });
     }
   },
 
-  applyItems(items: Item[], nextCursor: string | null) {
+  applyItems(items: Item[], nextCursor: string | null, enterAnim?: boolean) {
     const columns = splitColumns(items);
-    this.setData({
+    const patch: {
+      items: Item[];
+      leftItems: Item[];
+      rightItems: Item[];
+      nextCursor: string | null;
+      enterAnim?: boolean;
+    } = {
       items,
       leftItems: columns.left,
       rightItems: columns.right,
       nextCursor,
-    });
+    };
+    if (enterAnim !== undefined) patch.enterAnim = enterAnim;
+    this.setData(patch);
   },
 });
 
@@ -165,7 +234,7 @@ function estimateCardHeight(item: Item): number {
     ? (item.photo.height / item.photo.width) * 100
     : 75;
   const aspect = Math.max(50, Math.min(160, raw));
-  return aspect + 34 + item.actors.length * 11 + (item.remainingActors > 0 ? 10 : 0);
+  return aspect + 34 + item.actors.length * 13 + (item.remainingActors > 0 ? 11 : 0);
 }
 
 function splitColumns(items: Item[]): { left: Item[]; right: Item[] } {

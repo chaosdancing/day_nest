@@ -1,4 +1,4 @@
-<view class="page">
+<view class="page {{theme}}">
   <view class="head">
     <text class="head__emoji">✏️</text>
     <view class="head__title scribble">改个名字</view>

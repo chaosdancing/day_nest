@@ -19,6 +19,7 @@ type UserRecord = {
   displayName: string;
   avatarKey: string | null;
   wechatOpenId: string | null;
+  canUpload: boolean;
 };
 
 function toUserDTO(u: UserRecord) {
@@ -28,6 +29,7 @@ function toUserDTO(u: UserRecord) {
     displayName: u.displayName,
     avatarKey: u.avatarKey,
     hasWechatBound: u.wechatOpenId !== null,
+    canUpload: u.canUpload,
   };
 }
 

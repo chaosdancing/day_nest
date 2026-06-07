@@ -12,7 +12,7 @@ const Body = z.object({
 export async function registerUploadRoutes(app: FastifyInstance) {
   app.post(
     '/api/uploads/token',
-    { onRequest: [app.requireUser] },
+    { onRequest: [app.requireUploader] },
     async (req) => {
       const parsed = Body.safeParse(req.body);
       if (!parsed.success) {

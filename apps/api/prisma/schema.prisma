@@ -16,6 +16,11 @@ model User {
   createdAt     DateTime @default(now())
   wechatOpenId  String?  @unique
   wechatBoundAt DateTime?
+  // Whether this user may post photos (create/append collections, upload).
+  // Password-registered family accounts default to true; WeChat one-tap
+  // accounts that register WITHOUT an invite are viewers (false) until they
+  // redeem an invite. Read access never requires this flag.
+  canUpload     Boolean  @default(true)
 
   collections   Collection[]    @relation("CollectionCreator")
   photos        Photo[]         @relation("PhotoUploader")

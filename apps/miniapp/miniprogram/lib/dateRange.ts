@@ -1,9 +1,11 @@
 /**
- * Date-range presets, kept 1:1 with apps/web/src/lib/timelineFilters.ts
- * so both surfaces show the same chips. Web ships only four presets
- * (all / year / quarter / custom); we follow.
+ * Date-range presets for the timeline filter bar. The mini-app ships four
+ * chips — 全部 / 今年 / 当月 / 自定义 (all / year / month / custom). The
+ * "当月" preset replaces the web's trailing-90-day "近 90 天" so phone users
+ * get a tidy "this calendar month" jump that matches how they think about
+ * recent uploads.
  */
-export type DatePreset = 'all' | 'year' | 'quarter' | 'custom';
+export type DatePreset = 'all' | 'year' | 'month' | 'custom';
 
 export interface DateRange {
   dateFrom?: string;
@@ -20,14 +22,17 @@ export function buildPresetRange(
 ): DateRange {
   if (preset === 'all') return {};
   if (preset === 'year') {
-    // Local-year (matches web) so a user opening the app at 02:00 on Jan 1
-    // in UTC+8 sees the new year preset, not the previous one.
+    // Local-year so a user opening the app at 02:00 on Jan 1 in UTC+8 sees
+    // the new year preset, not the previous one.
     const year = now.getFullYear();
     return { dateFrom: `${year}-01-01`, dateTo: `${year}-12-31` };
   }
-  // 'quarter' → trailing 90 days. UTC math (matches web). The "near 90 days"
-  // window includes today, so we step back 89 days from `now`.
-  const from = new Date(now);
-  from.setUTCDate(from.getUTCDate() - 89);
-  return { dateFrom: formatDateInput(from), dateTo: formatDateInput(now) };
+  // 'month' → the current local calendar month, first day .. last day.
+  // Built from local getFullYear()/getMonth() (same reasoning as 'year')
+  // and `new Date(year, month + 1, 0)` for the month's last day.
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const mm = String(month + 1).padStart(2, '0');
+  const lastDay = String(new Date(year, month + 1, 0).getDate()).padStart(2, '0');
+  return { dateFrom: `${year}-${mm}-01`, dateTo: `${year}-${mm}-${lastDay}` };
 }

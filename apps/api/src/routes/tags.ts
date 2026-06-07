@@ -114,7 +114,7 @@ export async function registerTagRoutes(app: FastifyInstance) {
    */
   app.patch(
     '/api/tags/:name',
-    { onRequest: [app.requireUser] },
+    { onRequest: [app.requireUploader] },
     async (req) => {
       const { name } = req.params as { name: string };
       const parsed = TagRenameInput.safeParse(req.body);
@@ -249,7 +249,7 @@ export async function registerTagRoutes(app: FastifyInstance) {
    */
   app.delete(
     '/api/tags/:name',
-    { onRequest: [app.requireUser] },
+    { onRequest: [app.requireUploader] },
     async (req, reply) => {
       const { name } = req.params as { name: string };
       const t = await findTagByEncodedName(app, name);

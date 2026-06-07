@@ -33,7 +33,7 @@ describe('authStore', () => {
 
   it('setSession persists tokens and user to storage', () => {
     authStore.setSession({
-      user: { id: 'u2', username: 'dad', displayName: '爸爸', avatarKey: null, hasWechatBound: true },
+      user: { id: 'u2', username: 'dad', displayName: '爸爸', avatarKey: null, hasWechatBound: true, canUpload: true },
       accessToken: 'a2',
       refreshToken: 'r2',
     });
@@ -44,7 +44,7 @@ describe('authStore', () => {
 
   it('logout clears state and storage', () => {
     authStore.setSession({
-      user: { id: 'u3', username: 'x', displayName: 'X', avatarKey: null, hasWechatBound: true },
+      user: { id: 'u3', username: 'x', displayName: 'X', avatarKey: null, hasWechatBound: true, canUpload: true },
       accessToken: 'a3',
       refreshToken: 'r3',
     });
@@ -57,7 +57,7 @@ describe('authStore', () => {
 
   it('exposes TokenProvider compatible methods', () => {
     authStore.setSession({
-      user: { id: 'u', username: 'u', displayName: 'U', avatarKey: null, hasWechatBound: false },
+      user: { id: 'u', username: 'u', displayName: 'U', avatarKey: null, hasWechatBound: false, canUpload: true },
       accessToken: 'a4',
       refreshToken: 'r4',
     });

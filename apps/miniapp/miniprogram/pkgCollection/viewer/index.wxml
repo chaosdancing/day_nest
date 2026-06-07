@@ -1,4 +1,4 @@
-<view class="viewer">
+<view class="viewer {{theme}}">
   <view wx:if="{{loading}}" class="empty">读取中…</view>
 
   <swiper
@@ -19,19 +19,34 @@
             direction="all"
             scale="{{true}}"
             scale-min="1"
-            scale-max="3"
+            scale-max="4"
             scale-value="{{scales[i]}}"
             out-of-bounds="{{false}}"
             inertia="{{true}}"
+            damping="{{28}}"
             data-index="{{i}}"
             bindscale="onScale"
             bindlongpress="onLongPress"
           >
+            <!-- Base layer: the thumbnail. Its src never changes, so it never
+                 reloads or re-lays-out mid-gesture. -->
             <image
               class="mv__img"
               src="{{item.thumbnailUrl}}"
               mode="aspectFit"
               lazy-load="true"
+              bindtap="onPhotoTap"
+            />
+            <!-- Hi-res layer: the full-res original, stacked on top with the same
+                 geometry and crossfaded in once downloaded (inserted only when
+                 ready). This avoids the "zoom thumbnail then jump to original"
+                 swap because the base never disappears. -->
+            <image
+              wx:if="{{origSrcs[i]}}"
+              class="mv__img mv__img--hi"
+              src="{{origSrcs[i]}}"
+              mode="aspectFit"
+              bindtap="onPhotoTap"
             />
           </movable-view>
         </movable-area>
@@ -39,14 +54,34 @@
     </swiper-item>
   </swiper>
 
-  <!-- Top-right favorite heart -->
+  <!-- Top bar: back chevron on the left, centered counter. The top-right is
+       intentionally left empty for the WeChat capsule. The right spacer mirrors
+       the back button width so the counter stays optically centered. The EXIF
+       (ⓘ) entry lives at the bottom-left instead. -->
   <view
-    wx:if="{{currentFav}}"
-    class="heart {{currentFav.favoritedByMe ? 'heart--on' : ''}}"
-    bindtap="onFavoriteTap"
+    wx:if="{{photos.length > 0}}"
+    class="topbar"
+    style="padding-top: {{statusBarHeight}}px"
   >
-    <text class="heart__glyph">{{currentFav.favoritedByMe ? '♥' : '♡'}}</text>
-    <text wx:if="{{currentFav.favoriteCount > 0}}" class="heart__count">{{currentFav.favoriteCount}}</text>
+    <view class="topbar__left">
+      <view class="topbar__btn" catchtap="onBack">
+        <text class="topbar__back-chev">‹</text>
+      </view>
+    </view>
+    <view class="topbar__counter">{{current + 1}} / {{photos.length}}</view>
+    <view class="topbar__spacer"></view>
+  </view>
+
+  <!-- Double-tap-to-favorite heart pop. Purely decorative, ignores taps. -->
+  <view wx:if="{{heartPop}}" class="heart-pop">
+    <text class="heart-pop__glyph">♥</text>
+  </view>
+
+  <!-- Non-blocking hint while the full-res original is being fetched (tapped
+       原图 or auto-triggered by pinch-zoom). -->
+  <view wx:if="{{loadingOriginal}}" class="loading-hint">
+    <text class="loading-hint__dot">◌</text>
+    <text>加载原图…</text>
   </view>
 
   <!-- Prev / Next chevron buttons. Hidden while pinch-zoomed because the
@@ -66,57 +101,115 @@
     <text class="nav__chev">›</text>
   </view>
 
-  <!-- Bottom status bar: counter + tags + edit info button.
-       Sits above safe-area inset so it's reachable on iPhones with home bar. -->
-  <view wx:if="{{photos.length > 0}}" class="bottom safe-area-inset-bottom">
-    <view class="bottom__counter">{{current + 1}} / {{photos.length}}</view>
-    <scroll-view
-      wx:if="{{currentTags.length > 0}}"
-      class="bottom__tags"
-      scroll-x="true"
-      enhanced="{{true}}"
-      show-scrollbar="{{false}}"
-    >
-      <view wx:for="{{currentTags}}" wx:key="*this" class="bottom__tag">#{{item}}</view>
-    </scroll-view>
-    <view class="bottom__edit" bindtap="onInfoToggle">
-      <text class="bottom__edit-emoji">✏️</text>
-      <text class="bottom__edit-label">编辑信息</text>
+  <!-- Bottom chrome: a small EXIF (ⓘ) button at the bottom-left, above a glassy
+       action bar (最爱 · 原图 · 下载 · 编辑). A dark scrim anchors it to the bottom
+       and it clears the iPhone home indicator via the safe-area inset. Chrome is
+       always visible (no immersive mode). -->
+  <view wx:if="{{photos.length > 0}}" class="bottom">
+    <view class="bottom__aux">
+      <view class="infobtn" catchtap="onInfoToggle">
+        <text class="infobtn__glyph">ⓘ</text>
+      </view>
+    </view>
+
+    <view class="actionbar">
+      <view
+        class="act {{currentFav.favoritedByMe ? 'act--fav' : ''}}"
+        catchtap="onFavoriteTap"
+      >
+        <text class="act__icon">{{currentFav.favoritedByMe ? '♥' : '♡'}}</text>
+        <text class="act__label">最爱{{currentFav.favoriteCount > 0 ? ' ' + currentFav.favoriteCount : ''}}</text>
+      </view>
+
+      <view
+        class="act {{currentOriginalLoaded ? 'act--done' : ''}}"
+        catchtap="onViewOriginal"
+      >
+        <text class="act__icon">{{loadingOriginal ? '◌' : (currentOriginalLoaded ? '✓' : '🔍')}}</text>
+        <text class="act__label">{{loadingOriginal ? '加载中' : (currentOriginalLoaded ? '已是原图' : '原图')}}</text>
+      </view>
+
+      <view class="act" catchtap="onDownload">
+        <text class="act__icon">{{downloading ? '◌' : '⬇'}}</text>
+        <text class="act__label">{{downloading ? '下载中' : '下载'}}</text>
+      </view>
+
+      <view class="act" catchtap="onOpenEditFromCaption">
+        <text class="act__icon">✏️</text>
+        <text class="act__label">编辑</text>
+      </view>
     </view>
   </view>
 
-  <!-- Info drawer (unchanged structurally, just polished by the WXSS) -->
+  <!-- EXIF / 信息 drawer. Metadata leads (read-only); editing reveals the
+       editable caption + tags. -->
   <view wx:if="{{infoOpen}}" class="info-mask" bindtap="onInfoToggle">
     <view class="info-drawer" catchtap="onInfoNoop">
       <view class="info__handle"></view>
-      <view class="info__title">照片信息</view>
-      <label class="info__field">
-        <text class="info__label">描述</text>
-        <textarea
-          class="info__textarea"
-          value="{{draftCaption}}"
-          placeholder="写点关于这张照片的说明…"
-          maxlength="2000"
-          bindinput="onCaptionInput"
-        />
-      </label>
-      <view class="info__row">
-        <text class="info__label">拍摄于</text>
-        <text class="info__value">{{currentTakenAtLabel || '—'}}</text>
+      <view class="info__title">EXIF 信息</view>
+
+      <view class="info__meta">
+        <view class="info__row">
+          <text class="info__label">拍摄时间</text>
+          <text class="info__value">{{currentTakenAtLabel || '未知'}}</text>
+        </view>
+        <view class="info__row">
+          <text class="info__label">尺寸</text>
+          <text class="info__value">{{currentDimensions || '—'}}{{currentDimensions ? ' px' : ''}}</text>
+        </view>
+        <view class="info__row">
+          <text class="info__label">格式</text>
+          <text class="info__value">{{currentFormat || '未知'}}</text>
+        </view>
       </view>
-      <view class="info__field">
-        <text class="info__label">标签</text>
-        <tag-picker
-          value="{{draftTags}}"
-          suggest="{{tagSuggestions}}"
-          placeholder="输入或选择标签"
-          bind:change="onTagsChange"
-        />
-      </view>
-      <view class="info__actions">
-        <view class="info__cancel" bindtap="onInfoToggle">取消</view>
-        <view class="info__save" bindtap="onSaveInfo">{{savingInfo ? '保存中…' : '保存信息'}}</view>
-      </view>
+
+      <!-- Read-only caption + tags with an 编辑 affordance. -->
+      <block wx:if="{{!editingInfo}}">
+        <view class="info__block">
+          <text class="info__label">描述</text>
+          <view class="info__caption">{{currentCaption || '—'}}</view>
+        </view>
+        <view class="info__block">
+          <text class="info__label">标签</text>
+          <view wx:if="{{currentTags.length > 0}}" class="info__tags">
+            <text wx:for="{{currentTags}}" wx:key="*this" class="info__tag">#{{item}}</text>
+          </view>
+          <view wx:else class="info__caption">—</view>
+        </view>
+        <view class="info__actions">
+          <view class="info__edit-btn" bindtap="onStartEditInfo">
+            <text class="info__edit-emoji">✏️</text>
+            <text>编辑</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- Editable caption + tags. -->
+      <block wx:else>
+        <label class="info__field">
+          <text class="info__label">描述</text>
+          <textarea
+            class="info__textarea"
+            value="{{draftCaption}}"
+            placeholder="写点关于这张照片的说明…"
+            maxlength="2000"
+            bindinput="onCaptionInput"
+          />
+        </label>
+        <view class="info__field">
+          <text class="info__label">标签</text>
+          <tag-picker
+            value="{{draftTags}}"
+            suggest="{{tagSuggestions}}"
+            placeholder="输入或选择标签"
+            bind:change="onTagsChange"
+          />
+        </view>
+        <view class="info__actions">
+          <view class="info__cancel" bindtap="onCancelEditInfo">取消</view>
+          <view class="info__save" bindtap="onSaveInfo">{{savingInfo ? '保存中…' : '保存'}}</view>
+        </view>
+      </block>
     </view>
   </view>
 </view>

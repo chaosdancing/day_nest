@@ -113,7 +113,7 @@ async function getDirectCollectionTags(
 export async function registerCollectionRoutes(app: FastifyInstance) {
   app.post(
     '/api/collections',
-    { onRequest: [app.requireUser] },
+    { onRequest: [app.requireUploader] },
     async (req, reply) => {
       const parsed = CollectionCreateInput.safeParse(req.body);
       if (!parsed.success) {
@@ -291,6 +291,31 @@ export async function registerCollectionRoutes(app: FastifyInstance) {
     }
   );
 
+  // Distinct, non-empty collection locations across the (family-shared) album,
+  // ordered by frequency then name. Powers the upload page's location
+  // fuzzy-match suggestions. Defined before "/:id" so it isn't captured as a
+  // collection id.
+  app.get(
+    '/api/collections/locations',
+    { onRequest: [app.requireUser] },
+    async () => {
+      const rows = await app.deps.prisma.collection.findMany({
+        where: { location: { not: null } },
+        select: { location: true },
+      });
+      const counts = new Map<string, number>();
+      for (const r of rows) {
+        const loc = (r.location ?? '').trim();
+        if (!loc) continue;
+        counts.set(loc, (counts.get(loc) ?? 0) + 1);
+      }
+      const locations = [...counts.entries()]
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+        .map(([location, count]) => ({ location, count }));
+      return { locations };
+    }
+  );
+
   app.get(
     '/api/collections/:id',
     { onRequest: [app.requireUser] },
@@ -311,7 +336,7 @@ export async function registerCollectionRoutes(app: FastifyInstance) {
 
   app.post(
     '/api/collections/:id/append',
-    { onRequest: [app.requireUser] },
+    { onRequest: [app.requireUploader] },
     async (req) => {
       const { id } = req.params as { id: string };
       const parsed = CollectionAppendInput.safeParse(req.body);
@@ -334,7 +359,7 @@ export async function registerCollectionRoutes(app: FastifyInstance) {
 
   app.patch(
     '/api/collections/:id',
-    { onRequest: [app.requireUser] },
+    { onRequest: [app.requireUploader] },
     async (req) => {
       const { id } = req.params as { id: string };
       const parsed = CollectionUpdateInput.safeParse(req.body);
@@ -385,7 +410,7 @@ export async function registerCollectionRoutes(app: FastifyInstance) {
 
   app.delete(
     '/api/collections/:id',
-    { onRequest: [app.requireUser] },
+    { onRequest: [app.requireUploader] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const photos = await app.deps.prisma.photo.findMany({

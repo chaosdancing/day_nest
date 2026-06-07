@@ -2,6 +2,7 @@ import type { PhotoDTO } from '@daynest/shared';
 import { apiClient } from './_client.js';
 import { ensureOk } from './_http.js';
 import { resolveApiBase } from '../config.js';
+import { bumpContentVersion } from '../contentVersion.js';
 
 export interface PhotoUrlResponse {
   url: string;
@@ -30,6 +31,7 @@ export const photosService = {
       data: body,
     });
     ensureOk('PATCH', url, res.statusCode, res.data);
+    bumpContentVersion();
     return res.data;
   },
 };

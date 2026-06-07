@@ -1,4 +1,4 @@
-<view class="page">
+<view class="page {{theme}} {{slide}}">
   <page-hero
     emoji="⚙️"
     title="设置"
@@ -6,66 +6,50 @@
     motion="wobble"
   />
 
-  <!-- 账户 -->
-  <view class="card">
-    <view class="card__head mono-label">👤 账户</view>
+  <!-- 账户 / 个人资料 -->
+  <view class="card profile {{enterAnim ? 'card--enter' : ''}}">
+    <view class="profile__top">
+      <view class="profile__avatar">{{user.displayName ? user.displayName[0] : '🌱'}}</view>
 
-    <view class="row">
-      <view class="row__key mono-label">登录名</view>
-      <view class="row__value row__value--mono">{{user.username || '—'}}</view>
-      <view class="row__hint mono-label">不可改</view>
-    </view>
-
-    <view class="row">
-      <view class="row__key mono-label">展示名</view>
       <block wx:if="{{!editing}}">
-        <view class="row__value scribble" bindtap="onStartEditDisplay">
-          {{user.displayName || '—'}}
+        <view class="profile__id">
+          <view class="profile__name">{{user.displayName || '未命名'}}</view>
+          <view class="profile__handle">@{{user.username || '—'}}</view>
         </view>
-        <view class="row__action" bindtap="onStartEditDisplay">
-          <text class="row__action-emoji">✏️</text>
+        <view class="profile__edit" bindtap="onStartEditDisplay">
+          <text class="profile__edit-icon">✏️</text>
+          <text>编辑</text>
         </view>
       </block>
-      <block wx:else>
+
+      <view wx:else class="profile__id">
         <input
-          class="row__input"
+          class="profile__input"
           value="{{draftDisplay}}"
           bindinput="onDraftInput"
           bindconfirm="onCommitDisplay"
           confirm-type="done"
           maxlength="64"
           focus="{{true}}"
-          placeholder-class="row__placeholder"
+          placeholder="起个温暖的名字"
+          placeholder-class="profile__placeholder"
         />
-        <view class="row__action row__action--cancel" bindtap="onCancelEditDisplay">取消</view>
-        <view class="row__action row__action--save" bindtap="onCommitDisplay">
-          {{saving ? '保存中…' : '保存'}}
-        </view>
-      </block>
+        <view class="profile__handle">@{{user.username || '—'}}</view>
+      </view>
+    </view>
+
+    <view wx:if="{{editing}}" class="profile__actions">
+      <view class="btn btn--ghost" bindtap="onCancelEditDisplay">取消</view>
+      <view class="btn btn--solid" bindtap="onCommitDisplay">
+        {{saving ? '保存中…' : '保存'}}
+      </view>
     </view>
 
     <view wx:if="{{notice}}" class="notice notice--{{noticeKind}}">{{notice}}</view>
   </view>
 
-  <!-- 外观 -->
-  <view class="card">
-    <view class="card__head mono-label">🎨 外观</view>
-    <view class="theme">
-      <view
-        wx:for="{{themeOptions}}"
-        wx:key="key"
-        class="theme__opt {{themeMode === item.key ? 'theme__opt--on' : ''}}"
-        data-mode="{{item.key}}"
-        bindtap="onPickTheme"
-      >
-        <text class="theme__emoji">{{item.emoji}}</text>
-        <text class="theme__label">{{item.label}}</text>
-      </view>
-    </view>
-  </view>
-
   <!-- 退出 -->
-  <view class="card">
+  <view class="card {{enterAnim ? 'card--enter' : ''}}">
     <button class="logout" bindtap="onLogout">退出登录</button>
   </view>
 

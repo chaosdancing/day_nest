@@ -1,29 +1,77 @@
 import type { TagDTO } from '@daynest/shared';
 import { tagsService } from '../../lib/services/tags.js';
+import { applyTheme, disposeTheme } from '../../lib/theme.js';
+import { consumeTabSlide } from '../../lib/tabTransition.js';
+import { getContentVersion } from '../../lib/contentVersion.js';
+
+// See pages/timeline — skip the redundant refresh on first mount, re-pull on
+// every subsequent return to the tab.
+let hasShown = false;
+let inFlight = false;
+let animatedOnce = false;
+let slideTimer: ReturnType<typeof setTimeout> | null = null;
+// Content version captured on the last successful list load — see pages/timeline.
+let lastLoadedVersion = -1;
 
 Page({
   data: {
+    theme: '' as '' | 'dark',
     tags: [] as TagDTO[],
     popular: [] as TagDTO[],
     collectionTags: [] as TagDTO[],
     photoOnlyTags: [] as TagDTO[],
-    view: 'flat' as 'flat' | 'categorized',
     loading: false,
+    slide: '' as '' | 'slide-in-right' | 'slide-in-left',
+    enterAnim: true,
   },
 
   onShow() {
+    applyTheme(this);
     const tb = typeof this.getTabBar === 'function' ? this.getTabBar() : null;
     if (tb) tb.setData({ active: 2 });
-    if (this.data.tags.length === 0 && !this.data.loading) void this.refresh();
+    this.playTabSlide();
+    if (!hasShown) {
+      hasShown = true;
+      if (this.data.tags.length === 0 && !inFlight) void this.refresh();
+    } else if (this.data.tags.length === 0 || getContentVersion() !== lastLoadedVersion) {
+      // Only re-pull when content changed since the last load. In-place refresh
+      // keeps tags visible; when unchanged we skip the network call entirely.
+      void this.refresh(true);
+    }
+  },
+
+  onUnload() {
+    disposeTheme(this);
+    hasShown = false;
+    animatedOnce = false;
+    if (slideTimer !== null) {
+      clearTimeout(slideTimer);
+      slideTimer = null;
+    }
+  },
+
+  playTabSlide() {
+    const slide = consumeTabSlide();
+    if (!slide) return;
+    if (slideTimer !== null) clearTimeout(slideTimer);
+    this.setData({ slide });
+    slideTimer = setTimeout(() => {
+      slideTimer = null;
+      this.setData({ slide: '' });
+    }, 280);
   },
 
   onPullDownRefresh() {
-    this.refresh().finally(() => wx.stopPullDownRefresh());
+    this.refresh(true).finally(() => wx.stopPullDownRefresh());
   },
 
-  async refresh() {
-    if (this.data.loading) return;
-    this.setData({ loading: true });
+  async refresh(inPlace = false) {
+    if (inFlight) return;
+    inFlight = true;
+    // Only show the loading state on a fresh load; an in-place refresh keeps
+    // the existing tags visible until the new data arrives.
+    if (!inPlace) this.setData({ loading: true });
+    const enter = !animatedOnce;
     try {
       const tags = await tagsService.list();
       const popular = [...tags]
@@ -31,17 +79,15 @@ Page({
         .slice(0, 6);
       const collectionTags = tags.filter((t) => (t.collectionCount ?? 0) > 0);
       const photoOnlyTags = tags.filter((t) => (t.collectionCount ?? 0) === 0 && (t.photoCount ?? 0) > 0);
-      this.setData({ tags, popular, collectionTags, photoOnlyTags });
+      animatedOnce = true;
+      lastLoadedVersion = getContentVersion();
+      this.setData({ tags, popular, collectionTags, photoOnlyTags, enterAnim: enter });
     } catch {
       wx.showToast({ title: '加载失败', icon: 'none' });
     } finally {
-      this.setData({ loading: false });
+      inFlight = false;
+      if (!inPlace) this.setData({ loading: false });
     }
-  },
-
-  onSwitchView(e: WechatMiniprogram.TouchEvent) {
-    const view = e.currentTarget.dataset.view as 'flat' | 'categorized';
-    this.setData({ view });
   },
 
   onTagTap(e: WechatMiniprogram.TouchEvent) {
