@@ -194,47 +194,78 @@ export function SettingsPage() {
         </AnimatePresence>
       </section>
 
-      <section className="polaroid p-5 mt-8">
-        <h2 className="font-mono text-xs uppercase tracking-widest text-ink/60 dark:text-paper/60 mb-3">
-          💌 邀请家人
-        </h2>
-        <p className="text-sm text-ink/70 dark:text-paper/70 mb-3">
-          生成一个一次性邀请口令，发送给家人即可加入 🏡
-        </p>
-        <button
-          onClick={generateInvite}
-          disabled={busy}
-          className="bg-kraft text-paper px-4 py-2 rounded-sm hover:bg-kraft-dark disabled:opacity-50"
-        >
-          {busy ? '生成中…' : '✨ 生成邀请'}
-        </button>
-        {invite && inviteUrl ? (
-          <div className="mt-4 space-y-2">
-            <p className="font-mono text-xs text-ink/60 dark:text-paper/55">
-              过期：{new Date(invite.expiresAt).toLocaleString()}
-            </p>
-            <div className="flex gap-2">
-              <input
-                readOnly
-                value={inviteUrl}
-                className="input font-mono text-xs"
-                onFocus={(e) => e.currentTarget.select()}
-              />
-              <button
-                type="button"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(inviteUrl);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 1500);
-                }}
-                className="px-3 py-1.5 bg-paper-dark text-ink rounded-sm hover:bg-kraft/30"
-              >
-                {copied ? '已复制' : '复制'}
-              </button>
+      {user?.canUpload ? (
+        <section className="polaroid p-5 mt-8">
+          <h2 className="font-mono text-xs uppercase tracking-widest text-ink/60 dark:text-paper/60 mb-3">
+            💌 邀请家人
+          </h2>
+          <p className="text-sm text-ink/70 dark:text-paper/70 mb-3">
+            生成一个一次性邀请口令，发送给家人即可加入 🏡
+          </p>
+          <button
+            onClick={generateInvite}
+            disabled={busy}
+            className="bg-kraft text-paper px-4 py-2 rounded-sm hover:bg-kraft-dark disabled:opacity-50"
+          >
+            {busy ? '生成中…' : '✨ 生成邀请'}
+          </button>
+          {invite && inviteUrl ? (
+            <div className="mt-4 space-y-3">
+              <p className="font-mono text-xs text-ink/60 dark:text-paper/55">
+                过期：{new Date(invite.expiresAt).toLocaleString()} · 仅可使用一次
+              </p>
+              <div>
+                <span className="block font-mono text-[10px] uppercase tracking-widest text-ink/50 dark:text-paper/50 mb-1">
+                  邀请码
+                </span>
+                <div className="flex gap-2">
+                  <input
+                    readOnly
+                    value={invite.token}
+                    className="input font-mono text-xs"
+                    onFocus={(e) => e.currentTarget.select()}
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(invite.token);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 1500);
+                    }}
+                    className="px-3 py-1.5 bg-paper-dark text-ink rounded-sm hover:bg-kraft/30 whitespace-nowrap"
+                  >
+                    复制码
+                  </button>
+                </div>
+              </div>
+              <div>
+                <span className="block font-mono text-[10px] uppercase tracking-widest text-ink/50 dark:text-paper/50 mb-1">
+                  邀请链接
+                </span>
+                <div className="flex gap-2">
+                  <input
+                    readOnly
+                    value={inviteUrl}
+                    className="input font-mono text-xs"
+                    onFocus={(e) => e.currentTarget.select()}
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(inviteUrl);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 1500);
+                    }}
+                    className="px-3 py-1.5 bg-paper-dark text-ink rounded-sm hover:bg-kraft/30 whitespace-nowrap"
+                  >
+                    {copied ? '已复制' : '复制链接'}
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        ) : null}
-      </section>
+          ) : null}
+        </section>
+      ) : null}
     </div>
   );
 }

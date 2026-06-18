@@ -48,6 +48,38 @@
     <view wx:if="{{notice}}" class="notice notice--{{noticeKind}}">{{notice}}</view>
   </view>
 
+  <!-- 邀请家人 — 仅对有上传权限的家人开放 -->
+  <view wx:if="{{user.canUpload}}" class="card invite {{enterAnim ? 'card--enter' : ''}}">
+    <view class="invite__head">
+      <text class="invite__emoji">💌</text>
+      <view class="invite__title">邀请家人</view>
+    </view>
+    <view class="invite__sub">生成一个邀请，发给家人即可加入、一起发照片。</view>
+
+    <view wx:if="{{!inviteToken}}" class="invite__gen">
+      <view class="btn btn--solid invite__gen-btn" bindtap="onGenerateInvite">
+        {{inviteBusy ? '生成中…' : '✨ 生成邀请'}}
+      </view>
+    </view>
+
+    <block wx:else>
+      <view class="invite__field">
+        <text class="invite__label">邀请码</text>
+        <view class="invite__value mono-label">{{inviteToken}}</view>
+        <view class="invite__copy" bindtap="onCopyInviteCode">复制</view>
+      </view>
+      <view class="invite__field">
+        <text class="invite__label">邀请链接</text>
+        <view class="invite__value invite__value--link">{{inviteLink}}</view>
+        <view class="invite__copy" bindtap="onCopyInviteLink">复制</view>
+      </view>
+      <view class="invite__meta">有效期至 {{inviteExpiresLabel}} · 仅可使用一次</view>
+      <view class="invite__again" bindtap="onGenerateInvite">
+        {{inviteBusy ? '生成中…' : '重新生成'}}
+      </view>
+    </block>
+  </view>
+
   <!-- 退出 -->
   <view class="card {{enterAnim ? 'card--enter' : ''}}">
     <button class="logout" bindtap="onLogout">退出登录</button>
