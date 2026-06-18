@@ -10,6 +10,7 @@ export const endpoints = {
   wechatUnbind: () => `${resolveApiBase()}/api/auth/wechat-unbind`,
   refreshToken: () => `${resolveApiBase()}/api/auth/refresh-token`,
   me: () => `${resolveApiBase()}/api/auth/me`,
+  createInvite: () => `${resolveApiBase()}/api/invites`,
   subscribe: () => `${resolveApiBase()}/api/wechat/subscribe`,
   /** Username/password login. Dev-only entry from /pages/dev-login/index. */
   login: () => `${resolveApiBase()}/api/auth/login`,

@@ -3,6 +3,7 @@ import { createApiClient } from '../../lib/api.js';
 import { endpoints } from '../../lib/endpoints.js';
 import { authStore } from '../../stores/authStore.js';
 import { applyTheme, disposeTheme } from '../../lib/theme.js';
+import { disableShareMenu } from '../../lib/shareMenu.js';
 import type { UserDTO } from '@daynest/shared';
 
 const api = createApiClient({ tokens: authStore, refreshUrl: endpoints.refreshToken() });
@@ -29,6 +30,10 @@ Page({
 
   onLoad() {
     applyTheme(this);
+  },
+
+  onShow() {
+    disableShareMenu();
   },
 
   onUnload() {

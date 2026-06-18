@@ -131,6 +131,96 @@
 .notice--ok { color: #3b8e4f; background: rgba(123, 210, 158, .18); }
 .notice--err { color: var(--pin-red); background: rgba(210, 59, 59, .12); }
 
+/* ───────────────────────── Invite card ───────────────────────── */
+.invite__head {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+.invite__emoji {
+  font-size: 40rpx;
+  line-height: 1;
+}
+.invite__title {
+  font-family: var(--font-hand);
+  font-size: 40rpx;
+  color: var(--ink-primary);
+}
+.invite__sub {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: var(--ink-secondary);
+}
+.invite__gen {
+  margin-top: 26rpx;
+}
+.invite__gen-btn {
+  display: inline-block;
+  text-align: center;
+}
+
+.invite__field {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 22rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 16rpx;
+  background: var(--paper-cream);
+  box-shadow: inset 0 0 0 2rpx rgba(168, 138, 92, .22);
+}
+.invite__label {
+  flex-shrink: 0;
+  width: 112rpx;
+  font-family: var(--font-mono);
+  font-size: 22rpx;
+  letter-spacing: 1rpx;
+  color: var(--ink-secondary);
+}
+.invite__value {
+  flex: 1;
+  min-width: 0;
+  font-size: 28rpx;
+  color: var(--ink-primary);
+  word-break: break-all;
+}
+.invite__value--link {
+  font-family: var(--font-mono);
+  font-size: 22rpx;
+  line-height: 1.4;
+}
+.invite__copy {
+  flex-shrink: 0;
+  padding: 10rpx 26rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  color: var(--paper-cream);
+  background: var(--kraft-base);
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+.invite__copy:active {
+  transform: scale(.94);
+  opacity: .85;
+}
+.invite__meta {
+  margin-top: 20rpx;
+  font-family: var(--font-mono);
+  font-size: 22rpx;
+  color: var(--ink-secondary);
+  opacity: .8;
+}
+.invite__again {
+  margin-top: 18rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: var(--ink-secondary);
+  text-decoration: underline;
+}
+.invite__again:active {
+  opacity: .7;
+}
+
 /* Logout button — keep red but tonal */
 .logout {
   width: 100%;

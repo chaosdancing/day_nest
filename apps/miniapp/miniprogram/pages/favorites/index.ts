@@ -5,6 +5,7 @@ import { applyTheme, disposeTheme } from '../../lib/theme.js';
 import { consumeTabSlide } from '../../lib/tabTransition.js';
 import { getContentVersion } from '../../lib/contentVersion.js';
 import { authStore } from '../../stores/authStore.js';
+import { enableShareMenu } from '../../lib/shareMenu.js';
 
 type Scope = 'all' | 'mine';
 
@@ -115,6 +116,7 @@ Page({
   },
 
   onShow() {
+    enableShareMenu();
     applyTheme(this);
     const tb = typeof this.getTabBar === 'function' ? this.getTabBar() : null;
     if (tb) tb.setData({ active: 1 });
@@ -314,6 +316,13 @@ Page({
     };
     if (enterAnim !== undefined) patch.enterAnim = enterAnim;
     this.setData(patch);
+  },
+
+  onShareTimeline() {
+    return {
+      title: '慢慢记 · 全家最爱',
+      query: '',
+    };
   },
 });
 

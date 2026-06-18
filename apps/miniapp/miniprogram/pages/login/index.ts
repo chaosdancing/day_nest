@@ -4,6 +4,7 @@ import { createApiClient } from '../../lib/api.js';
 import { endpoints } from '../../lib/endpoints.js';
 import { authStore } from '../../stores/authStore.js';
 import { applyTheme, disposeTheme } from '../../lib/theme.js';
+import { disableShareMenu } from '../../lib/shareMenu.js';
 
 const api = createApiClient({ tokens: authStore, refreshUrl: endpoints.refreshToken() });
 
@@ -40,6 +41,7 @@ Page({
   },
 
   onShow() {
+    disableShareMenu();
     const s = authStore.getState();
     if (s.hydrated && s.accessToken && s.user) {
       wx.switchTab({ url: '/pages/timeline/index' });

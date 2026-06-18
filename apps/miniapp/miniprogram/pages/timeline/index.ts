@@ -6,6 +6,7 @@ import { consumeTabSlide } from '../../lib/tabTransition.js';
 import { getContentVersion } from '../../lib/contentVersion.js';
 import { buildPresetRange } from '../../lib/dateRange.js';
 import { ensureCanUpload } from '../../lib/uploadGate.js';
+import { enableShareMenu } from '../../lib/shareMenu.js';
 
 interface FilterChange {
   dateFrom?: string;
@@ -134,6 +135,7 @@ Page({
   },
 
   onShow() {
+    enableShareMenu();
     const tb = typeof this.getTabBar === 'function' ? this.getTabBar() : null;
     if (tb) tb.setData({ active: 0 });
     this.playTabSlide();
@@ -294,5 +296,12 @@ Page({
   async onFabTap() {
     if (!(await ensureCanUpload())) return;
     wx.navigateTo({ url: '/pkgUpload/new/index' });
+  },
+
+  onShareTimeline() {
+    return {
+      title: '慢慢记 · 时光轴',
+      query: '',
+    };
   },
 });
