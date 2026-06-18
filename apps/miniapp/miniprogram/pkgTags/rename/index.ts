@@ -2,6 +2,7 @@ import type { TagDTO } from '@daynest/shared';
 import { tagsService } from '../../lib/services/tags.js';
 import { normalizeTagName } from '../../lib/tagName.js';
 import { applyTheme, disposeTheme } from '../../lib/theme.js';
+import { enableShareMenu } from '../../lib/shareMenu.js';
 
 interface PageData {
   theme: '' | 'dark';
@@ -32,6 +33,7 @@ Page({
 
   async onLoad(query: Record<string, string | undefined>) {
     applyTheme(this);
+    enableShareMenu();
     const tag = decodeURIComponent(query.tag ?? '');
     const display = decodeURIComponent(query.display ?? tag);
     if (!tag) {
@@ -125,5 +127,13 @@ Page({
       wx.showToast({ title: '保存失败', icon: 'none' });
       this.setData({ submitting: false });
     }
+  },
+
+  onShareTimeline() {
+    const d = this.data.originalDisplay || this.data.tagName;
+    return {
+      title: d ? `慢慢记 · 编辑 #${d}` : '慢慢记 · 标签',
+      query: '',
+    };
   },
 });

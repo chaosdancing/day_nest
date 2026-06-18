@@ -3,6 +3,11 @@ import { collectionsService } from '../../lib/services/collections.js';
 import { favoritesService } from '../../lib/services/favorites.js';
 import { tagsService, type TaggedPhotoItem } from '../../lib/services/tags.js';
 import { applyTheme, disposeTheme } from '../../lib/theme.js';
+import {
+  DEFAULT_SHARE_PATH,
+  DEFAULT_SHARE_TITLE,
+  enableShareMenu,
+} from '../../lib/shareMenu.js';
 
 type Scope = 'all' | 'collection' | 'photo';
 
@@ -107,6 +112,7 @@ Page({
   },
 
   onShow() {
+    enableShareMenu();
     // Re-pull on return-to-page so a rename committed on /pkgTags/rename/
     // (which only navigateBack's by 1 for the non-merge case) reflects the
     // new collection counts and tag display label here.
@@ -270,5 +276,26 @@ Page({
     wx.navigateTo({
       url: `/pkgTags/rename/index?tag=${encodeURIComponent(this.data.tagName)}&display=${encodeURIComponent(this.data.tagDisplay)}`,
     });
+  },
+
+  onShareAppMessage() {
+    const tag = this.data.tagName;
+    const display = this.data.tagDisplay || tag;
+    const scope = this.data.scope;
+    if (!tag) {
+      return { title: DEFAULT_SHARE_TITLE, path: DEFAULT_SHARE_PATH };
+    }
+    return {
+      title: `慢慢记 · #${display}`,
+      path: `/pkgTags/pinboard/index?tag=${encodeURIComponent(tag)}&display=${encodeURIComponent(display)}&scope=${encodeURIComponent(scope)}`,
+    };
+  },
+
+  onShareTimeline() {
+    const display = this.data.tagDisplay || this.data.tagName;
+    return {
+      title: display ? `慢慢记 · #${display}` : '慢慢记 · 标签',
+      query: '',
+    };
   },
 });

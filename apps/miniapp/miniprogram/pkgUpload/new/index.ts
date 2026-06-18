@@ -9,12 +9,16 @@ import { createUploadQueue } from '../../lib/uploadQueue.js';
 import { debounce, type DebouncedFn } from '../../lib/debounce.js';
 import { stableAngle } from '../../lib/hash.js';
 import { applyTheme, disposeTheme } from '../../lib/theme.js';
+import { enableShareMenu } from '../../lib/shareMenu.js';
 
 let unsubscribe: (() => void) | null = null;
 let titleSearch: DebouncedFn<[string]> | null = null;
 
 const QUEUE_CONCURRENCY = 10;
-const COMPRESS_LONG_EDGE = 1600;
+// Long-edge cap + JPEG quality for the client-side compression before upload.
+// Bumped from 1600/75 so stored originals stay sharp when zoomed in the viewer.
+const COMPRESS_LONG_EDGE = 2560;
+const COMPRESS_QUALITY = 82;
 
 type DraftPhotoView = DraftPhoto & {
   frameStyle: string;
@@ -109,6 +113,7 @@ Page({
 
   onLoad() {
     applyTheme(this);
+    enableShareMenu();
     compressedPaths.clear();
     uploadStore.reset();
     this.syncFromStore();
@@ -315,7 +320,11 @@ Page({
         if (p.stage.kind === 'done') continue;
         uploadStore.setStage(p.id, { kind: 'compressing' });
         try {
-          const c = await compressImage({ src: p.originalPath, longEdge: COMPRESS_LONG_EDGE });
+          const c = await compressImage({
+            src: p.originalPath,
+            longEdge: COMPRESS_LONG_EDGE,
+            quality: COMPRESS_QUALITY,
+          });
           // Replace path/dimensions in-place by re-adding with the compressed temp file.
           // We track new dims on the photo via setStage with a temporary uploading-0% marker;
           // the final fileKey/width/height come from Qiniu's returnBody.
@@ -420,6 +429,13 @@ Page({
       this.syncFromStore();
       console.error('upload submit', err);
     }
+  },
+
+  onShareTimeline() {
+    return {
+      title: '慢慢记 · 新建回忆',
+      query: '',
+    };
   },
 });
 

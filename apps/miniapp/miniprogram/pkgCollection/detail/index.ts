@@ -4,6 +4,11 @@ import { favoritesService } from '../../lib/services/favorites.js';
 import { tagsService } from '../../lib/services/tags.js';
 import { stableAngle, stableInt } from '../../lib/hash.js';
 import { applyTheme, disposeTheme } from '../../lib/theme.js';
+import {
+  DEFAULT_SHARE_PATH,
+  DEFAULT_SHARE_TITLE,
+  enableShareMenu,
+} from '../../lib/shareMenu.js';
 
 type PhotoView = CollectionDetailDTO['photos'][number] & {
   /** Precomputed natural-aspect frame style for photo-tile. */
@@ -87,6 +92,8 @@ Page({
     draftOccurredOn: '',
     draftTags: [] as string[],
     tagSuggestions: [] as string[],
+    /** Stable collection id for share paths before `collection` loads. */
+    shareCollectionId: '' as string,
   },
 
   onLoad(query: Record<string, string | undefined>) {
@@ -97,6 +104,8 @@ Page({
       wx.showToast({ title: '缺少集合 id', icon: 'none' });
       return;
     }
+    this.setData({ shareCollectionId: id });
+    enableShareMenu();
     if (photoId) {
       wx.redirectTo({
         url: `/pkgCollection/viewer/index?collectionId=${encodeURIComponent(id)}&photoId=${encodeURIComponent(photoId)}`,
@@ -262,5 +271,24 @@ Page({
       wx.showToast({ title: msg.slice(0, 30), icon: 'none' });
       this.setData({ savingEdit: false });
     }
+  },
+
+  onShareAppMessage() {
+    const cid = this.data.shareCollectionId;
+    const c = this.data.collection;
+    return {
+      title: c?.title ? `慢慢记 · ${c.title}` : DEFAULT_SHARE_TITLE,
+      path: cid
+        ? `/pkgCollection/detail/index?id=${encodeURIComponent(cid)}`
+        : DEFAULT_SHARE_PATH,
+    };
+  },
+
+  onShareTimeline() {
+    const c = this.data.collection;
+    return {
+      title: c?.title ? `慢慢记 · ${c.title}` : '慢慢记 · 回忆详情',
+      query: '',
+    };
   },
 });

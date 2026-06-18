@@ -3,6 +3,7 @@ import { tagsService } from '../../lib/services/tags.js';
 import { applyTheme, disposeTheme } from '../../lib/theme.js';
 import { consumeTabSlide } from '../../lib/tabTransition.js';
 import { getContentVersion } from '../../lib/contentVersion.js';
+import { enableShareMenu } from '../../lib/shareMenu.js';
 
 // See pages/timeline — skip the redundant refresh on first mount, re-pull on
 // every subsequent return to the tab.
@@ -26,6 +27,7 @@ Page({
   },
 
   onShow() {
+    enableShareMenu();
     applyTheme(this);
     const tb = typeof this.getTabBar === 'function' ? this.getTabBar() : null;
     if (tb) tb.setData({ active: 2 });
@@ -99,5 +101,12 @@ Page({
     wx.navigateTo({
       url: `/pkgTags/pinboard/index?tag=${encodeURIComponent(name)}&display=${encodeURIComponent(display)}&scope=${encodeURIComponent(scope)}`,
     });
+  },
+
+  onShareTimeline() {
+    return {
+      title: '慢慢记 · 标签',
+      query: '',
+    };
   },
 });
